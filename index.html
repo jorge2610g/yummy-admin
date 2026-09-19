@@ -31,7 +31,7 @@ button{border:0;border-radius:11px;padding:11px 15px;cursor:pointer;font-weight:
 }
 .admin-version{padding:24px 12px;text-align:center;color:var(--mut);font-size:12px;opacity:.75}
 
-/* Ajuste móvil v2.0.1: contenido centrado y tarjetas sin desbordes */
+/* Ajuste móvil v2.0.2: contenido centrado y tarjetas sin desbordes */
 @media(max-width:600px){
   body{overflow-x:hidden!important}
   main,.wrap,.container,.content,.panel{width:100%!important;max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
@@ -43,7 +43,7 @@ button{border:0;border-radius:11px;padding:11px 15px;cursor:pointer;font-weight:
 }
 #orderEditModal{display:none}
 .order-track{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.order-track span{padding:6px 9px;border-radius:999px;background:var(--ghost);font-size:12px}.order-track span.done,.order-track span.current{background:var(--a);color:#171000}.order-track span.current{font-weight:900}.order-detail{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
-/* Vista móvil del resumen de contenido v2.0.1 */
+/* Vista móvil del resumen de contenido v2.0.2 */
 @media(max-width:600px){
  #restaurants .card.span12{padding:16px!important;width:100%!important;overflow:hidden!important}
  #restaurants .card.span12>.row.between{display:block!important}
@@ -84,6 +84,32 @@ button{border:0;border-radius:11px;padding:11px 15px;cursor:pointer;font-weight:
 .subscription-trial{color:#ffb703}.subscription-active{color:#2dd4bf}.subscription-expired,.subscription-suspended{color:#fb7185}.sub-progress{height:8px;background:var(--ghost);border-radius:999px;overflow:hidden;margin:9px 0}.sub-progress>i{display:block;height:100%;background:var(--a)}
 
 
+
+/* Responsive hardening */
+html,body{max-width:100%;overflow-x:hidden}
+img,video,iframe,svg{max-width:100%;height:auto}
+input,select,textarea,button{max-width:100%}
+@media(max-width:900px){
+  .wrap{width:min(100% - 24px,1180px)!important;margin-left:auto!important;margin-right:auto!important}
+  .top,.row.between{gap:10px;flex-wrap:wrap}
+  .tabs{display:flex!important;overflow-x:auto!important;white-space:nowrap!important;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+  .tabs .tab{flex:0 0 auto!important}
+  .grid{grid-template-columns:1fr!important}
+  .span4,.span5,.span6,.span7,.span8,.span12{grid-column:1/-1!important;width:100%!important}
+  .card{max-width:100%!important}
+}
+@media(max-width:600px){
+  body{font-size:15px}
+  .wrap{width:min(100% - 16px,1180px)!important}
+  .top{align-items:flex-start!important}
+  .top>.row{width:100%;display:flex;flex-wrap:wrap}
+  .top>.row>*{flex:1 1 auto}
+  .card{padding:16px!important;border-radius:16px!important}
+  .row{flex-wrap:wrap}
+  input,select,textarea{width:100%!important;min-width:0!important}
+  button,.btn{min-height:44px}
+  table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+}
 </style><style id="responsive-v2">
 html,body{max-width:100%;overflow-x:hidden}
 .wrap{width:min(1440px,100%);padding-left:clamp(12px,3vw,32px);padding-right:clamp(12px,3vw,32px)}
@@ -569,4 +595,4 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.0.1</div></body></html>
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.0.2</div></body></html>
