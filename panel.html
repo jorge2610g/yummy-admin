@@ -31,7 +31,7 @@ button{border:0;border-radius:11px;padding:11px 15px;cursor:pointer;font-weight:
 }
 .admin-version{padding:24px 12px;text-align:center;color:var(--mut);font-size:12px;opacity:.75}
 
-/* Ajuste móvil v1.4.69: contenido centrado y tarjetas sin desbordes */
+/* Ajuste móvil v2.0.0: contenido centrado y tarjetas sin desbordes */
 @media(max-width:600px){
   body{overflow-x:hidden!important}
   main,.wrap,.container,.content,.panel{width:100%!important;max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
@@ -43,7 +43,7 @@ button{border:0;border-radius:11px;padding:11px 15px;cursor:pointer;font-weight:
 }
 #orderEditModal{display:none}
 .order-track{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.order-track span{padding:6px 9px;border-radius:999px;background:var(--ghost);font-size:12px}.order-track span.done,.order-track span.current{background:var(--a);color:#171000}.order-track span.current{font-weight:900}.order-detail{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
-/* Vista móvil del resumen de contenido v1.4.69 */
+/* Vista móvil del resumen de contenido v2.0.0 */
 @media(max-width:600px){
  #restaurants .card.span12{padding:16px!important;width:100%!important;overflow:hidden!important}
  #restaurants .card.span12>.row.between{display:block!important}
@@ -268,25 +268,7 @@ async function loadRestaurants(){let rq=sb.from("restaurants").select("*").order
 function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;const url=new URL("/", "https://menu.yummypro.online");url.searchParams.set("r",r.slug);window.open(url.toString(),"_blank")}async function openRestaurantPanel(id){
   if(!isSuperAdmin)return toast("Acceso exclusivo del administrador general");
   const r=restaurants.find(x=>Number(x.id)===Number(id));if(!r)return toast("Restaurante no encontrado");
-  adminRestaurantMode=true;currentRestaurant=Number(id);currentRole="restaurant";
-  document.getElementById("adminRestaurantBanner").style.display="";
-  document.getElementById("adminRestaurantModeName").textContent="Viendo como: "+r.name;
-  document.getElementById("panelMainTitle").textContent="Panel · "+r.name;
-  document.getElementById("viewMenuLink").href="https://menu.yummypro.online/?r="+encodeURIComponent(r.slug);
-  document.getElementById("viewMenuLink").style.display="";
-  const restaurantTabs=["orders","products","categories","qr","plans","settings"];
-  document.querySelectorAll(".tab").forEach(t=>t.style.display=restaurantTabs.includes(t.dataset.tab)?"":"none");
-  document.getElementById("mpCredentialsCard").style.display="none";
-  document.getElementById("planCreatorCard").style.display="none";
-  document.getElementById("demoProductActions").style.display="none";
-  document.getElementById("restaurantMpSettings")?.style.setProperty("display","");
-  await loadSubscriptionPlans();
-  await Promise.all([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);
-  await loadRestaurantMercadoPago();
-  renderRestaurantContent();renderQrPanel();
-  showTab("orders");
-  window.scrollTo({top:0,behavior:"smooth"});
-  toast("Viendo el panel de "+r.name);
+  location.href="./restaurant.html?restaurant="+encodeURIComponent(id);
 }
 async function returnToAdminPanel(){
   if(!isSuperAdmin||!adminRestaurantMode)return;
@@ -587,4 +569,4 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v1.4.69</div></body></html>
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.0.0</div></body></html>
