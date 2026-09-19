@@ -31,7 +31,7 @@ button{border:0;border-radius:11px;padding:11px 15px;cursor:pointer;font-weight:
 }
 .admin-version{padding:24px 12px;text-align:center;color:var(--mut);font-size:12px;opacity:.75}
 
-/* Ajuste móvil v1.0.12: contenido centrado y tarjetas sin desbordes */
+/* Ajuste móvil v1.0.13: contenido centrado y tarjetas sin desbordes */
 @media(max-width:600px){
   body{overflow-x:hidden!important}
   main,.wrap,.container,.content,.panel{width:100%!important;max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
@@ -43,7 +43,7 @@ button{border:0;border-radius:11px;padding:11px 15px;cursor:pointer;font-weight:
 }
 #orderEditModal{display:none}
 .order-track{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.order-track span{padding:6px 9px;border-radius:999px;background:var(--ghost);font-size:12px}.order-track span.done,.order-track span.current{background:var(--a);color:#171000}.order-track span.current{font-weight:900}.order-detail{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
-/* Vista móvil del resumen de contenido v1.0.12 */
+/* Vista móvil del resumen de contenido v1.0.13 */
 @media(max-width:600px){
  #restaurants .card.span12{padding:16px!important;width:100%!important;overflow:hidden!important}
  #restaurants .card.span12>.row.between{display:block!important}
@@ -377,7 +377,7 @@ function renderBusinessStatus(r){
 let subscriptionCountdownTimer=null;
 function formatSubscriptionCountdown(end,status){if(status==="expired")return "00 días · 00:00:00";if(status==="suspended")return "Suscripción suspendida";const ms=Math.max(0,end-Date.now()),days=Math.floor(ms/86400000),hours=Math.floor(ms%86400000/3600000),minutes=Math.floor(ms%3600000/60000),seconds=Math.floor(ms%60000/1000),pad=n=>String(n).padStart(2,"0");return pad(days)+" días · "+pad(hours)+":"+pad(minutes)+":"+pad(seconds)}
 function startSubscriptionCountdown(r,status){if(subscriptionCountdownTimer){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null}const el=document.getElementById("subscriptionCountdown");if(!el||!r?.subscription_expires_at||status==="suspended")return;const end=new Date(r.subscription_expires_at).getTime();const tick=()=>{const current=document.getElementById("subscriptionCountdown");if(!current){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null;return}const expired=end<=Date.now();current.textContent=expired?"00 días · 00:00:00":formatSubscriptionCountdown(end,status);if(expired){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null;current.previousElementSibling&&(current.previousElementSibling.textContent="Tiempo restante");}};tick();subscriptionCountdownTimer=setInterval(tick,1000)}
-function renderSubscriptionBanner(r){if(subscriptionCountdownTimer){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null}if(isSuperAdmin&&!adminRestaurantMode){subscriptionBanner.style.display="none";return;}const el=document.getElementById("subscriptionBanner");if(!el||!r){if(el)el.style.display="none";return}const s=subscriptionInfo(r);el.style.display="block";const msg=s.status==="trial"?"🎁 Prueba gratuita":s.status==="active"?"✅ Suscripción activa":s.status==="expired"?"⚠️ Suscripción vencida":"⛔ Suscripción suspendida";const countdown=(s.status==="trial"||s.status==="active")&&r.subscription_expires_at?"<div style='margin-top:7px'><span class='mut'>Tiempo restante</span><div id='subscriptionCountdown' style='font-size:20px;font-weight:900;letter-spacing:.4px;margin-top:2px'>Calculando…</div></div>":"";el.innerHTML="<div class='row between'><div><b>"+msg+"</b>"+countdown+"<div class='mut'>"+esc(r.subscription_plan||"Prueba 30 días")+(r.subscription_expires_at?" · vence "+new Date(r.subscription_expires_at).toLocaleString("es-CL"):"")+"</div></div>"+((isSuperAdmin||currentRole==="manager")?"<button class='ghost' onclick=showTab('subscriptions')>Gestionar</button>":"")+"</div>";startSubscriptionCountdown(r,s.status)}
+function renderSubscriptionBanner(r){if(subscriptionCountdownTimer){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null}const el=document.getElementById("subscriptionBanner");if(isSuperAdmin&&!adminRestaurantMode){if(el)el.style.display="none";return;}if(!el||!r){if(el)el.style.display="none";return}const s=subscriptionInfo(r);el.style.display="block";const msg=s.status==="trial"?"🎁 Prueba gratuita":s.status==="active"?"✅ Suscripción activa":s.status==="expired"?"⚠️ Suscripción vencida":"⛔ Suscripción suspendida";const countdown=(s.status==="trial"||s.status==="active")&&r.subscription_expires_at?"<div style='margin-top:7px'><span class='mut'>Tiempo restante</span><div id='subscriptionCountdown' style='font-size:20px;font-weight:900;letter-spacing:.4px;margin-top:2px'>Calculando…</div></div>":"";el.innerHTML="<div class='row between'><div><b>"+msg+"</b>"+countdown+"<div class='mut'>"+esc(r.subscription_plan||"Prueba 30 días")+(r.subscription_expires_at?" · vence "+new Date(r.subscription_expires_at).toLocaleString("es-CL"):"")+"</div></div>"+((isSuperAdmin||currentRole==="manager")?"<button class='ghost' onclick=showTab('subscriptions')>Gestionar</button>":"")+"</div>";startSubscriptionCountdown(r,s.status)}
 function showTab(name){const b=document.querySelector('.tab[data-tab="'+name+'"]');if(b)b.click()}
 function goEditCategory(id){showTab("categories");editCategory(id)}
 function goEditProduct(id){showTab("products");editProduct(id)}
@@ -587,4 +587,4 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v1.0.12</div></body></html>
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v1.0.13</div></body></html>
