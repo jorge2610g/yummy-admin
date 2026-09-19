@@ -214,7 +214,19 @@ async function enter(user){
   const msg=document.getElementById("loginMsg");
   try{
     msg.textContent="Verificando permisos...";
-    const {data,error}=await sb.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle(); isSuperAdmin=!!data; let membership=[]; if(!isSuperAdmin){const mr=await sb.from("restaurant_staff").select("restaurant_id,role,permissions").eq("user_id",user.id).eq("active",true);if(mr.error){msg.textContent="Error al verificar restaurante: "+mr.error.message;return}membership=mr.data||[];currentRole=membership[0]?.role||"";}
+    const {data,error}=await sb.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle(); isSuperAdmin=!!data; let membership=[]; if(!isSuperAdmin){const mr=await sb.from("restaurant_staff").select("restaurant_id,role,permissions").eq("user_id",user.id).eq("active",true);if(mr.error){msg.textContent="Error al verificar restaurante: "+mr.error.message;return}membership=mr.data||[];
+      if(!membership.length && user.user_metadata?.trial_restaurant_name){
+        const cr=await sb.rpc("create_my_trial_restaurant",{
+          p_name:user.user_metadata.trial_restaurant_name,
+          p_whatsapp:user.user_metadata.trial_whatsapp||"",
+          p_address:user.user_metadata.trial_address||""
+        });
+        if(!cr.error){
+          const retry=await sb.from("restaurant_staff").select("restaurant_id,role,permissions").eq("user_id",user.id).eq("active",true);
+          membership=retry.data||[];
+        }
+      }
+      currentRole=membership[0]?.role||"";}
     if(error){msg.textContent="Error al verificar permisos: "+error.message;return}
     if(!isSuperAdmin && !membership.length){await sb.auth.signOut();msg.textContent="Esta cuenta no tiene acceso a ningún restaurante.";return} if(!isSuperAdmin&&membership.length){
  currentRestaurant=membership[0].restaurant_id;enableRestaurantNotifications();setTimeout(startRestaurantOrderRealtime,0); const menuLink=document.getElementById("viewMenuLink"); if(menuLink){const {data:menuRestaurant}=await sb.from("restaurants").select("slug").eq("id",currentRestaurant).single();const menuSlug=menuRestaurant?.slug||currentRestaurant;menuLink.href="https://menu.yummypro.online/?r="+encodeURIComponent(menuSlug);menuLink.style.display="";}
