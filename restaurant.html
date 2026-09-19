@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Panel Restaurante</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">document.querySelectorAll(".dashGo").forEach(b=>b.addEventListener("click",()=>{const t=b.dataset.go;const tab=document.querySelector('[data-tab="'+t+'"]');if(tab&&tab.style.display!=="none")tab.click()}));
+</script>
+<style>
+:root{--bg:#07111f;--bg2:#0c1b2f;--card:#0e1d30;--field:#071525;--item:#0a192a;--ghost:#16273b;--pill:#17304a;--txt:#f6f8fb;--mut:#9fb0c5;--line:#203550;--a:#ffb703;--ok:#2dd4bf;--bad:#fb7185;--shadow:#0004}
+html[data-theme="light"]{--bg:#f4f7fb;--bg2:#e9eef6;--card:#fff;--field:#fff;--item:#f8fafc;--ghost:#eef2f7;--pill:#e7edf5;--txt:#172033;--mut:#5f6f82;--line:#d6deea;--shadow:#23324a18}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:linear-gradient(135deg,var(--bg),var(--bg2));color:var(--txt);min-height:100vh}
+button,input,textarea,select{font:inherit}.hidden{display:none!important}.wrap{max-width:1280px;margin:auto;padding:24px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 18px 50px var(--shadow)}
+.login{max-width:430px;margin:10vh auto}.login h1{margin:0 0 8px}.mut{color:var(--mut)}label{display:block;margin:12px 0 6px;font-size:13px;color:var(--mut)}
+input,textarea,select{width:100%;background:var(--field);border:1px solid var(--line);color:var(--txt);border-radius:11px;padding:12px;outline:none}textarea{min-height:90px;resize:vertical}
+button{border:0;border-radius:11px;padding:11px 15px;cursor:pointer;font-weight:800}.primary{background:var(--a);color:#171000}.ghost{background:var(--ghost);color:var(--txt);border:1px solid var(--line)}.danger{background:#3b1720;color:#fecdd3}.full{width:100%;margin-top:16px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.top h1{font-size:24px;margin:0}.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:18px}.tab{white-space:nowrap;background:#13253a;color:var(--mut)}.tab.active{background:var(--a);color:#171000}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}.span4{grid-column:span 4}.span5{grid-column:span 5}.span7{grid-column:span 7}.span8{grid-column:span 8}.span12{grid-column:span 12}
+.stat{font-size:28px;font-weight:900;margin-top:8px}.row{display:flex;gap:10px;align-items:center}.between{justify-content:space-between}.list{display:grid;gap:10px}.item{border:1px solid var(--line);border-radius:13px;padding:13px;background:var(--item)}.item h3{margin:0 0 5px}.pill{display:inline-block;border-radius:999px;padding:5px 9px;background:var(--pill);font-size:12px}.price{font-weight:900;color:var(--a)}
+.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{padding:7px 10px;font-size:12px}.section{display:none}.section.active{display:block}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.toast{position:fixed;right:18px;bottom:18px;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;display:none;z-index:5}
+@media(max-width:800px){.wrap{padding:14px}.span4,.span5,.span7,.span8,.span12{grid-column:span 12}.two{grid-template-columns:1fr}.top{align-items:flex-start}.top .row{flex-wrap:wrap;justify-content:flex-end}}
+
+@media(max-width:600px){
+ #productList .item{padding:10px!important;border-radius:12px!important}
+ #productList .item h3{font-size:15px!important;line-height:1.2;margin:0 0 3px!important}
+ #productList .item .mut{font-size:12px!important;line-height:1.25}
+ #productList .item .price{font-size:16px!important}
+ #productList .item .row{gap:6px!important}
+ #productList .item button,#productList .item select{min-height:36px!important;padding:7px 9px!important;font-size:12px!important}
+ #productList{gap:8px!important}
+}
+.admin-version{padding:24px 12px;text-align:center;color:var(--mut);font-size:12px;opacity:.75}
+
+/* Ajuste móvil v2.0.0: contenido centrado y tarjetas sin desbordes */
+@media(max-width:600px){
+  body{overflow-x:hidden!important}
+  main,.wrap,.container,.content,.panel{width:100%!important;max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
+  main{padding-left:12px!important;padding-right:12px!important}
+  .card,.item,#productList .item,#categoryList .item{width:100%!important;max-width:100%!important;min-width:0!important;margin-left:0!important;margin-right:0!important;box-sizing:border-box!important}
+  #productList,#categoryList{grid-template-columns:minmax(0,1fr)!important;width:100%!important;max-width:100%!important;margin:0!important}
+  #productList .item .row,#categoryList .item .row{display:flex!important;flex-wrap:wrap!important;justify-content:flex-start!important;align-items:center!important}
+  #productList .item button,#categoryList .item button{flex:0 0 auto!important}
+}
+#orderEditModal{display:none}
+.order-track{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.order-track span{padding:6px 9px;border-radius:999px;background:var(--ghost);font-size:12px}.order-track span.done,.order-track span.current{background:var(--a);color:#171000}.order-track span.current{font-weight:900}.order-detail{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+/* Vista móvil del resumen de contenido v2.0.0 */
+@media(max-width:600px){
+ #restaurants .card.span12{padding:16px!important;width:100%!important;overflow:hidden!important}
+ #restaurants .card.span12>.row.between{display:block!important}
+ #restaurants .card.span12>.row.between .primary{width:100%!important;margin-top:14px!important}
+ #restaurants .card.span12>.grid{display:block!important;width:100%!important}
+ #restaurants .card.span12>.grid>.span5,
+ #restaurants .card.span12>.grid>.span7{width:100%!important;max-width:100%!important;margin:0 0 18px!important}
+ #restaurantCategoryPreview,#restaurantProductPreview{width:100%!important;display:block!important}
+ #restaurantCategoryPreview .item,#restaurantProductPreview .item{
+   width:100%!important;max-width:100%!important;min-width:0!important;
+   margin:0 0 10px!important;padding:14px!important;box-sizing:border-box!important;
+ }
+ #restaurantCategoryPreview .item .row,#restaurantProductPreview .item .row{
+   display:flex!important;flex-wrap:wrap!important;gap:8px!important;
+   justify-content:flex-start!important;align-items:center!important;width:100%!important
+ }
+ #restaurantCategoryPreview .actions,#restaurantProductPreview .actions{
+   display:flex!important;flex-wrap:wrap!important;gap:8px!important;width:100%!important;margin-top:8px!important
+ }
+ #restaurantCategoryPreview button,#restaurantProductPreview button{
+   min-width:0!important;padding:9px 12px!important;font-size:13px!important
+ }
+}
+
+@media(max-width:600px){
+ #restaurants .card.span12>.grid{display:grid!important;grid-template-columns:1fr!important;gap:18px!important}
+ #restaurants .card.span12>.grid>.span5,#restaurants .card.span12>.grid>.span7{grid-column:1/-1!important;width:100%!important;min-width:0!important}
+ #restaurantCategoryPreview .item,#restaurantProductPreview .item{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:10px!important;align-items:center!important}
+ #restaurantCategoryPreview .item>div:first-child,#restaurantProductPreview .item>div:first-child{min-width:0!important;overflow-wrap:anywhere!important}
+ #restaurantCategoryPreview .actions,#restaurantProductPreview .actions{width:auto!important;margin:0!important;display:flex!important;gap:6px!important;flex-wrap:nowrap!important}
+ #restaurantCategoryPreview .actions button,#restaurantProductPreview .actions button{padding:8px 9px!important;font-size:12px!important;white-space:nowrap!important}
+}
+@media(max-width:390px){
+ #restaurantCategoryPreview .item,#restaurantProductPreview .item{grid-template-columns:1fr!important}
+ #restaurantCategoryPreview .actions,#restaurantProductPreview .actions{width:100%!important;margin-top:6px!important}
+}
+.uploadBox{display:grid;gap:10px;margin-top:8px}.uploadBox input[type=file]{display:none}.uploadPreview{width:96px;height:96px;object-fit:cover;border-radius:14px;border:1px solid var(--border)}@media(max-width:600px){.uploadBox button{width:100%}}
+.subscription-trial{color:#ffb703}.subscription-active{color:#2dd4bf}.subscription-expired,.subscription-suspended{color:#fb7185}.sub-progress{height:8px;background:var(--ghost);border-radius:999px;overflow:hidden;margin:9px 0}.sub-progress>i{display:block;height:100%;background:var(--a)}
+
+
+</style><style id="responsive-v2">
+html,body{max-width:100%;overflow-x:hidden}
+.wrap{width:min(1440px,100%);padding-left:clamp(12px,3vw,32px);padding-right:clamp(12px,3vw,32px)}
+.tabs{display:flex;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;padding-bottom:8px;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.tabs .tab{flex:0 0 auto;white-space:nowrap}
+.grid{min-width:0}.card,.item,.row>*{min-width:0}
+input,select,textarea,button{max-width:100%}
+img,svg,video{max-width:100%;height:auto}
+@media(max-width:900px){
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .span3,.span4,.span6,.span8{grid-column:span 1!important}.span12{grid-column:1/-1!important}
+ .top{gap:12px;flex-wrap:wrap}.top>div:last-child{width:100%;justify-content:flex-start}
+}
+@media(max-width:600px){
+ body{font-size:15px}.wrap{padding:12px}
+ .grid{grid-template-columns:minmax(0,1fr)!important;gap:12px}
+ .span3,.span4,.span6,.span8,.span12{grid-column:1/-1!important}
+ .card{padding:16px!important;border-radius:16px!important}
+ .top h1{font-size:24px;margin-bottom:2px}
+ .top .row{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ .top .row a,.top .row button{width:100%}
+ .tabs{margin-left:-12px;margin-right:-12px;padding-left:12px;padding-right:12px}
+ .tab,button{min-height:44px}
+ .row{flex-wrap:wrap}
+ .row>input,.row>select{flex:1 1 180px}
+ .item{padding:12px}
+ .item>.row,.between{gap:10px}
+ .stat{font-size:30px!important}
+ #restaurants .grid,#users .grid,#products .grid,#categories .grid,#orders .grid,#settings .grid{grid-template-columns:1fr!important}
+ .modal{padding:10px!important;align-items:flex-start!important}
+ .modal>.card{margin-top:20px;width:100%!important}
+}
+@media(max-width:380px){
+ .top .row{grid-template-columns:1fr}.card{padding:13px!important}
+ .tabs{gap:7px}.tab{padding-left:13px!important;padding-right:13px!important}
+}
+</style><script>window.initAdminGoogleMaps=function(){window.__adminGoogleMapsReady=true;window.dispatchEvent(new Event("admin-google-maps-ready"));};</script><script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDYPUksIeTAdBu5yU85VjOzy3ILx9NmTgc&loading=async&libraries=places&callback=initAdminGoogleMaps"></script></head>
+<body class="auth-loading">
+<style>.auth-loading #login,.auth-loading #app{display:none!important}</style>
+<div id="login" class="wrap login hidden"><div class="card"><h1>Panel de administración</h1><p class="mut">Gestiona menú, precios, disponibilidad y datos del negocio.</p>
+<label>Correo administrador</label><input id="email" type="email" autocomplete="username" placeholder="tu@email.com">
+<label>Contraseña</label><div class="row"><input id="password" type="password" autocomplete="current-password" placeholder="••••••••"><button type="button" class="ghost" aria-label="Mostrar contraseña" onclick="return togglePassword('password',this)">Ver</button></div>
+<button class="primary full" onclick="login()">Ingresar</button><p id="loginMsg" class="mut"></p></div></div>
+
+<div id="app" class="wrap hidden">
+<div id="subscriptionBanner" class="card" style="margin-bottom:14px;display:none"></div>
+<div id="adminRestaurantBanner" class="card" style="display:none;margin-bottom:14px"><div class="row between"><div><b id="adminRestaurantModeName">Viendo como restaurante</b><div class="mut">Sesión protegida del administrador general</div></div><button class="primary" onclick="returnToAdminPanel()">← Volver al panel administrador</button></div></div><div class="top"><div><h1 id="panelMainTitle">Panel Restaurante</h1><div id="who" class="mut"></div></div><div class="row"><a id="viewMenuLink" href="#" target="_blank" style="display:none"><button class="ghost">Ver menú</button></a><button class="ghost" id="themeBtn" type="button" onclick="toggleAdminTheme()">☀️ Modo claro</button><button class="ghost" onclick="logout()">Salir</button></div></div>
+<div class="tabs">
+<button class="tab active" data-tab="restaurants">🏪 Restaurantes</button><button class="tab" data-tab="subscriptions">💳 Suscripciones</button><button class="tab" data-tab="users">👥 Personal</button><button class="tab" data-tab="dashboard">📊 Métricas</button><button class="tab" data-tab="orders">📦 Pedidos Mercado Pago</button><button class="tab" data-tab="products">🍔 Productos</button><button class="tab" data-tab="categories">📚 Categorías</button><button class="tab" data-tab="qr">▦ Código QR</button><button class="tab" data-tab="plans">💳 Planes</button><button class="tab" data-tab="settings">⚙️ Configuración</button>
+</div>
+
+<section id="subscriptions" class="section"><div class="grid"><div class="card span12" id="planCreatorCard"><h2>Crear plan de suscripción</h2><p class="mut">Crea los planes que podrás asignar a los restaurantes.</p><div class="grid"><div class="span4"><label>Nombre del plan</label><input id="planName" placeholder="Ej: Mensual"></div><div class="span4"><label>Monto (CLP)</label><input id="planAmount" type="number" min="0" step="1" placeholder="Ej: 19990"></div><div class="span4"><label>Días</label><input id="planDays" type="number" min="1" step="1" placeholder="Ej: 30"></div><div class="span12"><button class="primary" onclick="saveSubscriptionPlan()">Crear plan</button></div></div><div id="planList" class="list" style="margin-top:16px"></div></div><div class="card span12"><div class="row between"><div><h2>Suscripciones</h2><p class="mut">Cada restaurante recibe 30 días gratis. Desde aquí puedes gestionar estado, plan, precio y vencimiento.</p></div><button class="ghost" onclick="loadRestaurants()">Actualizar</button></div><div id="subscriptionList" class="list"></div></div><div class="card span12" id="mpCredentialsCard"><div class="row between"><div><h2>Mercado Pago · Suscripciones</h2><p class="mut">Verifica la conexión de Mercado Pago Express usada únicamente para cobrar los planes de suscripción.</p></div><button class="ghost" onclick="verifySubscriptionMercadoPago()">Verificar conexión</button></div><div class="two" style="margin-top:14px"><div><label>Public Key de Express</label><input id="subscriptionMpPublicKey" placeholder="APP_USR-..."></div><div><label>Access Token de Express</label><input id="subscriptionMpAccessToken" type="password" placeholder="APP_USR-..."><div class="mut" id="subscriptionMpTokenHint" style="font-size:12px;margin-top:5px"></div></div></div><div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="primary" onclick="saveSubscriptionMercadoPago()">Guardar credenciales</button><button class="ghost" onclick="loadSubscriptionMercadoPagoSettings()">Cargar estado</button></div><div id="subscriptionMpStatus" class="item" style="margin-top:14px"><b>Estado:</b> <span class="mut">Pulsa “Verificar conexión”.</span></div></div></div></section>
+<section id="plans" class="section"><div class="grid"><div class="card span12"><h2>Planes disponibles</h2><p class="mut">Elige un plan para mantener activo tu restaurante.</p><div id="restaurantPlanList" class="list"></div></div></div></section><section id="qr" class="section"><div class="grid"><div class="card span12"><h2>Código QR del restaurante</h2><p class="mut">Enlace directo para compartir el menú. Puedes copiarlo o abrirlo para generar/imprimir su QR desde el teléfono.</p><div id="qrPanel" class="list"></div></div></div></section>
+<section id="users" class="section"><div class="grid"><div class="card span5"><h2>Usuario de restaurante</h2><p class="mut">Crea una cuenta en Supabase y asígnala directamente a un restaurante.</p><label>Correo</label><input id="staffEmail" type="email" placeholder="usuario@restaurante.com"><label>Contraseña inicial</label><div class="row"><input id="staffPassword" type="password" minlength="8" placeholder="Mínimo 8 caracteres"><button type="button" class="ghost" aria-label="Mostrar contraseña" onclick="return togglePassword('staffPassword',this)">Ver</button></div><label>Restaurante</label><select id="staffRestaurant"></select><label>Rol</label><select id="staffRole"><option value="restaurant">Solo restaurante</option><option value="editor">Editor</option><option value="manager">Administrador</option></select><label>Permisos</label><div class="item"><label><input id="permProducts" type="checkbox" checked> Productos</label><label><input id="permCategories" type="checkbox" checked> Categorías</label><label><input id="permBusiness" type="checkbox"> Datos del negocio</label></div><button class="primary" style="margin-top:15px" onclick="createStaffUser()">Crear usuario y asignar</button></div><div class="card span7"><div class="row between"><h2>Usuarios asignados</h2><button class="ghost" onclick="loadStaff()">Actualizar</button></div><div id="staffList" class="list"></div></div></div></section>
+<section id="restaurants" class="section active"><div class="grid">
+<div class="card span5"><h2>Crear restaurante</h2><input id="rid" type="hidden"><label>Nombre</label><input id="rname" placeholder="Ej: Burger House"><label>Link / slug</label><input id="rslug" placeholder="burger-house"><label>Dominio propio</label><input id="rdomain" placeholder="menu.negocio.com"><label>WhatsApp</label><input id="rwa" placeholder="569..."><label>Dirección</label><input id="raddr"><label>Colores de la web</label><div class="three" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div><label>Principal</label><input id="rcolorPrimary" type="color" value="#ffc21a" style="height:46px;padding:4px"></div><div><label>Secundario</label><input id="rcolorSecondary" type="color" value="#1e1f24" style="height:46px;padding:4px"></div><div><label>Texto</label><input id="rcolorText" type="color" value="#1e1f24" style="height:46px;padding:4px"></div></div><button type="button" class="ghost" style="margin-top:10px" onclick="resetRestaurantColors()">Restablecer colores</button><label>Logo del restaurante</label><div class="uploadBox"><input id="rlogo" type="hidden"><input id="rlogoFile" type="file" accept="image/*" onchange="uploadRestaurantLogo(this)"><button type="button" class="ghost" onclick="rlogoFile.click()">📷 Elegir logo de la galería</button><img id="rlogoPreview" class="uploadPreview" hidden></div><div class="row" style="margin-top:15px"><button class="primary" onclick="saveRestaurant()">Guardar restaurante</button><button class="ghost" onclick="clearRestaurant()">Limpiar</button></div></div>
+<div class="card span7"><div class="row between"><h2>Mis restaurantes</h2><button class="ghost" onclick="loadRestaurants()">Actualizar</button></div><div id="restaurantList" class="list"></div></div>
+</div></section>
+<section id="dashboard" class="section">
+<div class="row between" style="margin-bottom:16px"><div><h2 style="margin:0">Resumen del negocio</h2><div class="mut">Actividad y rendimiento del restaurante seleccionado</div></div><button class="ghost" onclick="refreshAll()">Actualizar datos</button></div>
+<div class="grid">
+
+<div class="card span4"><div class="row between"><h2>Estado del negocio</h2><select id="dashboardRestaurantSelect" style="width:auto;min-width:220px" onchange="changeDashboardRestaurant(this.value)"></select></div><div id="businessStatus" class="list"></div></div>
+<div class="card span12"><h2>Accesos rápidos</h2><div class="row" style="flex-wrap:wrap"><button class="ghost dashGo" type="button" onclick="showTab('products')">Gestionar productos</button><button class="ghost dashGo" type="button" onclick="showTab('categories')">Categorías</button><button class="ghost dashGo" type="button" onclick="showTab('settings')">Configurar negocio</button></div></div>
+</div></section>
+
+<section id="orders" class="section"><div class="grid"><div class="card span12"><div class="row between"><div><h2>Pedidos Mercado Pago</h2><p class="mut">Gestiona los pedidos pagados en línea y actualiza el estado que verá el cliente.</p></div><button class="ghost" onclick="loadOrders()">Actualizar</button></div><div class="row" style="margin-top:14px;flex-wrap:wrap"><button class="ghost" onclick="filterOrdersStatus('all')">Todos <b id="countAll">0</b></button><button class="ghost" onclick="filterOrdersStatus('entregado')">Entregados <b id="countDelivered">0</b></button><button class="ghost" onclick="filterOrdersStatus('cancelado')">Cancelados <b id="countCancelled">0</b></button></div><div id="orderList" class="list" style="margin-top:16px"></div></div></div></section>
+
+<section id="products" class="section"><div class="grid">
+<div class="card span5"><h2 id="productTitle">Nuevo producto</h2><input id="pid" type="hidden">
+<label>Nombre</label><input id="pname"><label>Descripción</label><textarea id="pdesc"></textarea>
+<div class="two"><div><label>Precio</label><input id="pprice" type="number" min="0" step=".01"></div><div><label>Categoría</label><select id="pcat"></select></div></div>
+<label>Imagen del producto</label><input id="pimage" placeholder="URL de imagen (opcional)"><div class="uploadBox"><input id="pimageFile" type="file" accept="image/*" onchange="uploadProductImage(this)"><button type="button" class="ghost" onclick="pimageFile.click()">📷 Elegir foto de la galería</button><img id="pimagePreview" class="uploadPreview" hidden></div>
+<div class="two"><div><label>Etiqueta</label><input id="pbadge" placeholder="Popular"></div><div><label>Orden</label><input id="psort" type="number" value="0"></div></div>
+<div class="row" style="margin-top:12px"><label style="margin:0"><input id="pfeatured" type="checkbox" style="width:auto"> Destacado</label><label style="margin:0"><input id="pavailable" type="checkbox" style="width:auto" checked> Disponible</label></div>
+<div class="row" style="margin-top:15px"><button class="primary" onclick="saveProduct()">Guardar producto</button><button class="ghost" onclick="clearProduct()">Limpiar</button></div></div>
+<div class="card span7"><div class="row between"><h2>Productos</h2><div class="actions"><span id="demoProductActions"><button class="primary" onclick="addDemoProducts()">Agregar productos demo</button><button class="danger" onclick="removeDemoProducts()">Quitar productos demo</button></span><button class="ghost" onclick="loadProducts()">Actualizar</button></div></div><div id="productList" class="list"></div></div>
+</div></section>
+
+<section id="categories" class="section"><div class="grid"><div class="card span5"><h2>Nueva categoría</h2><input id="cid" type="hidden"><label>Nombre</label><input id="cname"><label>Slug</label><input id="cslug" placeholder="hamburguesas"><label>Orden</label><input id="csort" type="number" value="0"><label><input id="cactive" type="checkbox" style="width:auto" checked> Activa</label><div class="row" style="margin-top:15px"><button class="primary" onclick="saveCategory()">Guardar</button><button class="ghost" onclick="clearCategory()">Limpiar</button></div></div><div class="card span7"><h2>Categorías</h2><div id="categoryList" class="list"></div></div></div></section>
+
+
+
+<section id="settings" class="section"><div class="card"><h2>Datos del negocio</h2><div class="grid">
+<div class="span4"><label>Nombre</label><input id="sname"></div><div class="span4"><label>WhatsApp</label><input id="swhatsapp"></div><div class="span4"><label>Instagram</label><input id="sinstagram"></div>
+<div class="span12"><label>Dirección</label><input id="saddress"></div><div class="span4"><label>Apertura</label><input id="sopen" type="time"></div><div class="span4"><label>Cierre</label><input id="sclose" type="time"></div><div class="span4"><label>Tiempo retiro</label><input id="spickup"></div><div class="span8"><label>Tiempo delivery</label><input id="sdelivery"></div><div class="span12"><label>Nota delivery</label><input id="sdeliverynote"></div>
+<div class="span12" id="restaurantBrandSettings"><h3 style="margin-bottom:6px">Marca del restaurante</h3><p class="mut">Personaliza el menú público con tu logo y los colores de tu negocio.</p></div>
+<div class="span4"><label>Color principal</label><input id="scolorPrimary" type="color" value="#ffc21a" style="height:48px;padding:4px"></div>
+<div class="span4"><label>Color secundario</label><input id="scolorSecondary" type="color" value="#1e1f24" style="height:48px;padding:4px"></div>
+<div class="span4"><label>Color del texto</label><input id="scolorText" type="color" value="#1e1f24" style="height:48px;padding:4px"></div>
+<div class="span12"><label>Logo del restaurante</label><div class="uploadBox"><input id="slogo" type="hidden"><input id="slogoFile" type="file" accept="image/*" onchange="uploadSettingsLogo(this)"><button type="button" class="ghost" onclick="document.getElementById('slogoFile').click()">📷 Elegir logo</button><img id="slogoPreview" class="uploadPreview" hidden></div><p class="mut">Puedes subir JPG, PNG o WEBP de hasta 5 MB.</p></div>
+<div class="span12"><h3 style="margin-bottom:6px">Costo de Delivery</h3><p class="mut">Elige un precio fijo o cobro por distancia usando la ubicación GPS del cliente.</p></div>
+<div class="span4"><label>Modalidad</label><select id="sdeliverymode"><option value="fixed">Precio fijo</option><option value="distance">Por distancia / GPS</option></select></div>
+<div class="span4"><label>Precio fijo</label><input id="sdeliveryprice" type="number" min="0" step="1" placeholder="Ej: 2000"></div>
+<div class="span12"><label>Ubicación del restaurante</label><div class="row" style="gap:8px;align-items:stretch"><input id="smapaddress" autocomplete="street-address" placeholder="Escribe la dirección del restaurante" style="flex:1"><button type="button" class="primary" onclick="searchRestaurantAddress()" aria-label="Buscar y verificar dirección" title="Buscar y verificar dirección" style="width:52px;min-width:52px;padding:0;font-size:20px">🔎</button></div><p class="mut" id="smapstatus">Escribe la dirección y presiona la lupa para verificarla y obtener automáticamente la latitud y longitud.</p></div>
+<div class="span4"><label>Latitud del restaurante</label><input id="slat" type="number" step="any" placeholder="-20.2"></div>
+<div class="span4"><label>Longitud del restaurante</label><input id="slng" type="number" step="any" placeholder="-70.1"></div>
+<div class="span8"><label>Zonas por distancia</label><textarea id="sdeliveryzones" rows="4" placeholder="2=1500&#10;5=2500&#10;8=3500"></textarea><p class="mut">Una zona por línea: distancia máxima en km = precio. Ej.: 2=1500 significa hasta 2 km cuesta $1.500.</p></div>
+<div class="span12"><h3 style="margin-bottom:6px">Estado del local</h3><p class="mut" id="manualOpenStatusText">Usando horario predeterminado.</p><div class="row"><button class="primary" onclick="setManualOpenStatus('open')">🟢 Forzar abierto</button><button class="danger" onclick="setManualOpenStatus('closed')">🔴 Forzar cerrado</button><button class="ghost" onclick="setManualOpenStatus(null)">🕒 Volver al horario predeterminado</button></div></div><div class="span12"><button class="primary" onclick="saveSettings()">Guardar configuración</button></div><div class="span12" id="restaurantMpSettings"><hr style="border-color:var(--border);margin:22px 0"><h3>Mercado Pago</h3><p class="mut">Ingresa únicamente la Public Key de la cuenta Mercado Pago del restaurante. El Access Token se configura de forma privada en Supabase y nunca se muestra aquí.</p><label>Public Key</label><input id="restaurantMpPublicKey" placeholder="APP_USR-..."><label>Access Token</label><input id="restaurantMpAccessToken" type="password" autocomplete="new-password" placeholder="APP_USR-..."><p class="mut">El Access Token se guarda de forma privada y no volverá a mostrarse.</p><div class="row" style="margin-top:12px;flex-wrap:wrap"><button type="button" class="primary" id="saveRestaurantMpBtn">Guardar credenciales</button><button type="button" class="ghost" id="verifyRestaurantMpBtn">Verificar mis credenciales</button></div><div id="restaurantMpStatus" class="mut" style="margin-top:10px"></div></div></div></div></section>
+</div><div id="toast" class="toast"></div>
+
+<script>
+const SB_URL="https://gulctljitzlwokqydigx.supabase.co";
+const SB_KEY="sb_publishable__moppTxObowifx6rJbW_tw_3GiCkqhG";
+const sb=supabase.createClient(SB_URL,SB_KEY);
+function applyAdminTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("admin_theme",theme);const b=document.getElementById("themeBtn");if(b)b.textContent=theme==="dark"?"☀️ Modo claro":"🌙 Modo oscuro"}
+function toggleAdminTheme(){applyAdminTheme(document.documentElement.dataset.theme==="light"?"dark":"light")}
+applyAdminTheme(localStorage.getItem("admin_theme")||"dark");setTimeout(bindRestaurantMpButtons,0);
+let categories=[],products=[],orders=[],restaurants=[],staff=[],subscriptionPlans=[],currentRestaurant=null,isSuperAdmin=false,currentRole="",adminRestaurantMode=false;
+const money=n=>new Intl.NumberFormat("es-CL",{style:"currency",currency:"CLP",maximumFractionDigits:0}).format(Number(n||0));
+window.togglePassword=function(id,btn){const el=document.getElementById(id);if(!el)return false;const show=el.getAttribute("type")==="password";el.setAttribute("type",show?"text":"password");btn.textContent=show?"Ocultar":"Ver";btn.setAttribute("aria-pressed",show?"true":"false");return false}
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2500)}
+async function login(){
+  const msg=document.getElementById("loginMsg"), emailEl=document.getElementById("email"), passEl=document.getElementById("password");
+  msg.textContent="Ingresando...";
+  try{
+    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error("La conexión está tardando demasiado. Intenta nuevamente.")),15000));
+    const auth=sb.auth.signInWithPassword({email:emailEl.value.trim(),password:passEl.value});
+    const {data,error}=await Promise.race([auth,timeout]);
+    if(error){msg.textContent=error.message;return}
+    if(!data?.user){msg.textContent="No se pudo iniciar sesión.";return}
+    await enter(data.user);
+  }catch(e){msg.textContent=e.message||"Error de conexión. Intenta nuevamente."}
+}
+async function adminSaveRestaurantMpToken(){if(!isSuperAdmin)return;const restaurant_id=Number(adminMpRestaurant.value),access_token=adminMpAccessToken.value.trim();if(!restaurant_id||!access_token)return toast("Selecciona restaurante e ingresa Access Token");adminMpStatus.textContent="Verificando con Mercado Pago…";const {data,error}=await sb.functions.invoke("admin-save-restaurant-mp-token",{body:{restaurant_id,access_token}});if(error||data?.error){adminMpStatus.textContent="❌ "+(data?.error||error.message);return}adminMpAccessToken.value="";adminMpStatus.textContent="✅ Access Token válido y guardado de forma privada.";toast("Mercado Pago configurado")}
+async function adminCheckRestaurantMp(){if(!isSuperAdmin)return;const rid=Number(adminMpRestaurant.value);if(!rid)return;const {data,error}=await sb.rpc("restaurant_mp_connection_status",{rid});if(error)return adminMpStatus.textContent="❌ "+error.message;adminMpStatus.textContent=data?.[0]?.configured?"✅ Access Token configurado":"Access Token aún no configurado"}
+function bindRestaurantMpButtons(){const s=document.getElementById("saveRestaurantMpBtn"),v=document.getElementById("verifyRestaurantMpBtn");if(s)s.onclick=saveRestaurantMercadoPago;if(v)v.onclick=verifyRestaurantMercadoPago}
+async function loadRestaurantMercadoPago(){if(!currentRestaurant||isSuperAdmin)return;const {data,error}=await sb.from("restaurants").select("mercadopago_public_key").eq("id",currentRestaurant).single();if(error)return;restaurantMpPublicKey.value=data?.mercadopago_public_key||"";restaurantMpStatus.textContent=data?.mercadopago_public_key?"✅ Public Key guardada. El Access Token se administra de forma privada en Supabase.":"Mercado Pago aún no configurado."}
+async function saveRestaurantMercadoPago(){if(!currentRestaurant)return toast("No hay restaurante seleccionado");const key=restaurantMpPublicKey.value.trim(),token=restaurantMpAccessToken.value.trim();if(!key||!token)return toast("Ingresa Public Key y Access Token");restaurantMpStatus.textContent="Verificando credenciales…";const {error:ke}=await sb.from("restaurants").update({mercadopago_public_key:key}).eq("id",currentRestaurant);if(ke)return toast(ke.message);const {data,error}=await sb.functions.invoke("restaurant-save-mp-token",{body:{restaurant_id:currentRestaurant,access_token:token}});if(error||data?.error){restaurantMpStatus.textContent="❌ "+(data?.error||error.message);return}restaurantMpAccessToken.value="";restaurantMpStatus.textContent="✅ Mercado Pago configurado correctamente.";toast("Credenciales guardadas")}
+async function verifyRestaurantMercadoPago(){if(!currentRestaurant)return toast("No hay restaurante seleccionado");const box=document.getElementById("restaurantMpStatus");if(box)box.textContent="Verificando tus credenciales con Mercado Pago…";try{const {data:{session}}=await sb.auth.getSession();if(!session?.access_token){if(box)box.textContent="❌ Sesión vencida.";return}const res=await fetch(SB_URL+"/functions/v1/verify-restaurant-mercadopago",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({restaurant_id:currentRestaurant})});const data=await res.json();if(box)box.textContent=data.ok?"✅ Tus credenciales de Mercado Pago están funcionando correctamente.":"❌ "+(data.error||"Las credenciales no son válidas.");}catch(e){if(box)box.textContent="❌ No se pudo verificar Mercado Pago."}}
+async function logout(){await sb.auth.signOut();window.location.replace("./")}
+async function enter(user){
+  const msg=document.getElementById("loginMsg");
+  try{
+    msg.textContent="Verificando permisos...";
+    const {data,error}=await sb.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle(); isSuperAdmin=!!data; let membership=[];
+    const restaurantParam=Number(new URLSearchParams(location.search).get("restaurant")||0);
+    if(isSuperAdmin&&!restaurantParam){location.replace("./panel.html");return}
+    if(isSuperAdmin&&restaurantParam){currentRestaurant=restaurantParam;adminRestaurantMode=true;currentRole="restaurant";} if(!isSuperAdmin){const mr=await sb.from("restaurant_staff").select("restaurant_id,role,permissions").eq("user_id",user.id).eq("active",true);if(mr.error){msg.textContent="Error al verificar restaurante: "+mr.error.message;return}membership=mr.data||[];
+      if(!membership.length && user.user_metadata?.trial_restaurant_name){
+        const cr=await sb.rpc("create_my_trial_restaurant",{
+          p_name:user.user_metadata.trial_restaurant_name,
+          p_whatsapp:user.user_metadata.trial_whatsapp||"",
+          p_address:user.user_metadata.trial_address||""
+        });
+        if(!cr.error){
+          const retry=await sb.from("restaurant_staff").select("restaurant_id,role,permissions").eq("user_id",user.id).eq("active",true);
+          membership=retry.data||[];
+        }
+      }
+      currentRole=membership[0]?.role||"";}
+    if(error){msg.textContent="Error al verificar permisos: "+error.message;return}
+    if(!isSuperAdmin && !membership.length){await sb.auth.signOut();msg.textContent="Esta cuenta no tiene acceso a ningún restaurante.";return} if(!isSuperAdmin&&membership.length){
+ currentRestaurant=membership[0].restaurant_id;enableRestaurantNotifications();setTimeout(startRestaurantOrderRealtime,0); const menuLink=document.getElementById("viewMenuLink"); if(menuLink){const {data:menuRestaurant}=await sb.from("restaurants").select("slug").eq("id",currentRestaurant).single();const menuSlug=menuRestaurant?.slug||currentRestaurant;menuLink.href="https://menu.yummypro.online/?r="+encodeURIComponent(menuSlug);menuLink.style.display="";}
+ currentRole=membership[0].role||"restaurant";const rms=document.getElementById("restaurantMpSettings");if(rms)rms.style.display="";
+ const p=membership[0].permissions||{};
+ document.querySelectorAll(".tab").forEach(x=>x.style.display="");
+ if(currentRole==="restaurant"){
+   document.querySelectorAll("[data-tab=restaurants],[data-tab=users],[data-tab=dashboard],[data-tab=subscriptions]").forEach(x=>x.style.display="none");
+ }else if(currentRole==="editor"){
+   document.querySelectorAll("[data-tab=users]").forEach(x=>x.style.display="none");
+ }
+ if(currentRole!=="manager"){
+   if(!p.products) document.querySelector('[data-tab="products"]')?.style.setProperty("display","none");
+   if(!p.categories) document.querySelector('[data-tab="categories"]')?.style.setProperty("display","none");
+   if(!p.business) document.querySelector('[data-tab="business"]')?.style.setProperty("display","none");
+ }
+ const first=[...document.querySelectorAll(".tab")].find(x=>x.style.display!=="none");
+ document.querySelectorAll(".tab,.section").forEach(x=>x.classList.remove("active"));
+ if(first){first.classList.add("active");document.getElementById(first.dataset.tab)?.classList.add("active")} setTimeout(()=>{if(currentRestaurant)loadOrders()},0);
+}
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    document.body.classList.remove("auth-loading");
+    document.getElementById("who").textContent=user.email;
+    if(isSuperAdmin&&adminRestaurantMode){
+      const rr=(await sb.from("restaurants").select("*").eq("id",currentRestaurant).maybeSingle()).data;
+      if(!rr){location.replace("./panel.html");return}
+      document.getElementById("adminRestaurantBanner").style.display="";
+      document.getElementById("adminRestaurantModeName").textContent="Viendo como: "+rr.name;
+      document.getElementById("panelMainTitle").textContent="Panel · "+rr.name;
+      document.getElementById("viewMenuLink").href="https://menu.yummypro.online/?r="+encodeURIComponent(rr.slug||rr.id);
+      document.getElementById("viewMenuLink").style.display="";
+      const restaurantTabs=["orders","products","categories","qr","plans","settings"];
+      document.querySelectorAll(".tab").forEach(t=>t.style.display=restaurantTabs.includes(t.dataset.tab)?"":"none");
+      document.getElementById("mpCredentialsCard").style.display="none";document.getElementById("planCreatorCard").style.display="none";document.getElementById("demoProductActions").style.display="none";document.getElementById("restaurantMpSettings")?.style.setProperty("display","");
+    }else if(isSuperAdmin){document.querySelector('[data-tab="orders"]')?.style.setProperty("display","none");document.getElementById("orders")?.classList.remove("active");document.getElementById("demoProductActions").style.display="";document.getElementById("viewMenuLink").style.display="none";document.querySelector('[data-tab="settings"]')?.style.setProperty("display","none");document.getElementById("settings")?.classList.remove("active");document.getElementById("subscriptionBanner").style.display="none";document.querySelector('[data-tab="plans"]').style.display="none";document.getElementById("mpCredentialsCard").style.display="block";document.getElementById("planCreatorCard").style.display="block";}else{document.getElementById("demoProductActions").style.display="none";document.getElementById("mpCredentialsCard").style.display="none";document.getElementById("planCreatorCard").style.display="none";document.querySelector('[data-tab="plans"]').style.display="";}
+    msg.textContent="";
+    await refreshAll();
+  }catch(e){msg.textContent=e.message||"No se pudo abrir el panel."}
+}
+async function restoreSession(){try{const {data,error}=await sb.auth.getSession();if(error)throw error;if(data.session){await enter(data.session.user)}else{document.getElementById("login").classList.remove("hidden")}}catch(e){document.getElementById("login").classList.remove("hidden");document.getElementById("loginMsg").textContent=e.message||"No se pudo validar la sesión."}finally{document.body.classList.remove("auth-loading")}}restoreSession();
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById(b.dataset.tab).classList.add("active");if(b.dataset.tab==="orders"&&currentRestaurant)loadOrders()});
+async function refreshAll(){bindRestaurantMpButtons();await loadRestaurants();if(!isSuperAdmin||adminRestaurantMode){const r=restaurants.find(x=>Number(x.id)===Number(currentRestaurant));if(r)renderSubscriptionBanner(r);}await loadSubscriptionPlans();if(isSuperAdmin||currentRole==="manager")await loadStaff();await Promise.all([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);if(!isSuperAdmin)await loadRestaurantMercadoPago();renderRestaurantContent()}
+async function loadRestaurants(){let rq=sb.from("restaurants").select("*").order("created_at");if(!isSuperAdmin&&currentRole!=="manager"){const {data:m}=await sb.from("restaurant_staff").select("restaurant_id").eq("active",true);rq=rq.in("id",(m||[]).map(x=>x.restaurant_id));}const {data,error}=await rq;if(error)return toast(error.message);restaurants=data||[]; if(window.adminMpRestaurant){adminMpRestaurant.innerHTML=restaurants.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");}if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;if((!isSuperAdmin||adminRestaurantMode)&&currentRestaurant){const bannerRestaurant=restaurants.find(r=>Number(r.id)===Number(currentRestaurant));if(bannerRestaurant)renderSubscriptionBanner(bannerRestaurant);}restaurantList.innerHTML=restaurants.map(r=>{const s=subscriptionInfo(r);return `<div class="item"><div class="row between"><div><h3>${esc(r.name)}</h3><div class="mut">Link: <a style="color:#ffb703" target="_blank" href="https://menu.yummypro.online/?r=${encodeURIComponent(r.slug)}">?r=${esc(r.slug)}</a></div><div class="mut">${r.custom_domain?esc(r.custom_domain):"Sin dominio propio"}</div><div class="pill subscription-${s.status}">${s.label}</div></div><div class="actions"><button class="primary" onclick="viewRestaurant(${r.id})">Ver restaurante</button><button class="ghost" onclick="editRestaurant(${r.id})">Editar</button><button class="danger" onclick="deleteRestaurant(${r.id})">Eliminar</button><button class="primary" onclick="manageRestaurantContent(${r.id})">Administrar contenido</button>${isSuperAdmin?`<button class="ghost" onclick="openRestaurantPanel(${r.id})">Panel</button>`:""}</div></div></div>`}).join("")||"<p class='mut'>Sin restaurantes.</p>";renderSubscriptions();renderQrPanel()}
+function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;const url=new URL("/", "https://menu.yummypro.online");url.searchParams.set("r",r.slug);window.open(url.toString(),"_blank")}async function openRestaurantPanel(id){
+  if(!isSuperAdmin)return toast("Acceso exclusivo del administrador general");
+  const r=restaurants.find(x=>Number(x.id)===Number(id));if(!r)return toast("Restaurante no encontrado");
+  adminRestaurantMode=true;currentRestaurant=Number(id);currentRole="restaurant";
+  document.getElementById("adminRestaurantBanner").style.display="";
+  document.getElementById("adminRestaurantModeName").textContent="Viendo como: "+r.name;
+  document.getElementById("panelMainTitle").textContent="Panel · "+r.name;
+  document.getElementById("viewMenuLink").href="https://menu.yummypro.online/?r="+encodeURIComponent(r.slug);
+  document.getElementById("viewMenuLink").style.display="";
+  const restaurantTabs=["orders","products","categories","qr","plans","settings"];
+  document.querySelectorAll(".tab").forEach(t=>t.style.display=restaurantTabs.includes(t.dataset.tab)?"":"none");
+  document.getElementById("mpCredentialsCard").style.display="none";
+  document.getElementById("planCreatorCard").style.display="none";
+  document.getElementById("demoProductActions").style.display="none";
+  document.getElementById("restaurantMpSettings")?.style.setProperty("display","");
+  await loadSubscriptionPlans();
+  await Promise.all([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);
+  await loadRestaurantMercadoPago();
+  renderRestaurantContent();renderQrPanel();
+  showTab("orders");
+  window.scrollTo({top:0,behavior:"smooth"});
+  toast("Viendo el panel de "+r.name);
+}
+async function returnToAdminPanel(){
+  if(!isSuperAdmin||!adminRestaurantMode)return;
+  adminRestaurantMode=false;currentRole="";
+  document.getElementById("adminRestaurantBanner").style.display="none";
+  document.getElementById("panelMainTitle").textContent="Panel Restaurante";
+  document.getElementById("viewMenuLink").style.display="none";
+  document.querySelectorAll(".tab").forEach(t=>t.style.display="");
+  document.querySelector('[data-tab="orders"]')?.style.setProperty("display","none");
+  document.querySelector('[data-tab="settings"]')?.style.setProperty("display","none");
+  document.querySelector('[data-tab="plans"]')?.style.setProperty("display","none");
+  document.getElementById("mpCredentialsCard").style.display="block";
+  document.getElementById("planCreatorCard").style.display="block";
+  document.getElementById("demoProductActions").style.display="";
+  document.getElementById("restaurantMpSettings")?.style.setProperty("display","none");
+  await loadRestaurants();await loadSubscriptionPlans();await loadStaff();
+  showTab("restaurants");window.scrollTo({top:0,behavior:"smooth"});toast("Volviste al panel administrador");
+}
+function subscriptionInfo(r){const now=Date.now(),end=r.subscription_expires_at?new Date(r.subscription_expires_at).getTime():now;const days=Math.max(0,Math.ceil((end-now)/86400000));let status=r.subscription_status||"trial";if((status==="trial"||status==="active")&&end<now)status="expired";const names={trial:"Prueba gratis",active:"Activa",expired:"Vencida",suspended:"Suspendida"};return {status,days,label:status==="trial"?names[status]+" · "+days+" días":names[status]+(status==="active"?" · "+days+" días":"")}}
+async function loadSubscriptionPlans(){let q=sb.from("subscription_plans").select("*").order("amount",{ascending:true});if(!isSuperAdmin||adminRestaurantMode)q=q.eq("active",true);const {data,error}=await q;if(error)return toast(error.message);subscriptionPlans=data||[];if(isSuperAdmin&&!adminRestaurantMode)renderSubscriptionPlans();else renderRestaurantPlans()}
+function renderRestaurantPlans(){if(!window.restaurantPlanList)return;restaurantPlanList.innerHTML=subscriptionPlans.map(p=>`<div class="item"><div class="row between"><div><h3>${esc(p.name)}</h3><div class="price">${money(p.amount)}</div><div class="mut">${p.days} días de servicio</div></div><button class="primary" onclick="paySubscriptionPlan(${p.id})">Pagar</button></div></div>`).join("")||"<p class='mut'>No hay planes disponibles en este momento.</p>"}
+async function verifyRestaurantSubscriptionMercadoPago(){const box=document.getElementById("restaurantSubscriptionMpStatus");if(!box)return;box.textContent="Verificando conexión…";try{const {data:{session}}=await sb.auth.getSession();if(!session?.access_token){box.textContent="❌ Sesión vencida. Vuelve a iniciar sesión.";return}const res=await fetch(SB_URL+"/functions/v1/verify-subscription-mercadopago",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+session.access_token}});const data=await res.json();box.textContent=data.ok?"✅ "+(data.message||"Mercado Pago está funcionando correctamente"):"❌ "+(data.message||data.error||"No se pudo verificar Mercado Pago")}catch(e){box.textContent="❌ No se pudo verificar la conexión."}}
+async function paySubscriptionPlan(id){const p=subscriptionPlans.find(x=>x.id===id);if(!p)return;toast("Preparando pago de "+p.name+" con Mercado Pago…");try{const {data:{session}}=await sb.auth.getSession();if(!session?.access_token)return toast("Tu sesión venció. Vuelve a iniciar sesión.");const res=await fetch(SB_URL+"/functions/v1/create-subscription-payment",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({plan_id:p.id,restaurant_id:currentRestaurant})});const data=await res.json();if(!res.ok||!data?.init_point)return toast(data?.error||"No se pudo iniciar el pago");window.location.assign(data.init_point)}catch(e){toast("No se pudo conectar con Mercado Pago: "+e.message)}}
+function renderSubscriptionPlans(){if(!window.planList)return;planList.innerHTML=subscriptionPlans.map(p=>`<div class="item row between"><div><b>${esc(p.name)}</b><div class="mut">${money(p.amount)} · ${p.days} días · ${p.active?"Activo":"Inactivo"}</div></div><div class="actions"><button class="ghost" onclick="editSubscriptionPlan(${p.id})">Editar plan</button><button class="ghost" onclick="toggleSubscriptionPlan(${p.id},${!p.active})">${p.active?"Desactivar":"Activar"}</button><button class="danger" onclick="deleteSubscriptionPlan(${p.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Todavía no hay planes creados.</p>"}
+async function saveSubscriptionPlan(){if(!isSuperAdmin)return toast("Solo el administrador puede crear planes");const name=planName.value.trim(),amount=Number(planAmount.value),days=Number(planDays.value);if(!name||!Number.isFinite(amount)||amount<0||!Number.isInteger(days)||days<1)return toast("Completa nombre, monto y días correctamente");const {error}=await sb.from("subscription_plans").insert({name,amount,days});if(error)return toast(error.message);planName.value="";planAmount.value="";planDays.value="";toast("Plan creado");await loadSubscriptionPlans()}
+async function editSubscriptionPlan(id){if(!isSuperAdmin)return toast("Solo el administrador puede editar planes");const p=subscriptionPlans.find(x=>Number(x.id)===Number(id));if(!p)return toast("No se encontró el plan");const name=prompt("Nombre del plan",p.name||"");if(name===null)return;const amountText=prompt("Monto del plan (CLP)",String(Number(p.amount||0)));if(amountText===null)return;const daysText=prompt("Duración del plan (días)",String(Number(p.days||30)));if(daysText===null)return;const amount=Number(String(amountText).replace(/[^0-9.-]/g,"")),days=Number(String(daysText).trim());if(!name.trim()||!Number.isFinite(amount)||amount<0||!Number.isInteger(days)||days<1)return toast("Revisa nombre, monto y duración");const {error}=await sb.from("subscription_plans").update({name:name.trim(),amount,days,updated_at:new Date().toISOString()}).eq("id",id);if(error)return toast("No se pudo editar el plan: "+error.message);toast("Plan actualizado correctamente");await loadSubscriptionPlans()}
+async function toggleSubscriptionPlan(id,active){const {error}=await sb.from("subscription_plans").update({active,updated_at:new Date().toISOString()}).eq("id",id);if(error)return toast(error.message);await loadSubscriptionPlans()}
+async function deleteSubscriptionPlan(id){if(!confirm("¿Eliminar este plan?"))return;const {data,error}=await sb.rpc("admin_delete_subscription_plan",{p_plan_id:id});if(error)return toast("No se pudo eliminar el plan: "+error.message);if(data==="archived")toast("El plan tiene pagos aprobados, por seguridad se desactivó y se conservó el historial.");else toast("Plan eliminado correctamente");await loadSubscriptionPlans()}
+function renderSubscriptions(){if(!window.subscriptionList)return;subscriptionList.innerHTML=restaurants.map(r=>{const s=subscriptionInfo(r);const pct=Math.max(0,Math.min(100,(s.days/30)*100));return `<div class="item" data-status="${s.status}"><div class="row between"><div><h3>${esc(r.name)}</h3><div class="pill subscription-${s.status}">${s.label}</div><div class="mut">Plan: ${esc(r.subscription_plan||"Prueba 30 días")} · Precio: ${Number(r.subscription_price||0).toLocaleString("es-CL")}</div><div class="mut">Vence: ${r.subscription_expires_at?new Date(r.subscription_expires_at).toLocaleDateString("es-CL"):"Sin fecha"}</div><div class="sub-progress"><i style="width:${pct}%"></i></div></div><div class="actions"><button class="primary" onclick="extendSubscription(${r.id},30)">+30 días</button><button class="ghost" onclick="setExactSubscriptionDays(${r.id})">Editar días</button><button class="ghost" onclick="setSubscription(${r.id},'active')">Activar</button><button class="ghost" onclick="editSubscription(${r.id})">Editar plan</button><button class="danger" onclick="setSubscription(${r.id},'suspended')">Suspender</button></div></div></div>`}).join("")||"<p class='mut'>Sin restaurantes.</p>"}
+async function extendSubscription(id,days){const r=restaurants.find(x=>x.id===id);if(!r)return;const base=Math.max(Date.now(),r.subscription_expires_at?new Date(r.subscription_expires_at).getTime():0);const exp=new Date(base+days*86400000).toISOString();await saveSubscriptionChange(r,{subscription_status:"active",subscription_expires_at:exp},"Extensión +"+days+" días")}
+async function setExactSubscriptionDays(id){const r=restaurants.find(x=>x.id===id);if(!r)return;const current=subscriptionInfo(r).days;const value=prompt("Días restantes de suscripción",String(current));if(value===null)return;const days=Number(value);if(!Number.isInteger(days)||days<0)return toast("Ingresa un número de días válido (0 o mayor)");const now=new Date();const exp=new Date(now.getTime()+days*86400000);if(days===0)exp.setTime(now.getTime()-1000);await saveSubscriptionChange(r,{subscription_status:days>0?"active":"expired",subscription_expires_at:exp.toISOString()},"Días ajustados manualmente a "+days)}
+async function setSubscription(id,status){const r=restaurants.find(x=>x.id===id);if(!r)return;await saveSubscriptionChange(r,{subscription_status:status},"Estado: "+status)}
+async function editSubscription(id){const r=restaurants.find(x=>x.id===id);if(!r)return;const plan=prompt("Nombre del plan",r.subscription_plan||"Mensual");if(plan===null)return;const price=prompt("Precio del plan",String(r.subscription_price||0));if(price===null)return;const date=prompt("Vencimiento (AAAA-MM-DD)",r.subscription_expires_at?new Date(r.subscription_expires_at).toISOString().slice(0,10):"");if(date===null)return;const notes=prompt("Notas administrativas",r.subscription_notes||"");if(notes===null)return;await saveSubscriptionChange(r,{subscription_plan:plan,subscription_price:Number(price)||0,subscription_expires_at:date?new Date(date+"T23:59:59").toISOString():r.subscription_expires_at,subscription_notes:notes},"Edición de suscripción")}
+async function saveSubscriptionChange(r,changes,action){const prev=r.subscription_status;const prevExp=r.subscription_expires_at;const {error}=await sb.from("restaurants").update(changes).eq("id",r.id);if(error)return toast(error.message);await sb.from("restaurant_subscription_history").insert({restaurant_id:r.id,action,previous_status:prev,new_status:changes.subscription_status||prev,previous_expires_at:prevExp,new_expires_at:changes.subscription_expires_at||prevExp,amount:changes.subscription_price??null,notes:changes.subscription_notes||""});toast("Suscripción actualizada");await loadRestaurants()}
+function renderQrPanel(){if(!window.qrPanel)return;const qrRestaurants=(adminRestaurantMode&&currentRestaurant)?restaurants.filter(r=>Number(r.id)===Number(currentRestaurant)):restaurants;qrPanel.innerHTML=qrRestaurants.map(r=>{const url="https://menu.yummypro.online/?r="+encodeURIComponent(r.slug);const qr="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data="+encodeURIComponent(url);return `<div class="item" style="text-align:center"><h3>${esc(r.name)}</h3><img src="${qr}" alt="QR ${esc(r.name)}" style="width:min(280px,90%);background:white;padding:10px;border-radius:12px"><p class="mut" style="word-break:break-all">${esc(url)}</p><div class="actions" style="justify-content:center"><button class="primary" onclick="navigator.clipboard.writeText('${url}').then(()=>toast('Enlace copiado'))">Copiar enlace</button><a href="${qr}" target="_blank"><button class="ghost">Abrir QR</button></a></div></div>`}).join("")}
+async function uploadMedia(file,folder){if(!file)return null;if(!file.type.startsWith("image/")){toast("Selecciona una imagen");return null}if(file.size>5*1024*1024){toast("La imagen debe pesar menos de 5 MB");return null}const ext=(file.name.split(".").pop()||"jpg").toLowerCase();const path=folder+"/"+Date.now()+"-"+Math.random().toString(36).slice(2)+"."+ext;toast("Subiendo imagen...");const {error}=await sb.storage.from("restaurant-media").upload(path,file,{cacheControl:"3600",upsert:false});if(error){toast(error.message);return null}const {data}=sb.storage.from("restaurant-media").getPublicUrl(path);toast("Imagen subida");return data.publicUrl}
+async function uploadSettingsLogo(input){const file=input.files?.[0];if(!file)return;const url=await uploadMedia(file,"logos/"+(currentRestaurant||"restaurant"));if(!url)return;const sl=document.getElementById("slogo"),p=document.getElementById("slogoPreview");if(sl)sl.value=url;if(p){p.src=url;p.hidden=false}toast("Logo listo. Pulsa Guardar configuración para aplicarlo")}
+async function uploadProductImage(input){const url=await uploadMedia(input.files?.[0],"products/"+(currentRestaurant||"general"));if(!url)return;pimage.value=url;pimagePreview.src=url;pimagePreview.hidden=false}
+async function uploadRestaurantLogo(input){const url=await uploadMedia(input.files?.[0],"logos");if(!url)return;rlogo.value=url;rlogoPreview.src=url;rlogoPreview.hidden=false}
+function slugify(s){return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")}
+async function loadStaff(){
+ if(!isSuperAdmin&&currentRole!=="manager")return;
+ const list=document.getElementById("staffList"),restaurantSelect=document.getElementById("staffRestaurant");
+ if(list)list.innerHTML="<p class='mut'>Actualizando usuarios…</p>";
+ const {data,error}=await sb.from("restaurant_staff").select("*").order("created_at");
+ if(error){if(list)list.innerHTML="<p class='mut'>No se pudieron cargar los usuarios.</p>";return toast(error.message)}
+ staff=data||[];
+ if(restaurantSelect)restaurantSelect.innerHTML=restaurants.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");
+ if(list)list.innerHTML=staff.map(s=>{const r=restaurants.find(x=>x.id===s.restaurant_id);return `<div class="item row between"><div><b>${esc(s.email)}</b><div class="mut">${esc(r?.name||"Restaurante")} · ${esc(s.role)}</div><div class="mut">${Object.entries(s.permissions||{}).filter(([k,v])=>v).map(([k])=>({products:"Productos",categories:"Categorías",orders:"Pedidos",business:"Negocio"}[k]||k)).join(" · ")||"Sin permisos"}</div></div><div class="actions"><button type="button" class="ghost" onclick="editStaff(${s.id})">Editar acceso</button><button type="button" class="danger" onclick="removeStaff(${s.id})">Quitar acceso</button></div></div>`}).join("")||"<p class='mut'>Sin usuarios asignados.</p>";
+ toast("Usuarios actualizados");
+}
+async function createStaffUser(){const email=staffEmail.value.trim().toLowerCase(),password=staffPassword.value,rid=Number(staffRestaurant.value);if(!email||!password||!rid)return toast("Completa correo, contraseña y restaurante");if(password.length<8)return toast("La contraseña debe tener al menos 8 caracteres");const {data,error}=await sb.functions.invoke("create-restaurant-user",{body:{email:email,password:password,restaurant_id:rid,role:staffRole.value,permissions:{products:permProducts.checked,categories:permCategories.checked,business:permBusiness.checked}}});if(error)return toast(error.message);if(!data||!data.ok)return toast((data&&data.error)||"No se pudo crear el usuario");staffEmail.value="";staffPassword.value="";await loadStaff();toast("Usuario creado y asignado")}
+async function assignStaff(){const email=staffEmail.value.trim().toLowerCase(),rid=Number(staffRestaurant.value);if(!email||!rid)return toast("Completa correo y restaurante");const {data,error}=await sb.rpc("assign_restaurant_staff",{p_email:email,p_restaurant_id:rid,p_role:staffRole.value});if(error)return toast(error.message);staffEmail.value="";await loadStaff();toast("Usuario asignado")}
+function editStaff(id){const s=staff.find(x=>Number(x.id)===Number(id));if(!s)return toast("No se encontró el usuario");const modal=document.getElementById("accessModal");document.getElementById("editStaffId").value=s.id;const rs=document.getElementById("editStaffRestaurant");if(rs){rs.innerHTML=restaurants.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");rs.value=String(s.restaurant_id)}document.getElementById("editStaffRole").value=s.role||"restaurant";const p=s.permissions||{};document.getElementById("editPermProducts").checked=!!p.products;document.getElementById("editPermCategories").checked=!!p.categories;document.getElementById("editPermOrders").checked=!!p.orders;document.getElementById("editPermBusiness").checked=!!p.business;updateRoleHelp();if(modal)modal.style.display="flex"}
+function closeAccessModal(){accessModal.style.display="none"}
+function updateRoleHelp(){const v=editStaffRole.value;roleHelp.textContent=v==="restaurant"?"Solo puede trabajar con su propio restaurante y no puede gestionar usuarios ni otros locales.":v==="editor"?"Puede editar el contenido permitido, pero no administrar usuarios.":"Administrador: puede gestionar restaurantes y crear o modificar usuarios y accesos."}
+editStaffRole?.addEventListener("change",updateRoleHelp);
+async function saveAccessModal(){const id=Number(editStaffId.value),restaurant_id=Number(document.getElementById("editStaffRestaurant")?.value),role=editStaffRole.value,permissions={products:editPermProducts.checked,categories:editPermCategories.checked,orders:editPermOrders.checked,business:editPermBusiness.checked};if(!id||!restaurant_id)return toast("Selecciona un negocio");const {error}=await sb.from("restaurant_staff").update({restaurant_id,role,permissions}).eq("id",id);if(error)return toast(error.message);closeAccessModal();await loadStaff();toast("Acceso y negocio asignado actualizados")}
+async function removeStaff(id){if(!confirm("¿Quitar acceso a este usuario?"))return;const {error}=await sb.from("restaurant_staff").delete().eq("id",id);if(error)return toast(error.message);await loadStaff();toast("Acceso eliminado")}
+async function saveRestaurant(){const row={name:rname.value.trim(),slug:slugify(rslug.value.trim()||rname.value.trim()),custom_domain:rdomain.value.trim().toLowerCase()||null,whatsapp:rwa.value.trim(),address:raddr.value.trim(),theme_primary_color:rcolorPrimary.value||"#ffc21a",theme_secondary_color:rcolorSecondary.value||"#1e1f24",theme_text_color:rcolorText.value||"#1e1f24",logo_url:rlogo.value||null,updated_at:new Date().toISOString()};if(!row.name||!row.slug)return toast("Completa nombre y link");let q=rid.value?sb.from("restaurants").update(row).eq("id",rid.value):sb.from("restaurants").insert(row);const {error}=await q;if(error)return toast(error.message);clearRestaurant();await loadRestaurants();toast("Restaurante guardado")}
+function editRestaurant(id){const r=restaurants.find(x=>x.id===id);rid.value=r.id;rname.value=r.name;rslug.value=r.slug;rdomain.value=r.custom_domain||"";rwa.value=r.whatsapp||"";raddr.value=r.address||"";rcolorPrimary.value=r.theme_primary_color||"#ffc21a";rcolorSecondary.value=r.theme_secondary_color||"#1e1f24";rcolorText.value=r.theme_text_color||"#1e1f24";rlogo.value=r.logo_url||"";if(r.logo_url){rlogoPreview.src=r.logo_url;rlogoPreview.hidden=false}else rlogoPreview.hidden=true}
+function resetRestaurantColors(){rcolorPrimary.value="#ffc21a";rcolorSecondary.value="#1e1f24";rcolorText.value="#1e1f24"}
+function clearRestaurant(){rid.value="";rname.value="";rslug.value="";rdomain.value="";rwa.value="";raddr.value="";resetRestaurantColors();rlogo.value="";rlogoPreview.hidden=true;rlogoFile.value=""}
+async function selectRestaurant(id){currentRestaurant=id;await loadRestaurants();await Promise.all([loadCategories(),loadProducts()]);renderRestaurantContent();toast("Restaurante seleccionado")}
+async function deleteRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;if(!confirm("¿Eliminar "+r.name+"? También se eliminarán sus categorías y productos."))return;const {error}=await sb.from("restaurants").delete().eq("id",id);if(error)return toast(error.message);if(currentRestaurant===id)currentRestaurant=null;await loadRestaurants();await Promise.all([loadCategories(),loadProducts()]);renderRestaurantContent();toast("Restaurante eliminado")}
+function renderRestaurantContent(){const r=restaurants.find(x=>x.id===currentRestaurant);renderSubscriptionBanner(r);renderBusinessStatus(r);if(document.getElementById("selectedRestaurantTitle"))selectedRestaurantTitle.textContent=r?"Contenido de "+r.name:"Contenido del restaurante";if(document.getElementById("restaurantCategoryPreview"))restaurantCategoryPreview.innerHTML=categories.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="mut">${esc(x.slug)}</div></div><div class="actions"><button class="ghost" onclick="goEditCategory(${x.id})">Editar</button><button class="danger" onclick="deleteCategory(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin categorías.</p>";if(document.getElementById("restaurantProductPreview"))restaurantProductPreview.innerHTML=products.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="price">${money(x.price)}</div></div><div class="actions"><button class="ghost" onclick="goEditProduct(${x.id})">Editar</button><button class="danger" onclick="deleteProduct(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin productos.</p>"}
+async function changeDashboardRestaurant(id){
+ const n=Number(id);if(!n||n===Number(currentRestaurant))return;
+ currentRestaurant=n;
+ await Promise.all([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);
+ renderRestaurantContent();
+}
+function renderBusinessStatus(r){
+ const el=document.getElementById("businessStatus");if(!el)return;
+ const sel=document.getElementById("dashboardRestaurantSelect");
+ if(sel){sel.innerHTML=restaurants.map(x=>'<option value="'+x.id+'" '+(Number(x.id)===Number(currentRestaurant)?'selected':'')+'>'+esc(x.name)+'</option>').join("");sel.style.display=restaurants.length>1?"":"none";}
+ if(!r){el.innerHTML='<p class="mut">No hay restaurante seleccionado.</p>';return}
+ const sub=subscriptionInfo(r);
+ const manual=r.manual_open_status||"schedule";
+ const openLabel=manual==="open"?"🟢 Abierto manualmente":manual==="closed"?"🔴 Cerrado manualmente":"🕒 Según horario";
+ const subLabel=sub.status==="active"?"✅ Suscripción activa":sub.status==="trial"?"🎁 Prueba gratis":sub.status==="suspended"?"⛔ Suscripción suspendida":"⚠️ Suscripción vencida";
+ el.innerHTML='<div class="item"><b>'+esc(r.name)+'</b><div class="mut">'+esc(r.address||"Sin dirección configurada")+'</div></div>'+
+ '<div class="item"><div class="row between"><span>Estado</span><b>'+openLabel+'</b></div></div>'+
+ '<div class="item"><div class="row between"><span>Suscripción</span><b>'+subLabel+'</b></div><div class="mut">'+sub.days+' días restantes</div></div>'+
+ '<div class="item"><div class="row between"><span>Productos disponibles</span><b>'+products.filter(p=>p.available).length+'</b></div></div>'+
+ '<div class="item"><div class="row between"><span>Pedidos Mercado Pago</span><b>'+orders.length+'</b></div></div>';
+}
+let subscriptionCountdownTimer=null;
+function formatSubscriptionCountdown(end,status){if(status==="expired")return "00 días · 00:00:00";if(status==="suspended")return "Suscripción suspendida";const ms=Math.max(0,end-Date.now()),days=Math.floor(ms/86400000),hours=Math.floor(ms%86400000/3600000),minutes=Math.floor(ms%3600000/60000),seconds=Math.floor(ms%60000/1000),pad=n=>String(n).padStart(2,"0");return pad(days)+" días · "+pad(hours)+":"+pad(minutes)+":"+pad(seconds)}
+function startSubscriptionCountdown(r,status){if(subscriptionCountdownTimer){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null}const el=document.getElementById("subscriptionCountdown");if(!el||!r?.subscription_expires_at||status==="suspended")return;const end=new Date(r.subscription_expires_at).getTime();const tick=()=>{const current=document.getElementById("subscriptionCountdown");if(!current){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null;return}const expired=end<=Date.now();current.textContent=expired?"00 días · 00:00:00":formatSubscriptionCountdown(end,status);if(expired){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null;current.previousElementSibling&&(current.previousElementSibling.textContent="Tiempo restante");}};tick();subscriptionCountdownTimer=setInterval(tick,1000)}
+function renderSubscriptionBanner(r){if(subscriptionCountdownTimer){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null}const el=document.getElementById("subscriptionBanner");if(isSuperAdmin&&!adminRestaurantMode){if(el)el.style.display="none";return;}if(!el||!r){if(el)el.style.display="none";return}const s=subscriptionInfo(r);el.style.display="block";const msg=s.status==="trial"?"🎁 Prueba gratuita":s.status==="active"?"✅ Suscripción activa":s.status==="expired"?"⚠️ Suscripción vencida":"⛔ Suscripción suspendida";const countdown=(s.status==="trial"||s.status==="active")&&r.subscription_expires_at?"<div style='margin-top:7px'><span class='mut'>Tiempo restante</span><div id='subscriptionCountdown' style='font-size:20px;font-weight:900;letter-spacing:.4px;margin-top:2px'>Calculando…</div></div>":"";el.innerHTML="<div class='row between'><div><b>"+msg+"</b>"+countdown+"<div class='mut'>"+esc(r.subscription_plan||"Prueba 30 días")+(r.subscription_expires_at?" · vence "+new Date(r.subscription_expires_at).toLocaleString("es-CL"):"")+"</div></div>"+((isSuperAdmin||currentRole==="manager")?"<button class='ghost' onclick=showTab('subscriptions')>Gestionar</button>":"")+"</div>";startSubscriptionCountdown(r,s.status)}
+function showTab(name){const b=document.querySelector('.tab[data-tab="'+name+'"]');if(b)b.click()}
+function goEditCategory(id){showTab("categories");editCategory(id)}
+function goEditProduct(id){showTab("products");editProduct(id)}
+async function manageRestaurantContent(id){currentRestaurant=id;await loadRestaurants();await Promise.all([loadCategories(),loadProducts()]);const r=restaurants.find(x=>x.id===id);productTitle.textContent=r?"Productos de "+r.name:"Productos del restaurante";const listTitle=document.querySelector("#products .card.span7 h2");if(listTitle)listTitle.textContent=r?"Productos · "+r.name:"Productos";showTab("products");window.scrollTo({top:0,behavior:"smooth"})}
+function openSelectedContent(){manageRestaurantContent(currentRestaurant)}
+async function loadCategories(){const {data,error}=await sb.from("restaurant_categories").select("*").eq("restaurant_id",currentRestaurant).order("sort_order");if(error)return toast(error.message);categories=data||[];categoryList.innerHTML=categories.map(c=>`<div class="item row between"><div><h3>${esc(c.name)}</h3><span class="pill">${esc(c.slug)}</span> ${c.active?"":"<span class='pill'>Inactiva</span>"}</div><div class="actions"><button class="ghost" onclick="editCategory(${c.id})">Editar</button><button class="danger" onclick="deleteCategory(${c.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin categorías.</p>";pcat.innerHTML='<option value="">Sin categoría</option>'+categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}
+async function saveCategory(){const row={restaurant_id:currentRestaurant,name:cname.value.trim(),slug:cslug.value.trim().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""),sort_order:+csort.value||0,active:cactive.checked};if(!row.name||!row.slug)return toast("Completa nombre y slug");let q=cid.value?sb.from("restaurant_categories").update(row).eq("id",cid.value):sb.from("restaurant_categories").insert(row);const {error}=await q;if(error)return toast(error.message);clearCategory();await loadCategories();toast("Categoría guardada")}
+function editCategory(id){const c=categories.find(x=>x.id===id);cid.value=c.id;cname.value=c.name;cslug.value=c.slug;csort.value=c.sort_order;cactive.checked=c.active}
+function clearCategory(){cid.value="";cname.value="";cslug.value="";csort.value=0;cactive.checked=true}
+async function deleteCategory(id){if(!confirm("¿Eliminar esta categoría?"))return;const {error}=await sb.from("restaurant_categories").delete().eq("id",id);if(error)return toast(error.message);await loadCategories();toast("Categoría eliminada")}
+async function loadProducts(){const {data,error}=await sb.from("restaurant_products").select("*").eq("restaurant_id",currentRestaurant).order("sort_order");if(error)return toast(error.message);products=data||[];productList.innerHTML=products.map(p=>`<div class="item"><div class="row between"><div><h3>${esc(p.name)}</h3><div class="mut">${esc(p.description||"")}</div><div class="price">${money(p.price)}</div></div><div class="actions"><button class="ghost" onclick="editProduct(${p.id})">Editar</button><button class="ghost" onclick="toggleProduct(${p.id},${!p.available})">${p.available?"Desactivar":"Activar"}</button><button class="danger" onclick="deleteProduct(${p.id})">Eliminar</button></div></div></div>`).join("")||"<p class='mut'>Sin productos.</p>"}
+async function saveProduct(){let categoryId=pcat.value?+pcat.value:null;if(!categoryId){let general=categories.find(c=>c.slug==="general");if(!general){const {data,error}=await sb.from("restaurant_categories").insert({restaurant_id:currentRestaurant,name:"General",slug:"general",sort_order:0,active:true}).select("id,name,slug,active").single();if(error)return toast(error.message);general=data;categories.push(data)}categoryId=general.id}const row={restaurant_id:currentRestaurant,name:pname.value.trim(),description:pdesc.value.trim(),price:+pprice.value||0,category_id:categoryId,image_url:pimage.value.trim()||null,badge:pbadge.value.trim()||null,featured:pfeatured.checked,available:pavailable.checked,sort_order:+psort.value||0,updated_at:new Date().toISOString()};if(!row.name)return toast("Escribe el nombre");let q=pid.value?sb.from("restaurant_products").update(row).eq("id",pid.value):sb.from("restaurant_products").insert(row);const {error}=await q;if(error)return toast(error.message);clearProduct();await loadProducts();toast("Producto guardado")}
+function editProduct(id){const p=products.find(x=>x.id===id);pid.value=p.id;pname.value=p.name;pdesc.value=p.description||"";pprice.value=p.price;pcat.value=p.category_id||"";pimage.value=p.image_url||"";if(p.image_url){pimagePreview.src=p.image_url;pimagePreview.hidden=false}else pimagePreview.hidden=true;pbadge.value=p.badge||"";pfeatured.checked=p.featured;pavailable.checked=p.available;psort.value=p.sort_order;productTitle.textContent="Editar producto";scrollTo({top:0,behavior:"smooth"})}
+function clearProduct(){pid.value="";pname.value="";pdesc.value="";pprice.value="";pcat.value="";pimage.value="";pimagePreview.hidden=true;pimageFile.value="";pbadge.value="";pfeatured.checked=false;pavailable.checked=true;psort.value=0;productTitle.textContent="Nuevo producto"}
+async function toggleProduct(id,v){const {error}=await sb.from("restaurant_products").update({available:v,updated_at:new Date().toISOString()}).eq("id",id);if(error)return toast(error.message);await loadProducts()}
+async function addDemoProducts(){
+ if(!currentRestaurant)return toast("Selecciona un restaurante");
+ const demoCats=[["Combos","combos",1],["Hamburguesas","hamburguesas",2],["Papas y más","acompanamientos",3],["Bebidas","bebidas",4],["Postres","postres",5]];
+ const {data:existing}=await sb.from("restaurant_categories").select("id,slug").eq("restaurant_id",currentRestaurant);
+ const map={};(existing||[]).forEach(x=>map[x.slug]=x.id);
+ for(const [name,slug,sort_order] of demoCats){if(!map[slug]){const {data,error}=await sb.from("restaurant_categories").insert({restaurant_id:currentRestaurant,name,slug,sort_order,active:true,is_demo:true}).select("id").single();if(error)return toast(error.message);map[slug]=data.id}}
+ const demo=[
+ ["combos","Combo Clásica","La Clásica simple con papas fritas y gaseosa 500 ml.",2900,3200,"Ahorrás",true],
+ ["combos","Combo Doble","La Clásica doble con papas fritas y gaseosa 500 ml.",3200,3500,"",false],
+ ["combos","Combo Bacon","Bacon Crocante doble, papas con cheddar y panceta y una cerveza artesanal.",4400,4930,"",false],
+ ["combos","Combo Pareja","Dos Clásicas dobles, papas fritas para compartir y dos gaseosas.",5400,6100,"",false],
+ ["hamburguesas","La Clásica","Medallón blend 120g, cheddar, lechuga, tomate, pepinillos y salsa de la casa en pan de papa.",1600,null,"Más pedida",true],
+ ["hamburguesas","Cheddar Total","Medallón blend 120g, cheddar fundido en abundancia y salsa secreta en pan de papa.",1650,null,"",false],
+ ["hamburguesas","Bacon Crocante","Medallón blend 120g, cheddar, panceta crocante y alioli de la casa.",1730,null,"",true],
+ ["hamburguesas","Crispy Onion","Medallón blend 120g, cheddar, cebolla crispy y salsa barbacoa.",1700,null,"Nuevo",false],
+ ["hamburguesas","La Ahumada","Medallón blend 120g, cheddar ahumado, cebolla caramelizada y salsa ahumada.",1750,null,"",false],
+ ["acompanamientos","Papas fritas","Porción individual, bien crocantes.",900,null,"",false],
+ ["acompanamientos","Papas con cheddar y panceta","Papas fritas bañadas en cheddar caliente con panceta crocante.",1500,null,"Favorita",true],
+ ["acompanamientos","Aros de cebolla","Rebozados y fritos al momento. Vienen con salsa barbacoa.",1100,null,"",false],
+ ["bebidas","Gaseosa 500 ml","Línea Coca-Cola. Consultá sabores por WhatsApp.",700,null,"",false],
+ ["bebidas","Limonada con menta","Exprimida en el día, con menta y jengibre.",900,null,"",false],
+ ["bebidas","Cerveza artesanal 473 ml","Rubia, roja o IPA, según disponibilidad.",1400,null,"",false],
+ ["bebidas","Agua sin gas 500 ml","Botella individual.",500,null,"",false],
+ ["postres","Brownie con helado","Brownie tibio de chocolate con bocha de crema americana.",1600,null,"",false],
+ ["postres","Flan casero","Con dulce de leche y crema.",1200,null,"",false]];
+ const {data:existingP}=await sb.from("restaurant_products").select("name").eq("restaurant_id",currentRestaurant).eq("is_demo",true);const names=new Set((existingP||[]).map(x=>x.name));
+ const rows=demo.filter(x=>!names.has(x[1])).map((x,i)=>({restaurant_id:currentRestaurant,category_id:map[x[0]],name:x[1],description:x[2],price:x[3],compare_price:x[4],badge:x[5]||null,featured:x[6],available:x[1]!=="La Ahumada",sort_order:i+1,is_demo:true}));
+ if(rows.length){const {error}=await sb.from("restaurant_products").insert(rows);if(error)return toast(error.message)}
+ await Promise.all([loadCategories(),loadProducts()]);toast("Productos demo agregados")
+}
+async function removeDemoProducts(){if(!currentRestaurant)return toast("Selecciona un restaurante");if(!confirm("¿Quitar todos los productos y categorías demo de este restaurante?"))return;const {error:e1}=await sb.from("restaurant_products").delete().eq("restaurant_id",currentRestaurant).eq("is_demo",true);if(e1)return toast(e1.message);const {error:e2}=await sb.from("restaurant_categories").delete().eq("restaurant_id",currentRestaurant).eq("is_demo",true);if(e2)return toast(e2.message);await Promise.all([loadCategories(),loadProducts()]);toast("Productos demo eliminados")}
+async function deleteProduct(id){if(!confirm("¿Eliminar este producto?"))return;const {error}=await sb.from("restaurant_products").delete().eq("id",id);if(error)return toast(error.message);await loadProducts();toast("Producto eliminado")}
+async function enableRestaurantNotifications(){
+ if(!("Notification" in window))return;
+ if(Notification.permission==="default")await Notification.requestPermission();
+}
+function restaurantOrderAlert(row){
+ try{
+  if(Notification.permission==="granted")new Notification("🔔 Nuevo pedido Mercado Pago",{body:"#"+row.order_code+" · "+money(row.total),tag:"restaurant-order-"+row.id,renotify:true});
+  const ac=new (window.AudioContext||window.webkitAudioContext)(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=880;g.gain.value=.08;o.start();setTimeout(()=>{o.stop();ac.close()},350);
+ }catch(e){}
+}
+let restaurantOrdersChannel=null;
+function startRestaurantOrderRealtime(){
+ if(restaurantOrdersChannel){sb.removeChannel(restaurantOrdersChannel);restaurantOrdersChannel=null;}
+ if(!currentRestaurant||isSuperAdmin)return;
+ restaurantOrdersChannel=sb.channel("restaurant-orders-"+currentRestaurant)
+  .on("postgres_changes",{event:"*",schema:"public",table:"restaurant_orders",filter:"restaurant_id=eq."+currentRestaurant},async p=>{
+   const row=p.new||{},old=p.old||{};
+   if(row.payment_method==="Mercado Pago"&&row.payment_status==="approved"&&(p.eventType==="INSERT"||old.payment_status!=="approved"))restaurantOrderAlert(row); if(row.payment_method==="Mercado Pago")await loadOrders();
+  }).subscribe();
+}
+function filterOrdersView(f){document.querySelectorAll("#orderList .item").forEach(el=>{const d=new Date(el.dataset.created),n=new Date(),same=d.toDateString()===n.toDateString(),y=new Date(n);y.setDate(n.getDate()-1);let show=f==="all"||(f==="today"&&same)||(f==="yesterday"&&d.toDateString()===y.toDateString())||(f==="week"&&(n-d)<=604800000)||(f==="month"&&d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear());el.style.display=show?"":"none"})}
+function filterOrdersStatus(s){document.querySelectorAll("#orderList .item").forEach(el=>{const st=el.dataset.status;el.style.display=(s==="all"?(st!=="entregado"&&st!=="cancelado"):st===s)?"":"none"})}
+async function loadOrders(){
+ if(!currentRestaurant)return;
+ const {data,error}=await sb.from("restaurant_orders").select("*").eq("restaurant_id",currentRestaurant).eq("payment_method","Mercado Pago").eq("payment_status","approved").order("created_at",{ascending:false}).limit(100);
+ if(error)return toast(error.message);
+ orders=data||[];
+ const allStates=["recibido","preparacion","listo","entregado","cancelado"];
+ const labels={recibido:"Recibido",preparacion:"Preparación",listo:"Listo",entregado:"Entregado",cancelado:"Cancelado"};
+ orderList.innerHTML=orders.map(o=>{
+  const states=allStates;
+  const idx=states.indexOf(o.status);
+  const flow=["recibido","preparacion","listo","entregado"];
+  const items=Array.isArray(o.items)?o.items:[];
+  return `<div class="item" data-status="${o.status}"><div class="row between"><div><h3>#${esc(o.order_code)} · ${esc(o.customer_name)}</h3><div class="mut">${new Date(o.created_at).toLocaleString("es-CL")} · ${esc(o.order_type)} · Mercado Pago</div><div class="price">${money(o.total)}</div></div><div style="min-width:180px"><label>Estado</label><select onchange="setOrderStatus(${o.id},this.value)">${states.map(s=>`<option value="${s}" ${s===o.status?"selected":""}>${labels[s]}</option>`).join("")}</select></div></div><div class="order-track">${flow.map((s,i)=>`<span class="${o.status==="cancelado"?"":i<(flow.indexOf(o.status))?"done":s===o.status?"current":""}">${labels[s]}</span>`).join("")}${o.status==="cancelado"?'<span class="current">Cancelado</span>':""}</div><div class="order-detail"><b>${o.order_type==="Delivery"?"📍 Entrega":"📍 Retiro"}:</b> ${esc(o.order_type==="Delivery"?(o.delivery_address||"Sin dirección"):(restaurants.find(r=>r.id===currentRestaurant)?.address||"Dirección del restaurante"))}<br><span class="mut">${items.map(x=>esc((x.qty||1)+" × "+(x.name||"Producto"))).join(" · ")}</span></div><div class="actions" style="margin-top:12px"><button class="ghost" onclick="printOrderCommand(${o.id})">🖨️ Imprimir comanda</button></div></div>`;
+ }).join("")||"<p class='mut'>Todavía no hay pedidos de Mercado Pago.</p>";
+ const ca=document.getElementById("countAll"),cd=document.getElementById("countDelivered"),cc=document.getElementById("countCancelled");if(ca)ca.textContent=orders.filter(o=>o.status!=="entregado"&&o.status!=="cancelado").length;if(cd)cd.textContent=orders.filter(o=>o.status==="entregado").length;if(cc)cc.textContent=orders.filter(o=>o.status==="cancelado").length;filterOrdersStatus("all");
+}
+function printOrderCommand(id){
+ const o=orders.find(x=>Number(x.id)===Number(id));if(!o)return toast("Pedido no encontrado");
+ const r=restaurants.find(x=>Number(x.id)===Number(currentRestaurant));if(!r)return toast("Restaurante no encontrado");
+ let items=o.items||o.order_items||[];if(typeof items==="string"){try{items=JSON.parse(items)}catch{items=[]}}if(!Array.isArray(items))items=[];
+ const e=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+ const itemRows=items.map(x=>{const q=Number(x.qty||x.quantity||1),name=x.name||x.product_name||"Producto",price=Number(x.price||x.unit_price||0);return '<div class="line"><span>'+e(q+" × "+name)+'</span><b>'+(price?e(money(price*q)):"")+'</b></div>'}).join("");
+ const address=o.order_type==="Delivery"?(o.delivery_address||"Sin dirección"):(r.address||"Retiro en el local");
+ const notes=o.notes||o.note||o.customer_notes||o.observations||"";
+ const phone=o.customer_phone||o.phone||"";
+ const payment=o.payment_method||"";
+ const html='<!doctype html><html><head><meta charset="utf-8"><title>Comanda '+e(o.order_code||o.id)+'</title><style>@page{margin:4mm}body{font-family:Arial,sans-serif;width:72mm;max-width:100%;margin:0 auto;color:#000;font-size:12px}h1{text-align:center;font-size:18px;margin:0 0 4px}.center{text-align:center}.sep{border-top:1px dashed #000;margin:8px 0}.line{display:flex;justify-content:space-between;gap:8px;margin:5px 0}.line span{flex:1}.total{font-size:16px;font-weight:700}.label{font-weight:700;margin-top:5px}@media print{button{display:none}body{width:72mm}}button{width:100%;padding:10px;margin:12px 0}</style></head><body><h1>'+e(r.name)+'</h1><div class="center">'+e(r.address||"")+'<br>'+e(r.whatsapp||"")+'</div><div class="sep"></div><b>PEDIDO #'+e(o.order_code||o.id)+'</b><div>'+e(new Date(o.created_at).toLocaleString("es-CL"))+'</div><div class="label">Cliente</div><div>'+e(o.customer_name||"Sin nombre")+(phone?" · "+e(phone):"")+'</div><div class="label">'+e(o.order_type||"Pedido")+'</div><div>'+e(address)+'</div><div class="sep"></div>'+itemRows+'<div class="sep"></div><div class="line total"><span>TOTAL</span><span>'+e(money(o.total||0))+'</span></div>'+(payment?'<div><b>Pago:</b> '+e(payment)+'</div>':"")+(notes?'<div class="sep"></div><div><b>Aclaraciones:</b><br>'+e(notes)+'</div>':"")+'<div class="sep"></div><div class="center">Comanda · '+e(r.name)+'</div><button onclick="window.print()">Imprimir</button><script>setTimeout(()=>window.print(),250)<\/script></body></html>';
+ const w=window.open("","_blank","width=420,height=720");if(!w)return toast("Permite ventanas emergentes para imprimir");w.document.open();w.document.write(html);w.document.close();
+}
+async function setOrderStatus(id,status){
+ const order=orders.find(o=>o.id===id);if(!order)return;
+ if(status==="cancelado"){
+  if(!confirm("Al cancelar este pedido se solicitará la devolución total del pago al cliente mediante Mercado Pago. ¿Continuar?"))return loadOrders();
+  toast("Procesando devolución en Mercado Pago…");
+  const {data:{session}}=await sb.auth.getSession();
+  try{
+   const res=await fetch(SB_URL+"/functions/v1/refund-restaurant-payment",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({order_id:id})});
+   const data=await res.json();if(!res.ok)throw new Error(data.error||"No se pudo devolver el pago");
+   toast("Pedido cancelado y devolución solicitada correctamente.");
+  }catch(e){toast(e.message);return loadOrders();}
+ }else{
+  const {error}=await sb.from("restaurant_orders").update({status,updated_at:new Date().toISOString()}).eq("id",id).eq("restaurant_id",currentRestaurant);
+  if(error)return toast(error.message);
+  toast("Estado actualizado. El cliente ya puede verlo.");
+ }
+ await loadOrders();
+}
+async function searchRestaurantAddress(){
+ const input=document.getElementById("smapaddress"),st=document.getElementById("smapstatus");
+ const latEl=document.getElementById("slat"),lngEl=document.getElementById("slng"),addressEl=document.getElementById("saddress");
+ const address=input?.value.trim()||"";
+ if(!address){if(st)st.textContent="❌ Escribe una dirección primero.";input?.focus();return}
+ if(!window.google?.maps?.Geocoder){if(st)st.textContent="⏳ El servicio de ubicación todavía está cargando. Intenta nuevamente en unos segundos.";return}
+ if(st)st.textContent="🔎 Verificando dirección…";
+ try{
+  const geocoder=new google.maps.Geocoder();
+  const r=await geocoder.geocode({address});
+  const place=r.results?.[0];
+  if(!place?.geometry?.location){if(st)st.textContent="❌ No pudimos verificar esa dirección. Agrega calle, número, ciudad y vuelve a intentar.";return}
+  const lat=place.geometry.location.lat(),lng=place.geometry.location.lng();
+  const verified=place.formatted_address||address;
+  if(latEl)latEl.value=lat;
+  if(lngEl)lngEl.value=lng;
+  if(input)input.value=verified;
+  if(addressEl)addressEl.value=verified;
+  if(st)st.textContent="✅ Dirección verificada. Latitud y longitud encontradas automáticamente.";
+ }catch(e){
+  console.error("Error verificando dirección",e);
+  if(st)st.textContent="❌ No se pudo verificar la dirección. Revisa lo escrito e intenta nuevamente.";
+ }
+}
+async function loadSettings(){if(!currentRestaurant)return;const {data,error}=await sb.from("restaurants").select("*").eq("id",currentRestaurant).single();if(error)return toast(error.message);sname.value=data.name||"";swhatsapp.value=data.whatsapp||"";saddress.value=data.address||"";const sma=document.getElementById("smapaddress");if(sma)sma.value=data.address||"";sopen.value=(data.open_time||"").slice(0,5);sclose.value=(data.close_time||"").slice(0,5);sinstagram.value=data.instagram||"";spickup.value=data.pickup_eta||"";sdelivery.value=data.delivery_eta||"";sdeliverynote.value=data.delivery_note||"";const scp=document.getElementById("scolorPrimary"),scs=document.getElementById("scolorSecondary"),sct=document.getElementById("scolorText"),sl=document.getElementById("slogo"),slp=document.getElementById("slogoPreview");if(scp)scp.value=data.theme_primary_color||"#ffc21a";if(scs)scs.value=data.theme_secondary_color||"#1e1f24";if(sct)sct.value=data.theme_text_color||"#1e1f24";if(sl)sl.value=data.logo_url||"";if(slp){if(data.logo_url){slp.src=data.logo_url;slp.hidden=false}else{slp.removeAttribute("src");slp.hidden=true}}sdeliverymode.value=data.delivery_pricing_mode||"fixed";sdeliveryprice.value=Number(data.delivery_fixed_price||0);slat.value=data.latitude??"";slng.value=data.longitude??"";sdeliveryzones.value=(Array.isArray(data.delivery_zones)?data.delivery_zones:[]).map(z=>String(z.max_km)+"="+String(z.price)).join("\n");const mst=document.getElementById("manualOpenStatusText");if(mst)mst.textContent=data.manual_open_status==="open"?"🟢 Forzado ABIERTO":data.manual_open_status==="closed"?"🔴 Forzado CERRADO":"🕒 Usando horario predeterminado"}
+async function saveSettings(){if(!currentRestaurant)return toast("No hay restaurante seleccionado");const row={name:sname.value.trim(),whatsapp:swhatsapp.value.trim(),address:saddress.value.trim(),open_time:sopen.value,close_time:sclose.value,instagram:sinstagram.value.trim(),pickup_eta:spickup.value.trim(),delivery_eta:sdelivery.value.trim(),delivery_note:sdeliverynote.value.trim(),theme_primary_color:document.getElementById("scolorPrimary")?.value||"#ffc21a",theme_secondary_color:document.getElementById("scolorSecondary")?.value||"#1e1f24",theme_text_color:document.getElementById("scolorText")?.value||"#1e1f24",logo_url:document.getElementById("slogo")?.value||null,delivery_pricing_mode:sdeliverymode.value,delivery_fixed_price:Number(sdeliveryprice.value||0),latitude:slat.value===""?null:Number(slat.value),longitude:slng.value===""?null:Number(slng.value),delivery_zones:sdeliveryzones.value.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(x=>{const p=x.split("=");return {max_km:Number(p[0]),price:Number(p[1])}}).filter(z=>Number.isFinite(z.max_km)&&z.max_km>0&&Number.isFinite(z.price)&&z.price>=0).sort((x,y)=>x.max_km-y.max_km),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurants").update(row).eq("id",currentRestaurant);if(error)return toast(error.message);await loadRestaurants();if(adminRestaurantMode){await loadSettings();renderRestaurantContent();renderQrPanel()}toast("Datos del restaurante actualizados")}
+async function setManualOpenStatus(status){if(!currentRestaurant)return;const {error}=await sb.from("restaurants").update({manual_open_status:status,updated_at:new Date().toISOString()}).eq("id",currentRestaurant);if(error)return toast(error.message);await loadSettings();toast(status==="open"?"Local forzado como ABIERTO":status==="closed"?"Local forzado como CERRADO":"Se volvió al horario predeterminado")}
+function renderStats(){const valid=orders.filter(o=>o.status!=="cancelado"),sales=valid.reduce((a,o)=>a+Number(o.total||0),0);statProducts.textContent=products.filter(p=>p.available).length;statOrders.textContent=orders.length;statSales.textContent=money(sales);const av=document.getElementById("statAverage");if(av)av.textContent=money(valid.length?sales/valid.length:0);renderAnalytics(valid)}
+function renderAnalytics(valid){const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d)}const vals=days.map(d=>valid.filter(o=>{const x=new Date(o.created_at);return x.toDateString()===d.toDateString()}).reduce((a,o)=>a+Number(o.total||0),0));const max=Math.max(...vals,1);const sc=document.getElementById("salesChart");if(sc)sc.innerHTML='<div style="display:flex;align-items:end;gap:10px;height:190px;padding-top:12px">'+vals.map((v,i)=>'<div style="flex:1;text-align:center;min-width:0"><div class="mut" style="font-size:11px">'+money(v)+'</div><div style="height:'+Math.max(5,Math.round(v/max*125))+'px;background:var(--accent);border-radius:8px 8px 3px 3px;margin:5px auto;width:70%"></div><small class="mut">'+days[i].toLocaleDateString("es",{weekday:"short"})+'</small></div>').join("")+'</div>';const counts={};orders.forEach(o=>counts[o.status||"nuevo"]=(counts[o.status||"nuevo"]||0)+1);const st=document.getElementById("statusChart");if(st)st.innerHTML=Object.entries(counts).map(([k,v])=>'<div class="item"><div class="row between"><b>'+esc(k)+'</b><span>'+v+'</span></div><div style="height:8px;background:#ffffff12;border-radius:10px;margin-top:8px"><div style="height:100%;width:'+Math.round(v/Math.max(orders.length,1)*100)+'%;background:var(--accent);border-radius:10px"></div></div></div>').join("")||'<p class="mut">Sin pedidos.</p>';const names={};valid.forEach(o=>{let raw=o.items||o.order_items||[];if(typeof raw==="string"){try{raw=JSON.parse(raw)}catch{raw=[]}}if(Array.isArray(raw))raw.forEach(it=>{const n=it.name||it.product_name||"Producto";names[n]=(names[n]||0)+Number(it.qty||it.quantity||1)})});const tp=document.getElementById("topProducts");if(tp)tp.innerHTML=Object.entries(names).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,q],i)=>'<div class="item"><div class="row between"><b>'+(i+1)+'. '+esc(n)+'</b><span class="badge">'+q+' vendidos</span></div></div>').join("")||'<p class="mut">Aún no hay datos suficientes de productos vendidos.</p>'}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+
+const rt=sb.channel("admin-live").on("postgres_changes",{event:"*",schema:"public",table:"restaurant_products"},()=>loadProducts()).on("postgres_changes",{event:"*",schema:"public",table:"restaurant_categories"},()=>loadCategories()).on("postgres_changes",{event:"*",schema:"public",table:"restaurants"},()=>loadRestaurants()).subscribe();
+setInterval(()=>{if(!document.getElementById("app").classList.contains("hidden")){loadProducts();loadCategories();}},15000);
+</script><div id="accessModal" class="modal" style="display:none;position:fixed;inset:0;background:#0009;z-index:9999;align-items:center;justify-content:center;padding:20px"><div class="card" style="width:min(520px,100%);max-height:90vh;overflow:auto"><div class="row between"><h2>Editar acceso</h2><button class="ghost" onclick="closeAccessModal()">Cerrar</button></div><input type="hidden" id="editStaffId"><label>Negocio asignado</label><select id="editStaffRestaurant"></select><p class="mut">Puedes mover esta misma cuenta a otro restaurante para probarlo sin crear un usuario nuevo.</p><label>Tipo de acceso</label><select id="editStaffRole"><option value="restaurant">Solo restaurante</option><option value="editor">Editor</option><option value="manager">Administrador</option></select><p class="mut" id="roleHelp"></p><label>Permisos</label><div class="item"><label><input id="editPermProducts" type="checkbox"> Productos</label><label><input id="editPermCategories" type="checkbox"> Categorías</label><label><input id="editPermOrders" type="checkbox"> Pedidos</label><label><input id="editPermBusiness" type="checkbox"> Datos del negocio</label></div><button class="primary" style="margin-top:15px" onclick="saveAccessModal()">Guardar cambios</button></div></div><div id="orderEditModal" class="modal" style="display:none;position:fixed;inset:0;background:#0009;z-index:999;padding:16px;overflow:auto">
+<div class="card" style="width:min(760px,100%);margin:auto">
+<div class="row between"><h2>Detalle del pedido</h2><button onclick="closeOrderDetail()">✕</button></div>
+<input type="hidden" id="oeId">
+<div class="grid">
+<label>Cliente<input id="oeName"></label><label>Tipo<select id="oeType"><option>Retiro en el local</option><option>Delivery</option></select></label>
+<label class="span6">Dirección<input id="oeAddress"></label><label>Pago<input id="oePayment"></label>
+<label>Estado<select id="oeStatus"><option value="nuevo">Nuevo</option><option value="confirmado">Confirmado</option><option value="preparando">En preparación</option><option value="listo">Listo</option><option value="enviado">En camino</option><option value="entregado">Entregado / Retirado</option><option value="cancelado">Cancelado</option></select></label>
+<label class="span12">Notas<textarea id="oeNotes" rows="3"></textarea></label>
+</div>
+<h3>Productos</h3><div id="oeItems"></div>
+<div class="row between"><b>Total: <span id="oeTotal"></span></b><div class="row"><button onclick="closeOrderDetail()">Cancelar</button><button onclick="saveOrderDetail()">Guardar cambios</button></div></div>
+</div></div>
+<script>
+window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number(id));if(!o)return;oeId.value=o.id;oeName.value=o.customer_name||"";oeType.value=o.order_type||"Retiro en el local";oeAddress.value=o.delivery_address||"";oePayment.value=o.payment_method||"";oeStatus.value=o.status||"nuevo";oeNotes.value=o.notes||"";const its=Array.isArray(o.items)?o.items:[];oeItems.innerHTML=its.map((it,i)=>'<div class="item orderEditItem" data-i="'+i+'"><div class="grid"><label class="span6">Producto<input class="oiName" value="'+esc(it.name||"")+'"></label><label>Cantidad<input class="oiQty" type="number" min="1" value="'+Number(it.qty||1)+'"></label><label>Precio unitario<input class="oiPrice" type="number" min="0" step="0.01" value="'+Number(it.unit_price||0)+'"></label><label class="span12">Nota<input class="oiNote" value="'+esc(it.note||"")+'"></label></div></div>').join("");calcOrderEditTotal();oeItems.querySelectorAll("input").forEach(x=>x.addEventListener("input",calcOrderEditTotal));orderEditModal.style.display="flex"}
+window.closeOrderDetail=function(){orderEditModal.style.display="none"}
+function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
+window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
+</script><footer class="admin-version">Versión v1.4.67</footer><script>
+async function verifySubscriptionMercadoPago(){
+ const box=document.getElementById("subscriptionMpStatus");
+ if(!box)return;
+ box.innerHTML="<b>Estado:</b> <span class='mut'>Verificando conexión con Mercado Pago…</span>";
+ try{
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session?.access_token){box.innerHTML="<b>Estado:</b> ❌ Sesión vencida. Vuelve a iniciar sesión.";return}
+  const res=await fetch(SB_URL+"/functions/v1/verify-subscription-mercadopago",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+session.access_token}});
+  const data=await res.json();
+  box.innerHTML=data.ok
+   ? "<b>Estado:</b> ✅ "+esc(data.message)
+   : "<b>Estado:</b> ❌ "+esc(data.message||data.error||"No se pudo verificar Mercado Pago");
+ }catch(e){box.innerHTML="<b>Estado:</b> ❌ No se pudo verificar la conexión."}
+}
+</script>
+<script>
+async function loadSubscriptionMercadoPagoSettings(){
+ if(!isSuperAdmin)return;
+ try{
+  const {data:{session}}=await sb.auth.getSession(); if(!session?.access_token)return;
+  const res=await fetch(SB_URL+"/functions/v1/subscription-mercadopago-settings",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+session.access_token}});
+  const d=await res.json(); if(!res.ok)return;
+  const pk=document.getElementById("subscriptionMpPublicKey"), hint=document.getElementById("subscriptionMpTokenHint");
+  if(pk)pk.value=d.public_key||"";
+  if(hint)hint.textContent=d.has_access_token?"Access Token guardado de forma segura. Déjalo vacío para conservarlo.":"Todavía no hay Access Token guardado.";
+ }catch(e){}
+}
+async function saveSubscriptionMercadoPago(){
+ try{
+  const {data:{session}}=await sb.auth.getSession(); if(!session?.access_token)return toast("Tu sesión venció.");
+  const public_key=document.getElementById("subscriptionMpPublicKey")?.value.trim()||"";
+  const access_token=document.getElementById("subscriptionMpAccessToken")?.value.trim()||"";
+  if(!public_key)return toast("Ingresa la Public Key de Express.");
+  const res=await fetch(SB_URL+"/functions/v1/subscription-mercadopago-settings",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({public_key,access_token})});
+  const raw=await res.text(); let d={}; try{d=JSON.parse(raw)}catch(_){d={error:raw||"Respuesta inválida del servidor"}} if(!res.ok)return toast(d.error||"No se pudieron guardar las credenciales.");
+  document.getElementById("subscriptionMpAccessToken").value="";
+  toast("Credenciales de Mercado Pago Express guardadas.");
+  await loadSubscriptionMercadoPagoSettings();
+ }catch(e){toast("No se pudieron guardar las credenciales.");}
+}
+</script>
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.0.0</div></body></html>
