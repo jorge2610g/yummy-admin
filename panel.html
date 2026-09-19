@@ -130,7 +130,7 @@ img,svg,video{max-width:100%;height:auto}
 
 <div id="app" class="wrap hidden">
 <div id="subscriptionBanner" class="card" style="margin-bottom:14px;display:none"></div>
-<div class="top"><div><h1>Panel Restaurante</h1><div id="who" class="mut"></div></div><div class="row"><a id="viewMenuLink" href="#" target="_blank" style="display:none"><button class="ghost">Ver menú</button></a><button class="ghost" id="themeBtn" type="button" onclick="toggleAdminTheme()">☀️ Modo claro</button><button class="ghost" onclick="logout()">Salir</button></div></div>
+<div id="adminRestaurantBanner" class="card" style="display:none;margin-bottom:14px"><div class="row between"><div><b id="adminRestaurantModeName">Viendo como restaurante</b><div class="mut">Sesión protegida del administrador general</div></div><button class="primary" onclick="returnToAdminPanel()">← Volver al panel administrador</button></div></div><div class="top"><div><h1 id="panelMainTitle">Panel Restaurante</h1><div id="who" class="mut"></div></div><div class="row"><a id="viewMenuLink" href="#" target="_blank" style="display:none"><button class="ghost">Ver menú</button></a><button class="ghost" id="themeBtn" type="button" onclick="toggleAdminTheme()">☀️ Modo claro</button><button class="ghost" onclick="logout()">Salir</button></div></div>
 <div class="tabs">
 <button class="tab active" data-tab="restaurants">🏪 Restaurantes</button><button class="tab" data-tab="subscriptions">💳 Suscripciones</button><button class="tab" data-tab="users">👥 Personal</button><button class="tab" data-tab="dashboard">📊 Métricas</button><button class="tab" data-tab="orders">📦 Pedidos Mercado Pago</button><button class="tab" data-tab="products">🍔 Productos</button><button class="tab" data-tab="categories">📚 Categorías</button><button class="tab" data-tab="qr">▦ Código QR</button><button class="tab" data-tab="plans">💳 Planes</button><button class="tab" data-tab="settings">⚙️ Configuración</button>
 </div>
@@ -187,7 +187,7 @@ const sb=supabase.createClient(SB_URL,SB_KEY);
 function applyAdminTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("admin_theme",theme);const b=document.getElementById("themeBtn");if(b)b.textContent=theme==="dark"?"☀️ Modo claro":"🌙 Modo oscuro"}
 function toggleAdminTheme(){applyAdminTheme(document.documentElement.dataset.theme==="light"?"dark":"light")}
 applyAdminTheme(localStorage.getItem("admin_theme")||"dark");setTimeout(bindRestaurantMpButtons,0);
-let categories=[],products=[],orders=[],restaurants=[],staff=[],subscriptionPlans=[],currentRestaurant=null,isSuperAdmin=false,currentRole="";
+let categories=[],products=[],orders=[],restaurants=[],staff=[],subscriptionPlans=[],currentRestaurant=null,isSuperAdmin=false,currentRole="",adminRestaurantMode=false;
 const money=n=>new Intl.NumberFormat("es-CL",{style:"currency",currency:"CLP",maximumFractionDigits:0}).format(Number(n||0));
 window.togglePassword=function(id,btn){const el=document.getElementById(id);if(!el)return false;const show=el.getAttribute("type")==="password";el.setAttribute("type",show?"text":"password");btn.textContent=show?"Ocultar":"Ver";btn.setAttribute("aria-pressed",show?"true":"false");return false}
 function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2500)}
@@ -260,7 +260,46 @@ async function restoreSession(){try{const {data,error}=await sb.auth.getSession(
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById(b.dataset.tab).classList.add("active");if(b.dataset.tab==="orders"&&currentRestaurant)loadOrders()});
 async function refreshAll(){bindRestaurantMpButtons();await loadRestaurants();await loadSubscriptionPlans();if(isSuperAdmin||currentRole==="manager")await loadStaff();await Promise.all([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);if(!isSuperAdmin)await loadRestaurantMercadoPago();renderRestaurantContent()}
 async function loadRestaurants(){let rq=sb.from("restaurants").select("*").order("created_at");if(!isSuperAdmin&&currentRole!=="manager"){const {data:m}=await sb.from("restaurant_staff").select("restaurant_id").eq("active",true);rq=rq.in("id",(m||[]).map(x=>x.restaurant_id));}const {data,error}=await rq;if(error)return toast(error.message);restaurants=data||[]; if(window.adminMpRestaurant){adminMpRestaurant.innerHTML=restaurants.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");}if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;restaurantList.innerHTML=restaurants.map(r=>{const s=subscriptionInfo(r);return `<div class="item"><div class="row between"><div><h3>${esc(r.name)}</h3><div class="mut">Link: <a style="color:#ffb703" target="_blank" href="https://menu.yummypro.online/?r=${encodeURIComponent(r.slug)}">?r=${esc(r.slug)}</a></div><div class="mut">${r.custom_domain?esc(r.custom_domain):"Sin dominio propio"}</div><div class="pill subscription-${s.status}">${s.label}</div></div><div class="actions"><button class="primary" onclick="viewRestaurant(${r.id})">Ver restaurante</button><button class="ghost" onclick="editRestaurant(${r.id})">Editar</button><button class="danger" onclick="deleteRestaurant(${r.id})">Eliminar</button><button class="primary" onclick="manageRestaurantContent(${r.id})">Administrar contenido</button>${isSuperAdmin?`<button class="ghost" onclick="openRestaurantPanel(${r.id})">Panel</button>`:""}</div></div></div>`}).join("")||"<p class='mut'>Sin restaurantes.</p>";renderSubscriptions();renderQrPanel()}
-function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;const url=new URL("/", "https://menu.yummypro.online");url.searchParams.set("r",r.slug);window.open(url.toString(),"_blank")}async function openRestaurantPanel(id){if(!isSuperAdmin)return toast("Acceso exclusivo del administrador general");const r=restaurants.find(x=>Number(x.id)===Number(id));if(!r)return toast("Restaurante no encontrado");currentRestaurant=Number(id);await Promise.all([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);renderRestaurantContent();const allowed=["products","categories","qr","settings"];document.querySelectorAll(".tab,.section").forEach(x=>x.classList.remove("active"));const first=document.querySelector('.tab[data-tab="products"]');if(first){first.classList.add("active");document.getElementById("products")?.classList.add("active")}productTitle.textContent="Panel · "+r.name;const listTitle=document.querySelector("#products .card.span7 h2");if(listTitle)listTitle.textContent="Productos · "+r.name;toast("Panel de "+r.name+" abierto como administrador");window.scrollTo({top:0,behavior:"smooth"})}
+function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;const url=new URL("/", "https://menu.yummypro.online");url.searchParams.set("r",r.slug);window.open(url.toString(),"_blank")}async function openRestaurantPanel(id){
+  if(!isSuperAdmin)return toast("Acceso exclusivo del administrador general");
+  const r=restaurants.find(x=>Number(x.id)===Number(id));if(!r)return toast("Restaurante no encontrado");
+  adminRestaurantMode=true;currentRestaurant=Number(id);currentRole="restaurant";
+  document.getElementById("adminRestaurantBanner").style.display="";
+  document.getElementById("adminRestaurantModeName").textContent="Viendo como: "+r.name;
+  document.getElementById("panelMainTitle").textContent="Panel · "+r.name;
+  document.getElementById("viewMenuLink").href="https://menu.yummypro.online/?r="+encodeURIComponent(r.slug);
+  document.getElementById("viewMenuLink").style.display="";
+  const restaurantTabs=["orders","products","categories","qr","plans","settings"];
+  document.querySelectorAll(".tab").forEach(t=>t.style.display=restaurantTabs.includes(t.dataset.tab)?"":"none");
+  document.getElementById("mpCredentialsCard").style.display="none";
+  document.getElementById("planCreatorCard").style.display="none";
+  document.getElementById("demoProductActions").style.display="none";
+  document.getElementById("restaurantMpSettings")?.style.setProperty("display","");
+  await loadSubscriptionPlans();
+  await Promise.all([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);
+  await loadRestaurantMercadoPago();
+  renderRestaurantContent();renderQrPanel();
+  showTab("orders");
+  window.scrollTo({top:0,behavior:"smooth"});
+  toast("Viendo el panel de "+r.name);
+}
+async function returnToAdminPanel(){
+  if(!isSuperAdmin||!adminRestaurantMode)return;
+  adminRestaurantMode=false;currentRole="";
+  document.getElementById("adminRestaurantBanner").style.display="none";
+  document.getElementById("panelMainTitle").textContent="Panel Restaurante";
+  document.getElementById("viewMenuLink").style.display="none";
+  document.querySelectorAll(".tab").forEach(t=>t.style.display="");
+  document.querySelector('[data-tab="orders"]')?.style.setProperty("display","none");
+  document.querySelector('[data-tab="settings"]')?.style.setProperty("display","none");
+  document.querySelector('[data-tab="plans"]')?.style.setProperty("display","none");
+  document.getElementById("mpCredentialsCard").style.display="block";
+  document.getElementById("planCreatorCard").style.display="block";
+  document.getElementById("demoProductActions").style.display="";
+  document.getElementById("restaurantMpSettings")?.style.setProperty("display","none");
+  await loadRestaurants();await loadSubscriptionPlans();await loadStaff();
+  showTab("restaurants");window.scrollTo({top:0,behavior:"smooth"});toast("Volviste al panel administrador");
+}
 function subscriptionInfo(r){const now=Date.now(),end=r.subscription_expires_at?new Date(r.subscription_expires_at).getTime():now;const days=Math.max(0,Math.ceil((end-now)/86400000));let status=r.subscription_status||"trial";if((status==="trial"||status==="active")&&end<now)status="expired";const names={trial:"Prueba gratis",active:"Activa",expired:"Vencida",suspended:"Suspendida"};return {status,days,label:status==="trial"?names[status]+" · "+days+" días":names[status]+(status==="active"?" · "+days+" días":"")}}
 async function loadSubscriptionPlans(){let q=sb.from("subscription_plans").select("*").order("amount",{ascending:true});if(!isSuperAdmin)q=q.eq("active",true);const {data,error}=await q;if(error)return toast(error.message);subscriptionPlans=data||[];if(isSuperAdmin)renderSubscriptionPlans();else renderRestaurantPlans()}
 function renderRestaurantPlans(){if(!window.restaurantPlanList)return;restaurantPlanList.innerHTML=subscriptionPlans.map(p=>`<div class="item"><div class="row between"><div><h3>${esc(p.name)}</h3><div class="price">${money(p.amount)}</div><div class="mut">${p.days} días de servicio</div></div><button class="primary" onclick="paySubscriptionPlan(${p.id})">Pagar</button></div></div>`).join("")||"<p class='mut'>No hay planes disponibles en este momento.</p>"}
@@ -526,4 +565,4 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v1.0.4</div></body></html>
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v1.0.5</div></body></html>
