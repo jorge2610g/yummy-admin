@@ -193,8 +193,13 @@ img,svg,video{max-width:100%;height:auto}
 <section id="dashboard" class="section">
 <div class="row between" style="margin-bottom:16px"><div><h2 style="margin:0">Resumen del negocio</h2><div class="mut">Actividad y rendimiento del restaurante seleccionado</div></div><button class="ghost" onclick="refreshAll()">Actualizar datos</button></div>
 <div class="grid">
-
-<div class="card span4"><div class="row between"><h2>Estado del negocio</h2><select id="dashboardRestaurantSelect" style="width:auto;min-width:220px" onchange="changeDashboardRestaurant(this.value)"></select></div><div id="businessStatus" class="list"></div></div>
+<div class="card span4"><div class="mut">Restaurantes</div><div id="metricRestaurants" class="stat">0</div></div>
+<div class="card span4"><div class="mut">Suscripciones activas / prueba</div><div id="metricActiveSubscriptions" class="stat">0</div></div>
+<div class="card span4"><div class="mut">Planes disponibles</div><div id="metricPlans" class="stat">0</div></div>
+<div class="card span4"><div class="mut">Productos</div><div id="metricProducts" class="stat">0</div></div>
+<div class="card span4"><div class="mut">Categorías</div><div id="metricCategories" class="stat">0</div></div>
+<div class="card span4"><div class="mut">Pedidos Mercado Pago</div><div id="metricOrders" class="stat">0</div></div>
+<div class="card span12"><div class="row between"><h2>Estado del negocio</h2><select id="dashboardRestaurantSelect" style="width:auto;min-width:220px" onchange="changeDashboardRestaurant(this.value)"></select></div><div id="businessStatus" class="list"></div></div>
 <div class="card span12"><h2>Accesos rápidos</h2><div class="row" style="flex-wrap:wrap"><button class="ghost dashGo" type="button" onclick="showTab('products')">Gestionar productos</button><button class="ghost dashGo" type="button" onclick="showTab('categories')">Categorías</button><button class="ghost dashGo" type="button" onclick="showTab('settings')">Configurar negocio</button></div></div>
 </div></section>
 
@@ -333,7 +338,7 @@ async function returnToAdminPanel(){
   showTab("restaurants");window.scrollTo({top:0,behavior:"smooth"});toast("Volviste al panel administrador");
 }
 function subscriptionInfo(r){const now=Date.now(),end=r.subscription_expires_at?new Date(r.subscription_expires_at).getTime():now;const days=Math.max(0,Math.ceil((end-now)/86400000));let status=r.subscription_status||"trial";if((status==="trial"||status==="active")&&end<now)status="expired";const names={trial:"Prueba gratis",active:"Activa",expired:"Vencida",suspended:"Suspendida"};return {status,days,label:status==="trial"?names[status]+" · "+days+" días":names[status]+(status==="active"?" · "+days+" días":"")}}
-async function loadSubscriptionPlans(){let q=sb.from("subscription_plans").select("*").order("amount",{ascending:true});if(!isSuperAdmin||adminRestaurantMode)q=q.eq("active",true);const {data,error}=await q;if(error)return toast(error.message);subscriptionPlans=data||[];if(isSuperAdmin&&!adminRestaurantMode)renderSubscriptionPlans();else renderRestaurantPlans()}
+async function loadSubscriptionPlans(){let q=sb.from("subscription_plans").select("*").order("amount",{ascending:true});if(!isSuperAdmin||adminRestaurantMode)q=q.eq("active",true);const {data,error}=await q;if(error)return toast(error.message);subscriptionPlans=data||[];if(isSuperAdmin&&!adminRestaurantMode)renderSubscriptionPlans();else renderRestaurantPlans();renderAdminMetrics()}
 function renderRestaurantPlans(){if(!window.restaurantPlanList)return;restaurantPlanList.innerHTML=subscriptionPlans.map(p=>`<div class="item"><div class="row between"><div><h3>${esc(p.name)}</h3><div class="price">${money(p.amount)}</div><div class="mut">${p.days} días de servicio</div></div><button class="primary" onclick="paySubscriptionPlan(${p.id})">Pagar</button></div></div>`).join("")||"<p class='mut'>No hay planes disponibles en este momento.</p>"}
 async function verifyRestaurantSubscriptionMercadoPago(){const box=document.getElementById("restaurantSubscriptionMpStatus");if(!box)return;box.textContent="Verificando conexión…";try{const {data:{session}}=await sb.auth.getSession();if(!session?.access_token){box.textContent="❌ Sesión vencida. Vuelve a iniciar sesión.";return}const res=await fetch(SB_URL+"/functions/v1/verify-subscription-mercadopago",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+session.access_token}});const data=await res.json();box.textContent=data.ok?"✅ "+(data.message||"Mercado Pago está funcionando correctamente"):"❌ "+(data.message||data.error||"No se pudo verificar Mercado Pago")}catch(e){box.textContent="❌ No se pudo verificar la conexión."}}
 async function paySubscriptionPlan(id){const p=subscriptionPlans.find(x=>x.id===id);if(!p)return;toast("Preparando pago de "+p.name+" con Mercado Pago…");try{const {data:{session}}=await sb.auth.getSession();if(!session?.access_token)return toast("Tu sesión venció. Vuelve a iniciar sesión.");const res=await fetch(SB_URL+"/functions/v1/create-subscription-payment",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({plan_id:p.id,restaurant_id:currentRestaurant})});const data=await res.json();if(!res.ok||!data?.init_point)return toast(data?.error||"No se pudo iniciar el pago");window.location.assign(data.init_point)}catch(e){toast("No se pudo conectar con Mercado Pago: "+e.message)}}
@@ -379,12 +384,21 @@ function resetRestaurantColors(){rcolorPrimary.value="#ffc21a";rcolorSecondary.v
 function clearRestaurant(){rid.value="";rname.value="";rslug.value="";rdomain.value="";rwa.value="";raddr.value="";resetRestaurantColors();rlogo.value="";rlogoPreview.hidden=true;rlogoFile.value=""}
 async function selectRestaurant(id){currentRestaurant=id;await loadRestaurants();await Promise.all([loadCategories(),loadProducts()]);renderRestaurantContent();toast("Restaurante seleccionado")}
 async function deleteRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;if(!confirm("¿Eliminar "+r.name+"? También se eliminarán sus categorías y productos."))return;const {error}=await sb.from("restaurants").delete().eq("id",id);if(error)return toast(error.message);if(currentRestaurant===id)currentRestaurant=null;await loadRestaurants();await Promise.all([loadCategories(),loadProducts()]);renderRestaurantContent();toast("Restaurante eliminado")}
-function renderRestaurantContent(){const r=restaurants.find(x=>x.id===currentRestaurant);renderSubscriptionBanner(r);renderBusinessStatus(r);if(document.getElementById("selectedRestaurantTitle"))selectedRestaurantTitle.textContent=r?"Contenido de "+r.name:"Contenido del restaurante";if(document.getElementById("restaurantCategoryPreview"))restaurantCategoryPreview.innerHTML=categories.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="mut">${esc(x.slug)}</div></div><div class="actions"><button class="ghost" onclick="goEditCategory(${x.id})">Editar</button><button class="danger" onclick="deleteCategory(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin categorías.</p>";if(document.getElementById("restaurantProductPreview"))restaurantProductPreview.innerHTML=products.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="price">${money(x.price)}</div></div><div class="actions"><button class="ghost" onclick="goEditProduct(${x.id})">Editar</button><button class="danger" onclick="deleteProduct(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin productos.</p>"}
+function renderRestaurantContent(){const r=restaurants.find(x=>x.id===currentRestaurant);renderSubscriptionBanner(r);renderBusinessStatus(r);renderAdminMetrics();if(document.getElementById("selectedRestaurantTitle"))selectedRestaurantTitle.textContent=r?"Contenido de "+r.name:"Contenido del restaurante";if(document.getElementById("restaurantCategoryPreview"))restaurantCategoryPreview.innerHTML=categories.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="mut">${esc(x.slug)}</div></div><div class="actions"><button class="ghost" onclick="goEditCategory(${x.id})">Editar</button><button class="danger" onclick="deleteCategory(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin categorías.</p>";if(document.getElementById("restaurantProductPreview"))restaurantProductPreview.innerHTML=products.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="price">${money(x.price)}</div></div><div class="actions"><button class="ghost" onclick="goEditProduct(${x.id})">Editar</button><button class="danger" onclick="deleteProduct(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin productos.</p>"}
 async function changeDashboardRestaurant(id){
  const n=Number(id);if(!n||n===Number(currentRestaurant))return;
  currentRestaurant=n;
  await Promise.all([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);
  renderRestaurantContent();
+}
+function renderAdminMetrics(){
+ const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=String(v??0)};
+ set("metricRestaurants",restaurants.length);
+ set("metricActiveSubscriptions",restaurants.filter(r=>{const s=subscriptionInfo(r);return s.status==="active"||s.status==="trial"}).length);
+ set("metricPlans",subscriptionPlans.filter(p=>p.active!==false).length);
+ set("metricProducts",products.length);
+ set("metricCategories",categories.length);
+ set("metricOrders",orders.length);
 }
 function renderBusinessStatus(r){
  const el=document.getElementById("businessStatus");if(!el)return;
@@ -572,7 +586,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.0.6</footer><script>
+</script><footer class="admin-version">Versión v2.0.7</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
