@@ -209,7 +209,7 @@ function bindRestaurantMpButtons(){const s=document.getElementById("saveRestaura
 async function loadRestaurantMercadoPago(){if(!currentRestaurant||isSuperAdmin)return;const {data,error}=await sb.from("restaurants").select("mercadopago_public_key").eq("id",currentRestaurant).single();if(error)return;restaurantMpPublicKey.value=data?.mercadopago_public_key||"";restaurantMpStatus.textContent=data?.mercadopago_public_key?"✅ Public Key guardada. El Access Token se administra de forma privada en Supabase.":"Mercado Pago aún no configurado."}
 async function saveRestaurantMercadoPago(){if(!currentRestaurant)return toast("No hay restaurante seleccionado");const key=restaurantMpPublicKey.value.trim(),token=restaurantMpAccessToken.value.trim();if(!key||!token)return toast("Ingresa Public Key y Access Token");restaurantMpStatus.textContent="Verificando credenciales…";const {error:ke}=await sb.from("restaurants").update({mercadopago_public_key:key}).eq("id",currentRestaurant);if(ke)return toast(ke.message);const {data,error}=await sb.functions.invoke("restaurant-save-mp-token",{body:{restaurant_id:currentRestaurant,access_token:token}});if(error||data?.error){restaurantMpStatus.textContent="❌ "+(data?.error||error.message);return}restaurantMpAccessToken.value="";restaurantMpStatus.textContent="✅ Mercado Pago configurado correctamente.";toast("Credenciales guardadas")}
 async function verifyRestaurantMercadoPago(){if(!currentRestaurant)return toast("No hay restaurante seleccionado");const box=document.getElementById("restaurantMpStatus");if(box)box.textContent="Verificando tus credenciales con Mercado Pago…";try{const {data:{session}}=await sb.auth.getSession();if(!session?.access_token){if(box)box.textContent="❌ Sesión vencida.";return}const res=await fetch(SB_URL+"/functions/v1/verify-restaurant-mercadopago",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({restaurant_id:currentRestaurant})});const data=await res.json();if(box)box.textContent=data.ok?"✅ Tus credenciales de Mercado Pago están funcionando correctamente.":"❌ "+(data.error||"Las credenciales no son válidas.");}catch(e){if(box)box.textContent="❌ No se pudo verificar Mercado Pago."}}
-async function logout(){await sb.auth.signOut();location.reload()}
+async function logout(){await sb.auth.signOut();window.location.replace("./")}
 async function enter(user){
   const msg=document.getElementById("loginMsg");
   try{
@@ -565,4 +565,4 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v1.0.5</div></body></html>
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v1.0.6</div></body></html>
