@@ -312,7 +312,7 @@ async function enter(user){
   }catch(e){msg.textContent=e.message||"No se pudo abrir el panel."}
 }
 async function restoreSession(){try{const {data,error}=await sb.auth.getSession();if(error)throw error;if(data.session){await enter(data.session.user)}else{document.getElementById("login").classList.remove("hidden")}}catch(e){document.getElementById("login").classList.remove("hidden");document.getElementById("loginMsg").textContent=e.message||"No se pudo validar la sesión."}finally{document.body.classList.remove("auth-loading")}}restoreSession();
-document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById(b.dataset.tab)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){await refreshAll()}else if(b.dataset.tab==="orders"&&currentRestaurant){await loadOrders()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById(b.dataset.tab)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){await refreshAll();await loadAdminDashboardMetrics()}else if(b.dataset.tab==="orders"&&currentRestaurant){await loadOrders()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
 async function refreshAll(){
  bindRestaurantMpButtons();
  try{await loadRestaurants()}catch(e){console.error("Restaurantes",e)}
@@ -325,7 +325,7 @@ async function refreshAll(){
  results.forEach((r,i)=>{if(r.status==="rejected")console.error("Carga "+jobs[i][0],r.reason)});
  if(!isSuperAdmin){try{await loadRestaurantMercadoPago()}catch(e){console.error("Mercado Pago",e)}}
  renderRestaurantContent();
- renderAdminMetrics();
+ await loadAdminDashboardMetrics();
 }
 async function loadRestaurants(){let rq=sb.from("restaurants").select("*").order("created_at");if(!isSuperAdmin&&currentRole!=="manager"){const {data:m}=await sb.from("restaurant_staff").select("restaurant_id").eq("active",true);rq=rq.in("id",(m||[]).map(x=>x.restaurant_id));}const {data,error}=await rq;if(error)return toast(error.message);restaurants=data||[]; if(window.adminMpRestaurant){adminMpRestaurant.innerHTML=restaurants.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");}if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;if((!isSuperAdmin||adminRestaurantMode)&&currentRestaurant){const bannerRestaurant=restaurants.find(r=>Number(r.id)===Number(currentRestaurant));if(bannerRestaurant)renderSubscriptionBanner(bannerRestaurant);}restaurantList.innerHTML=restaurants.map(r=>{const s=subscriptionInfo(r);return `<div class="item"><div class="row between"><div><h3>${esc(r.name)}</h3><div class="mut">Link: <a style="color:#ffb703" target="_blank" href="https://menu.yummypro.online/?r=${encodeURIComponent(r.slug)}">?r=${esc(r.slug)}</a></div><div class="mut">${r.custom_domain?esc(r.custom_domain):"Sin dominio propio"}</div><div class="pill subscription-${s.status}">${s.label}</div></div><div class="actions"><button class="primary" onclick="viewRestaurant(${r.id})">Ver restaurante</button><button class="ghost" onclick="editRestaurant(${r.id})">Editar</button><button class="danger" onclick="deleteRestaurant(${r.id})">Eliminar</button><button class="primary" onclick="manageRestaurantContent(${r.id})">Administrar contenido</button>${isSuperAdmin?`<button class="ghost" onclick="openRestaurantPanel(${r.id})">Panel</button>`:""}</div></div></div>`}).join("")||"<p class='mut'>Sin restaurantes.</p>";renderSubscriptions();renderQrPanel()}
 function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;const url=new URL("/", "https://menu.yummypro.online");url.searchParams.set("r",r.slug);window.open(url.toString(),"_blank")}async function openRestaurantPanel(id){
@@ -403,6 +403,16 @@ async function changeDashboardRestaurant(id){
  currentRestaurant=n;
  await Promise.all([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);
  renderRestaurantContent();
+}
+async function loadAdminDashboardMetrics(){
+ if(!isSuperAdmin)return renderAdminMetrics();
+ const {data,error}=await sb.rpc("admin_dashboard_metrics");
+ if(error){console.error("Métricas administrativas",error);return toast("No se pudieron cargar las métricas")}
+ const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=String(v??0)};
+ set("metricRestaurants",data?.restaurants);set("metricActiveSubscriptions",data?.active_subscriptions);set("metricPlans",data?.plans);set("metricProducts",data?.products);set("metricCategories",data?.categories);set("metricOrders",data?.orders);
+ const sel=document.getElementById("dashboardRestaurantSelect"),opts=Array.isArray(data?.restaurant_options)?data.restaurant_options:[];
+ if(sel){sel.innerHTML=opts.map(x=>'<option value="'+x.id+'" '+(Number(x.id)===Number(currentRestaurant)?'selected':'')+'>'+esc(x.name)+'</option>').join("");sel.style.display=opts.length?"":"none";}
+ if(!currentRestaurant&&opts.length)currentRestaurant=Number(opts[0].id);
 }
 function renderAdminMetrics(){
  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=String(v??0)};
@@ -599,7 +609,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.0.8</footer><script>
+</script><footer class="admin-version">Versión v2.0.9</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
