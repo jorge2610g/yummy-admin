@@ -471,16 +471,15 @@ function clearRestaurant(){rid.value="";rname.value="";rslug.value="";rdomain.va
 async function selectRestaurant(id){currentRestaurant=id;await loadRestaurants();await Promise.all([loadCategories(),loadProducts()]);renderRestaurantContent();toast("Restaurante seleccionado")}
 async function deleteRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;if(!confirm("¿Eliminar "+r.name+"? También se eliminarán sus categorías y productos."))return;const {error}=await sb.from("restaurants").delete().eq("id",id);if(error)return toast(error.message);if(currentRestaurant===id)currentRestaurant=null;await loadRestaurants();await Promise.all([loadCategories(),loadProducts()]);renderRestaurantContent();toast("Restaurante eliminado")}
 function renderRestaurantContent(){const r=restaurants.find(x=>Number(x.id)===Number(currentRestaurant));renderSubscriptionBanner(r);renderBusinessStatus(r);if(!isSuperAdmin)renderAdminMetrics();if(document.getElementById("selectedRestaurantTitle"))selectedRestaurantTitle.textContent=r?"Contenido de "+r.name:"Contenido del restaurante";if(document.getElementById("restaurantCategoryPreview"))restaurantCategoryPreview.innerHTML=categories.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="mut">${esc(x.slug)}</div></div><div class="actions"><button class="ghost" onclick="goEditCategory(${x.id})">Editar</button><button class="danger" onclick="deleteCategory(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin categorías.</p>";if(document.getElementById("restaurantProductPreview"))restaurantProductPreview.innerHTML=products.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="price">${money(x.price)}</div></div><div class="actions"><button class="ghost" onclick="goEditProduct(${x.id})">Editar</button><button class="danger" onclick="deleteProduct(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin productos.</p>"}
+let dashboardRestaurantScope="all";
 async function changeDashboardRestaurant(id){
- const n=Number(id);if(!n)return;
- currentRestaurant=n;
- const r=restaurants.find(x=>Number(x.id)===n);
- if(r)renderBusinessStatus(r);
- const results=await Promise.allSettled([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);
- results.forEach((x,i)=>{if(x.status==="rejected")console.error("Cambio de restaurante",i,x.reason)});
- renderBusinessStatus(restaurants.find(x=>Number(x.id)===n));
- const sel=document.getElementById("dashboardRestaurantSelect");
- if(sel)sel.value=String(n);
+ dashboardRestaurantScope=id||"all";
+ const n=dashboardRestaurantScope==="all"?null:Number(dashboardRestaurantScope);
+ if(n)currentRestaurant=n;
+ await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview()]);
+ if(n){await Promise.allSettled([loadCategories(),loadProducts(),loadSettings(),loadOrders()]);renderBusinessStatus(restaurants.find(x=>Number(x.id)===n))}
+ else renderBusinessStatus(null);
+ const sel=document.getElementById("dashboardRestaurantSelect");if(sel)sel.value=dashboardRestaurantScope;
 }
 async function loadAdminDashboardMetrics(expectedRefreshId){
  if(!isSuperAdmin)return renderAdminMetrics();
@@ -492,7 +491,7 @@ async function loadAdminDashboardMetrics(expectedRefreshId){
  adminGeneralMetrics=m;
  renderAdminMetrics();
  const sel=document.getElementById("dashboardRestaurantSelect");
- if(sel&&restaurants.length){sel.innerHTML=restaurants.map(r=>'<option value="'+r.id+'" '+(Number(r.id)===Number(currentRestaurant)?'selected':'')+'>'+esc(r.name)+'</option>').join("");sel.style.display="";}
+ if(sel&&restaurants.length){sel.innerHTML='<option value="all">Todos los restaurantes</option>'+restaurants.map(r=>'<option value="'+r.id+'">'+esc(r.name)+'</option>').join("");sel.value=dashboardRestaurantScope;sel.style.display="";}
 }
 function renderAdminMetrics(){
  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=String(v??0)};
@@ -510,8 +509,8 @@ function renderAdminMetrics(){
 function renderBusinessStatus(r){
  const el=document.getElementById("businessStatus");if(!el)return;
  const sel=document.getElementById("dashboardRestaurantSelect");
- if(sel&&restaurants.length){sel.innerHTML=restaurants.map(x=>'<option value="'+x.id+'" '+(Number(x.id)===Number(currentRestaurant)?'selected':'')+'>'+esc(x.name)+'</option>').join("");sel.style.display=restaurants.length?"":"none";}
- if(!r){el.innerHTML='<p class="mut">No hay restaurante seleccionado.</p>';return}
+ if(sel&&restaurants.length){sel.innerHTML='<option value="all">Todos los restaurantes</option>'+restaurants.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join("");sel.value=dashboardRestaurantScope;sel.style.display=restaurants.length?"":"none";}
+ if(!r){el.innerHTML='<div class="item"><b>Todos los restaurantes</b><div class="mut">Resumen conjunto de toda la plataforma.</div></div>';return}
  const sub=subscriptionInfo(r);
  const manual=r.manual_open_status||"schedule";
  const openLabel=manual==="open"?"🟢 Abierto manualmente":manual==="closed"?"🔴 Cerrado manualmente":"🕒 Según horario";
@@ -538,9 +537,11 @@ async function manageRestaurantContent(id){currentRestaurant=id;await loadRestau
 function openSelectedContent(){manageRestaurantContent(currentRestaurant)}
 async function loadAdminOverview(){
  if(!isSuperAdmin)return;
- const [oq,cq]=await Promise.all([sb.from("restaurant_orders").select("*").order("created_at",{ascending:false}).limit(500),sb.from("customer_profiles").select("user_id").limit(5000)]);if(oq.error)throw oq.error;
+ let oqb=sb.from("restaurant_orders").select("*").order("created_at",{ascending:false}).limit(500);
+ const rid=dashboardRestaurantScope==="all"?null:Number(dashboardRestaurantScope);if(rid)oqb=oqb.eq("restaurant_id",rid);
+ const [oq,cq]=await Promise.all([oqb,sb.from("customer_profiles").select("user_id").limit(5000)]);if(oq.error)throw oq.error;
  adminPlatformOrders=oq.data||[];const today=new Date().toDateString(),todayOrders=adminPlatformOrders.filter(o=>new Date(o.created_at).toDateString()===today&&o.status!=="cancelado"),sales=todayOrders.reduce((a,o)=>a+Number(o.total||0),0);
- const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};set("metricCustomers",(cq.data||[]).length);set("metricOrdersToday",todayOrders.length);set("metricSalesToday",money(sales));set("metricAverageTicket",money(todayOrders.length?sales/todayOrders.length:0));
+ const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};const customerIds=new Set(adminPlatformOrders.map(o=>o.customer_id).filter(Boolean));set("metricCustomers",rid?customerIds.size:(cq.data||[]).length);set("metricOrdersToday",todayOrders.length);set("metricSalesToday",money(sales));set("metricAverageTicket",money(todayOrders.length?sales/todayOrders.length:0));
  const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d)}const vals=days.map(d=>adminPlatformOrders.filter(o=>o.status!=="cancelado"&&new Date(o.created_at).toDateString()===d.toDateString()).reduce((a,o)=>a+Number(o.total||0),0)),max=Math.max(...vals,1),chart=document.getElementById("adminSalesChart");if(chart)chart.innerHTML=vals.map((v,i)=>`<div class="mini-bar"><b>${money(v)}</b><i style="height:${Math.max(5,Math.round(v/max*95))}px"></i><small>${days[i].toLocaleDateString("es",{weekday:"short"})}</small></div>`).join("");
  const recent=document.getElementById("adminRecentOrders");if(recent)recent.innerHTML=adminPlatformOrders.slice(0,5).map(o=>`<div class="item"><div class="row between"><div><b>#${esc(o.order_code||o.id)}</b><div class="mut">${esc(restaurantName(o.restaurant_id))} · ${esc(o.customer_name||"Cliente")}</div></div><div><b>${money(o.total||0)}</b><div class="mut">${esc(o.status||"recibido")}</div></div></div></div>`).join("")||"<p class='mut'>Sin pedidos recientes.</p>";
 }
@@ -710,7 +711,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.1.19</footer><script>
+</script><footer class="admin-version">Versión v2.1.20</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
