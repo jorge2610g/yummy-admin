@@ -35,10 +35,10 @@ jobs:
               return;
             }
             const body=['## Estado: '+report.overall.toUpperCase(),'Detectado: `'+report.checkedAt+'`','Commit: `'+report.commit+'`','','| Servicio | Estado | HTTP | Latencia | Detalle |','|---|---:|---:|---:|---|',...affected.map(x=>`| ${x.name} | ${x.level} | ${x.httpStatus} | ${x.latencyMs} ms | ${x.message} |`),'','[Ver ejecución]('+process.env.GITHUB_SERVER_URL+'/'+process.env.GITHUB_REPOSITORY+'/actions/runs/'+process.env.GITHUB_RUN_ID+')'].join('\n');
-            if(current)await github.rest.issues.createComment({...context.repo,issue_number:current.number,body});
+            if(current)await github.rest.issues.update({...context.repo,issue_number:current.number,body});
             else await github.rest.issues.create({...context.repo,title,body,labels:['monitor']});
       - name: Alertar por WhatsApp
-        if: steps.health.outcome == 'failure'
+        if: always()
         continue-on-error: true
         run: node monitor/send-whatsapp.mjs
         env:
