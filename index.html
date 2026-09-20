@@ -451,7 +451,7 @@ async function loadStaff(){
  if(list)list.innerHTML="<p class='mut'>Actualizando usuarios…</p>";
  const {data,error}=await sb.from("restaurant_staff").select("*").order("created_at");
  if(error){if(list)list.innerHTML="<p class='mut'>No se pudieron cargar los usuarios.</p>";return toast(error.message)}
- staff=data||[];
+ staff=data||[];const scoped=selectedAdminRestaurant();if(isSuperAdmin&&scoped)staff=staff.filter(s=>Number(s.restaurant_id)===Number(scoped));
  if(restaurantSelect)restaurantSelect.innerHTML=restaurants.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");
  if(list)list.innerHTML=staff.map(s=>{const r=restaurants.find(x=>x.id===s.restaurant_id);return `<div class="item row between"><div><b>${esc(s.email)}</b><div class="mut">${esc(r?.name||"Restaurante")} · ${esc(s.role)}</div><div class="mut">${Object.entries(s.permissions||{}).filter(([k,v])=>v).map(([k])=>({products:"Productos",categories:"Categorías",orders:"Pedidos",business:"Negocio"}[k]||k)).join(" · ")||"Sin permisos"}</div></div><div class="actions"><button type="button" class="ghost" onclick="editStaff(${s.id})">Editar acceso</button><button type="button" class="danger" onclick="removeStaff(${s.id})">Quitar acceso</button></div></div>`}).join("")||"<p class='mut'>Sin usuarios asignados.</p>";
 
@@ -526,11 +526,11 @@ let subscriptionCountdownTimer=null;
 function formatSubscriptionCountdown(end,status){if(status==="expired")return "00 días · 00:00:00";if(status==="suspended")return "Suscripción suspendida";const ms=Math.max(0,end-Date.now()),days=Math.floor(ms/86400000),hours=Math.floor(ms%86400000/3600000),minutes=Math.floor(ms%3600000/60000),seconds=Math.floor(ms%60000/1000),pad=n=>String(n).padStart(2,"0");return pad(days)+" días · "+pad(hours)+":"+pad(minutes)+":"+pad(seconds)}
 function startSubscriptionCountdown(r,status){if(subscriptionCountdownTimer){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null}const el=document.getElementById("subscriptionCountdown");if(!el||!r?.subscription_expires_at||status==="suspended")return;const end=new Date(r.subscription_expires_at).getTime();const tick=()=>{const current=document.getElementById("subscriptionCountdown");if(!current){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null;return}const expired=end<=Date.now();current.textContent=expired?"00 días · 00:00:00":formatSubscriptionCountdown(end,status);if(expired){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null;current.previousElementSibling&&(current.previousElementSibling.textContent="Tiempo restante");}};tick();subscriptionCountdownTimer=setInterval(tick,1000)}
 function renderSubscriptionBanner(r){if(subscriptionCountdownTimer){clearInterval(subscriptionCountdownTimer);subscriptionCountdownTimer=null}const el=document.getElementById("subscriptionBanner");if(isSuperAdmin&&!adminRestaurantMode){if(el)el.style.display="none";return;}if(!el||!r){if(el)el.style.display="none";return}const s=subscriptionInfo(r);el.style.display="block";const msg=s.status==="trial"?"🎁 Prueba gratuita":s.status==="active"?"✅ Suscripción activa":s.status==="expired"?"⚠️ Suscripción vencida":"⛔ Suscripción suspendida";const countdown=(s.status==="trial"||s.status==="active")&&r.subscription_expires_at?"<div style='margin-top:7px'><span class='mut'>Tiempo restante</span><div id='subscriptionCountdown' style='font-size:20px;font-weight:900;letter-spacing:.4px;margin-top:2px'>Calculando…</div></div>":"";el.innerHTML="<div class='row between'><div><b>"+msg+"</b>"+countdown+"<div class='mut'>"+esc(r.subscription_plan||"Prueba 30 días")+(r.subscription_expires_at?" · vence "+new Date(r.subscription_expires_at).toLocaleString("es-CL"):"")+"</div></div>"+((isSuperAdmin||currentRole==="manager")?"<button class='ghost' onclick=showTab('subscriptions')>Gestionar</button>":"")+"</div>";startSubscriptionCountdown(r,s.status)}
-const scopedAdminTabs=new Set(["orders","customers","kitchenAdmin","financeAdmin","inventoryAdmin","promotionsAdmin","reviewsAdmin","products","categories","qr"]);
+const scopedAdminTabs=new Set(["users","orders","customers","kitchenAdmin","financeAdmin","inventoryAdmin","promotionsAdmin","reviewsAdmin","products","categories","qr"]);
 function selectedAdminRestaurant(){const v=document.getElementById("adminRestaurantScope")?.value||"all";return v==="all"?null:Number(v)}
 function syncAdminRestaurantScope(){const s=document.getElementById("adminRestaurantScope");if(!s)return;const keep=s.value||"all";s.innerHTML='<option value="all">Todos los restaurantes</option>'+restaurants.map(r=>'<option value="'+r.id+'">'+esc(r.name)+'</option>').join("");s.value=[...s.options].some(o=>o.value===keep)?keep:"all"}
 async function changeAdminRestaurantScope(v){if(v!=="all")currentRestaurant=Number(v);await refreshCurrentScopedTab()}
-async function refreshCurrentScopedTab(){const name=document.querySelector(".tab.active")?.dataset.tab;if(!name)return;const rid=selectedAdminRestaurant();if(rid)currentRestaurant=rid;if(name==="orders")await loadOrders();else if(name==="customers")await loadAdminCustomers();else if(name==="kitchenAdmin")await loadAdminKitchen();else if(name==="financeAdmin")await loadAdminFinance();else if(name==="inventoryAdmin")await loadAdminInventory();else if(name==="promotionsAdmin")await loadAdminPromotions();else if(name==="reviewsAdmin")await loadAdminReviews();else if(name==="products")await loadProducts();else if(name==="categories")await loadCategories();else if(name==="qr")renderQrPanel()}
+async function refreshCurrentScopedTab(){const name=document.querySelector(".tab.active")?.dataset.tab;if(!name)return;const rid=selectedAdminRestaurant();if(rid)currentRestaurant=rid;if(name==="orders")await loadOrders();else if(name==="customers")await loadAdminCustomers();else if(name==="kitchenAdmin")await loadAdminKitchen();else if(name==="financeAdmin")await loadAdminFinance();else if(name==="inventoryAdmin")await loadAdminInventory();else if(name==="promotionsAdmin")await loadAdminPromotions();else if(name==="reviewsAdmin")await loadAdminReviews();else if(name==="products")await loadProducts();else if(name==="categories")await loadCategories();else if(name==="qr")renderQrPanel();else if(name==="users")await loadStaff()}
 function showTab(name){const bar=document.getElementById("adminRestaurantScopeBar");if(bar)bar.style.display=isSuperAdmin&&scopedAdminTabs.has(name)?"":"none";syncAdminRestaurantScope();const b=document.querySelector('.tab[data-tab="'+name+'"]');if(b)b.click()}
 function goEditCategory(id){showTab("categories");editCategory(id)}
 function goEditProduct(id){showTab("products");editProduct(id)}
@@ -638,7 +638,39 @@ function printOrderCommand(id){
  const notes=o.notes||o.note||o.customer_notes||o.observations||"";
  const phone=o.customer_phone||o.phone||"";
  const payment=o.payment_method||"";
- const html='<!doctype html><html><head><meta charset="utf-8"><title>Comanda '+e(o.order_code||o.id)+'</title><style>@page{margin:4mm}body{font-family:Arial,sans-serif;width:72mm;max-width:100%;margin:0 auto;color:#000;font-size:12px}h1{text-align:center;font-size:18px;margin:0 0 4px}.center{text-align:center}.sep{border-top:1px dashed #000;margin:8px 0}.line{display:flex;justify-content:space-between;gap:8px;margin:5px 0}.line span{flex:1}.total{font-size:16px;font-weight:700}.label{font-weight:700;margin-top:5px}@media print{button{display:none}body{width:72mm}}button{width:100%;padding:10px;margin:12px 0}</style></head><body><h1>'+e(r.name)+'</h1><div class="center">'+e(r.address||"")+'<br>'+e(r.whatsapp||"")+'</div><div class="sep"></div><b>PEDIDO #'+e(o.order_code||o.id)+'</b><div>'+e(new Date(o.created_at).toLocaleString("es-CL"))+'</div><div class="label">Cliente</div><div>'+e(o.customer_name||"Sin nombre")+(phone?" · "+e(phone):"")+'</div><div class="label">'+e(o.order_type||"Pedido")+'</div><div>'+e(address)+'</div><div class="sep"></div>'+itemRows+'<div class="sep"></div><div class="line total"><span>TOTAL</span><span>'+e(money(o.total||0))+'</span></div>'+(payment?'<div><b>Pago:</b> '+e(payment)+'</div>':"")+(notes?'<div class="sep"></div><div><b>Aclaraciones:</b><br>'+e(notes)+'</div>':"")+'<div class="sep"></div><div class="center">Comanda · '+e(r.name)+'</div><button onclick="window.print()">Imprimir</button><script>setTimeout(()=>window.print(),250)<\/script></body></html>';
+ const html='<!doctype html><html><head><meta charset="utf-8"><title>Comanda '+e(o.order_code||o.id)+'</title><style>@page{margin:4mm}body{font-family:Arial,sans-serif;width:72mm;max-width:100%;margin:0 auto;color:#000;font-size:12px}h1{text-align:center;font-size:18px;margin:0 0 4px}.center{text-align:center}.sep{border-top:1px dashed #000;margin:8px 0}.line{display:flex;justify-content:space-between;gap:8px;margin:5px 0}.line span{flex:1}.total{font-size:16px;font-weight:700}.label{font-weight:700;margin-top:5px}@media print{button{display:none}body{width:72mm}}button{width:100%;padding:10px;margin:12px 0}</style></head><body><h1>'+e(r.name)+'</h1><div class="center">'+e(r.address||"")+'<br>'+e(r.whatsapp||"")+'</div><div class="sep"></div><b>PEDIDO #'+e(o.order_code||o.id)+'</b><div>'+e(new Date(o.created_at).toLocaleString("es-CL"))+'</div><div class="label">Cliente</div><div>'+e(o.customer_name||"Sin nombre")+(phone?" · "+e(phone):"")+'</div><div class="label">'+e(o.order_type||"Pedido")+'</div><div>'+e(address)+'</div><div class="sep"></div>'+itemRows+'<div class="sep"></div><div class="line total"><span>TOTAL</span><span>'+e(money(o.total||0))+'</span></div>'+(payment?'<div><b>Pago:</b> '+e(payment)+'</div>':"")+(notes?'<div class="sep"></div><div><b>Aclaraciones:</b><br>'+e(notes)+'</div>':"")+'<div class="sep"></div><div class="center">Comanda · '+e(r.name)+'</div><button onclick="window.print()">Imprimir</button><script>setTimeout(()=>window.print(),250)<\/script><script id="admin-scope-nav-fix-v2116">
+async function activateAdminTab(tab){
+ const name=tab?.dataset?.tab;if(!name)return;
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+ document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+ tab.classList.add("active");document.getElementById(name)?.classList.add("active");
+ const bar=document.getElementById("adminRestaurantScopeBar");
+ if(bar)bar.style.display=isSuperAdmin&&scopedAdminTabs.has(name)?"":"none";
+ syncAdminRestaurantScope();closeAdminSideMenu?.();
+ if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;
+ try{
+  if(name==="dashboard")await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview()]);
+  else if(name==="restaurants")await loadRestaurants();
+  else if(name==="subscriptions")await loadSubscriptionPlans();
+  else if(name==="users")await loadStaff();
+  else if(name==="orders")await loadOrders();
+  else if(name==="customers")await loadAdminCustomers();
+  else if(name==="kitchenAdmin")await loadAdminKitchen();
+  else if(name==="financeAdmin")await loadAdminFinance();
+  else if(name==="inventoryAdmin")await loadAdminInventory();
+  else if(name==="promotionsAdmin")await loadAdminPromotions();
+  else if(name==="reviewsAdmin")await loadAdminReviews();
+  else if(name==="products")await loadProducts();
+  else if(name==="categories")await loadCategories();
+  else if(name==="qr")renderQrPanel();
+  else if(name==="settings")await loadSettings();
+ }catch(e){console.error("Error cargando sección",name,e);toast("No se pudo actualizar esta sección")}
+}
+document.addEventListener("click",function(e){
+ const tab=e.target.closest("#adminSideMenu .tab");if(!tab)return;
+ e.preventDefault();e.stopImmediatePropagation();activateAdminTab(tab);
+},true);
+</script></body></html>';
  const w=window.open("","_blank","width=420,height=720");if(!w)return toast("Permite ventanas emergentes para imprimir");w.document.open();w.document.write(html);w.document.close();
 }
 async function setOrderStatus(id,status){
@@ -710,7 +742,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.1.15</footer><script>
+</script><footer class="admin-version">Versión v2.1.16</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
