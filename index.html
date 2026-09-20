@@ -269,6 +269,9 @@ async function enter(user){
   const msg=document.getElementById("loginMsg");
   try{
     msg.textContent="Verificando permisos...";
+    const {data:accountRole,error:roleError}=await sb.rpc("current_account_role");
+    if(roleError){await sb.auth.signOut();msg.textContent="No se pudo verificar el tipo de cuenta.";return}
+    if(accountRole!=="admin"){await sb.auth.signOut();msg.textContent=accountRole==="restaurant"?"Esta cuenta pertenece a un restaurante. Ingresa desde el panel de restaurante.":accountRole==="customer"?"Esta cuenta es de cliente y no tiene acceso al panel de administración.":"Esta cuenta no tiene permisos de administrador.";return}
     const {data,error}=await sb.from("admin_users").select("user_id").eq("user_id",user.id).maybeSingle(); isSuperAdmin=!!data; let membership=[]; if(!isSuperAdmin){const mr=await sb.from("restaurant_staff").select("restaurant_id,role,permissions").eq("user_id",user.id).eq("active",true);if(mr.error){msg.textContent="Error al verificar restaurante: "+mr.error.message;return}membership=mr.data||[];
       if(!membership.length && user.user_metadata?.trial_restaurant_name){
         const cr=await sb.rpc("create_my_trial_restaurant",{
@@ -628,7 +631,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.0.15</footer><script>
+</script><footer class="admin-version">Versión v2.0.16</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
