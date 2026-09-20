@@ -473,7 +473,8 @@ async function deleteRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r
 function renderRestaurantContent(){const r=restaurants.find(x=>Number(x.id)===Number(currentRestaurant));renderSubscriptionBanner(r);renderBusinessStatus(r);if(!isSuperAdmin)renderAdminMetrics();if(document.getElementById("selectedRestaurantTitle"))selectedRestaurantTitle.textContent=r?"Contenido de "+r.name:"Contenido del restaurante";if(document.getElementById("restaurantCategoryPreview"))restaurantCategoryPreview.innerHTML=categories.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="mut">${esc(x.slug)}</div></div><div class="actions"><button class="ghost" onclick="goEditCategory(${x.id})">Editar</button><button class="danger" onclick="deleteCategory(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin categorías.</p>";if(document.getElementById("restaurantProductPreview"))restaurantProductPreview.innerHTML=products.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="price">${money(x.price)}</div></div><div class="actions"><button class="ghost" onclick="goEditProduct(${x.id})">Editar</button><button class="danger" onclick="deleteProduct(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin productos.</p>"}
 let dashboardRestaurantScope="all";
 async function changeDashboardRestaurant(id){
- dashboardRestaurantScope=id||"all";
+ dashboardRestaurantScope=String(id||"all");
+ const sel=document.getElementById("dashboardRestaurantSelect");if(sel)sel.value=dashboardRestaurantScope;
  const n=dashboardRestaurantScope==="all"?null:Number(dashboardRestaurantScope);
  if(n)currentRestaurant=n;
  await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview()]);
@@ -509,7 +510,8 @@ function renderAdminMetrics(){
 function renderBusinessStatus(r){
  const el=document.getElementById("businessStatus");if(!el)return;
  const sel=document.getElementById("dashboardRestaurantSelect");
- if(sel&&restaurants.length){sel.innerHTML='<option value="all">Todos los restaurantes</option>'+restaurants.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join("");sel.value=dashboardRestaurantScope;sel.style.display=restaurants.length?"":"none";}
+ if(sel&&restaurants.length&&sel.options.length!==restaurants.length+1){sel.innerHTML='<option value="all">Todos los restaurantes</option>'+restaurants.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join("");sel.style.display=restaurants.length?"":"none";}
+ if(sel)sel.value=dashboardRestaurantScope;
  if(!r){el.innerHTML='<div class="item"><b>Todos los restaurantes</b><div class="mut">Resumen conjunto de toda la plataforma.</div></div>';return}
  const sub=subscriptionInfo(r);
  const manual=r.manual_open_status||"schedule";
@@ -711,7 +713,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.1.20</footer><script>
+</script><footer class="admin-version">Versión v2.1.21</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
