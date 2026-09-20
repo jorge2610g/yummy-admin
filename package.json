@@ -1,1 +1,1 @@
-{"name":"yummy-admin-quality","private":true,"version":"1.0.0","scripts":{"check":"node tests/static-check.mjs","test":"playwright test"},"devDependencies":{"@playwright/test":"1.63.0"}}
+{"name":"yummy-admin-quality","private":true,"version":"1.0.0","scripts":{"check":"node tests/static-check.mjs && node tests/security-check.mjs","test":"playwright test","test:production":"playwright test --config monitor/playwright.production.config.js"},"devDependencies":{"@playwright/test":"1.63.0"}}
