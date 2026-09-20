@@ -638,39 +638,7 @@ function printOrderCommand(id){
  const notes=o.notes||o.note||o.customer_notes||o.observations||"";
  const phone=o.customer_phone||o.phone||"";
  const payment=o.payment_method||"";
- const html='<!doctype html><html><head><meta charset="utf-8"><title>Comanda '+e(o.order_code||o.id)+'</title><style>@page{margin:4mm}body{font-family:Arial,sans-serif;width:72mm;max-width:100%;margin:0 auto;color:#000;font-size:12px}h1{text-align:center;font-size:18px;margin:0 0 4px}.center{text-align:center}.sep{border-top:1px dashed #000;margin:8px 0}.line{display:flex;justify-content:space-between;gap:8px;margin:5px 0}.line span{flex:1}.total{font-size:16px;font-weight:700}.label{font-weight:700;margin-top:5px}@media print{button{display:none}body{width:72mm}}button{width:100%;padding:10px;margin:12px 0}</style></head><body><h1>'+e(r.name)+'</h1><div class="center">'+e(r.address||"")+'<br>'+e(r.whatsapp||"")+'</div><div class="sep"></div><b>PEDIDO #'+e(o.order_code||o.id)+'</b><div>'+e(new Date(o.created_at).toLocaleString("es-CL"))+'</div><div class="label">Cliente</div><div>'+e(o.customer_name||"Sin nombre")+(phone?" · "+e(phone):"")+'</div><div class="label">'+e(o.order_type||"Pedido")+'</div><div>'+e(address)+'</div><div class="sep"></div>'+itemRows+'<div class="sep"></div><div class="line total"><span>TOTAL</span><span>'+e(money(o.total||0))+'</span></div>'+(payment?'<div><b>Pago:</b> '+e(payment)+'</div>':"")+(notes?'<div class="sep"></div><div><b>Aclaraciones:</b><br>'+e(notes)+'</div>':"")+'<div class="sep"></div><div class="center">Comanda · '+e(r.name)+'</div><button onclick="window.print()">Imprimir</button><script>setTimeout(()=>window.print(),250)<\/script><script id="admin-scope-nav-fix-v2116">
-async function activateAdminTab(tab){
- const name=tab?.dataset?.tab;if(!name)return;
- document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
- document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
- tab.classList.add("active");document.getElementById(name)?.classList.add("active");
- const bar=document.getElementById("adminRestaurantScopeBar");
- if(bar)bar.style.display=isSuperAdmin&&scopedAdminTabs.has(name)?"":"none";
- syncAdminRestaurantScope();closeAdminSideMenu?.();
- if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;
- try{
-  if(name==="dashboard")await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview()]);
-  else if(name==="restaurants")await loadRestaurants();
-  else if(name==="subscriptions")await loadSubscriptionPlans();
-  else if(name==="users")await loadStaff();
-  else if(name==="orders")await loadOrders();
-  else if(name==="customers")await loadAdminCustomers();
-  else if(name==="kitchenAdmin")await loadAdminKitchen();
-  else if(name==="financeAdmin")await loadAdminFinance();
-  else if(name==="inventoryAdmin")await loadAdminInventory();
-  else if(name==="promotionsAdmin")await loadAdminPromotions();
-  else if(name==="reviewsAdmin")await loadAdminReviews();
-  else if(name==="products")await loadProducts();
-  else if(name==="categories")await loadCategories();
-  else if(name==="qr")renderQrPanel();
-  else if(name==="settings")await loadSettings();
- }catch(e){console.error("Error cargando sección",name,e);toast("No se pudo actualizar esta sección")}
-}
-document.addEventListener("click",function(e){
- const tab=e.target.closest("#adminSideMenu .tab");if(!tab)return;
- e.preventDefault();e.stopImmediatePropagation();activateAdminTab(tab);
-},true);
-</script></body></html>';
+ const html='<!doctype html><html><head><meta charset="utf-8"><title>Comanda '+e(o.order_code||o.id)+'</title><style>@page{margin:4mm}body{font-family:Arial,sans-serif;width:72mm;max-width:100%;margin:0 auto;color:#000;font-size:12px}h1{text-align:center;font-size:18px;margin:0 0 4px}.center{text-align:center}.sep{border-top:1px dashed #000;margin:8px 0}.line{display:flex;justify-content:space-between;gap:8px;margin:5px 0}.line span{flex:1}.total{font-size:16px;font-weight:700}.label{font-weight:700;margin-top:5px}@media print{button{display:none}body{width:72mm}}button{width:100%;padding:10px;margin:12px 0}</style></head><body><h1>'+e(r.name)+'</h1><div class="center">'+e(r.address||"")+'<br>'+e(r.whatsapp||"")+'</div><div class="sep"></div><b>PEDIDO #'+e(o.order_code||o.id)+'</b><div>'+e(new Date(o.created_at).toLocaleString("es-CL"))+'</div><div class="label">Cliente</div><div>'+e(o.customer_name||"Sin nombre")+(phone?" · "+e(phone):"")+'</div><div class="label">'+e(o.order_type||"Pedido")+'</div><div>'+e(address)+'</div><div class="sep"></div>'+itemRows+'<div class="sep"></div><div class="line total"><span>TOTAL</span><span>'+e(money(o.total||0))+'</span></div>'+(payment?'<div><b>Pago:</b> '+e(payment)+'</div>':"")+(notes?'<div class="sep"></div><div><b>Aclaraciones:</b><br>'+e(notes)+'</div>':"")+'<div class="sep"></div><div class="center">Comanda · '+e(r.name)+'</div><button onclick="window.print()">Imprimir</button><script>setTimeout(()=>window.print(),250)<\/script>';
  const w=window.open("","_blank","width=420,height=720");if(!w)return toast("Permite ventanas emergentes para imprimir");w.document.open();w.document.write(html);w.document.close();
 }
 async function setOrderStatus(id,status){
@@ -742,7 +710,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.1.16</footer><script>
+</script><footer class="admin-version">Versión v2.1.17</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -796,4 +764,33 @@ function openCategoryAdminModal(){clearCategory();openAdminFormModal("adminCateg
 function openUserAdminModal(){staffEmail.value="";staffPassword.value="";openAdminFormModal("adminUserModal")}
 function openRestaurantAdminModal(){clearRestaurant();openAdminFormModal("adminRestaurantModal")}
 function openPlanAdminModal(){editingSubscriptionPlanId=null;planName.value="";planAmount.value="";planDays.value="";setSelectedPlanModules([]);openAdminFormModal("adminPlanModal")}
+</script><script id="admin-scope-nav-fix-v2117">
+async function activateAdminTab(tab){
+ const name=tab?.dataset?.tab;if(!name)return;
+ document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+ document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+ tab.classList.add("active");document.getElementById(name)?.classList.add("active");
+ const bar=document.getElementById("adminRestaurantScopeBar");
+ if(bar)bar.style.display=isSuperAdmin&&scopedAdminTabs.has(name)?"":"none";
+ syncAdminRestaurantScope();closeAdminSideMenu?.();
+ if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;
+ try{
+  if(name==="dashboard")await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview()]);
+  else if(name==="restaurants")await loadRestaurants();
+  else if(name==="subscriptions")await loadSubscriptionPlans();
+  else if(name==="users")await loadStaff();
+  else if(name==="orders")await loadOrders();
+  else if(name==="customers")await loadAdminCustomers();
+  else if(name==="kitchenAdmin")await loadAdminKitchen();
+  else if(name==="financeAdmin")await loadAdminFinance();
+  else if(name==="inventoryAdmin")await loadAdminInventory();
+  else if(name==="promotionsAdmin")await loadAdminPromotions();
+  else if(name==="reviewsAdmin")await loadAdminReviews();
+  else if(name==="products")await loadProducts();
+  else if(name==="categories")await loadCategories();
+  else if(name==="qr")renderQrPanel();
+  else if(name==="settings")await loadSettings();
+ }catch(e){console.error("Error cargando sección",name,e);toast("No se pudo actualizar esta sección")}
+}
+document.addEventListener("click",function(e){const tab=e.target.closest("#adminSideMenu .tab");if(!tab)return;e.preventDefault();e.stopImmediatePropagation();activateAdminTab(tab)},true);
 </script></body></html>
