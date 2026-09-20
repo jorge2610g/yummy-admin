@@ -209,7 +209,7 @@ button{transition:transform .16s ease,box-shadow .16s ease,border-color .16s eas
 <section id="users" class="section"><div class="card"><div class="row between"><h2>Usuarios asignados</h2><div class="actions"><button class="primary" onclick="openUserAdminModal()">＋ Crear usuario</button><button class="ghost" onclick="loadStaff()">Actualizar</button></div></div><div id="staffList" class="list"></div></div></section><div id="adminUserModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('adminUserModal')"></div><div class="card admin-form-card"><div class="row between"><h2>Usuario de restaurante</h2><button class="ghost" type="button" onclick="closeAdminFormModal('adminUserModal')">✕</button></div><h2>Usuario de restaurante</h2><p class="mut">Crea una cuenta en Supabase y asígnala directamente a un restaurante.</p><label>Correo</label><input id="staffEmail" type="email" placeholder="usuario@restaurante.com"><label>Contraseña inicial</label><div class="row"><input id="staffPassword" type="password" minlength="8" placeholder="Mínimo 8 caracteres"><button type="button" class="ghost" aria-label="Mostrar contraseña" onclick="return togglePassword('staffPassword',this)">Ver</button></div><label>Restaurante</label><select id="staffRestaurant"></select><label>Rol</label><select id="staffRole"><option value="restaurant">Solo restaurante</option><option value="editor">Editor</option><option value="manager">Administrador</option></select><label>Permisos</label><div class="item"><label><input id="permProducts" type="checkbox" checked> Productos</label><label><input id="permCategories" type="checkbox" checked> Categorías</label><label><input id="permBusiness" type="checkbox"> Datos del negocio</label></div><button class="primary" style="margin-top:15px" onclick="createStaffUser()">Crear usuario y asignar</button></div></div>
 <section id="restaurants" class="section"><div class="card"><div class="row between"><h2>Mis restaurantes</h2><div class="actions"><button class="primary" onclick="openRestaurantAdminModal()">＋ Crear restaurante</button><button class="ghost" onclick="loadRestaurants()">Actualizar</button></div></div><div id="restaurantList" class="list"></div></div></section><div id="adminRestaurantModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('adminRestaurantModal')"></div><div class="card admin-form-card"><div class="row between"><h2>Restaurante</h2><button class="ghost" type="button" onclick="closeAdminFormModal('adminRestaurantModal')">✕</button></div><h2>Crear restaurante</h2><input id="rid" type="hidden"><label>Nombre</label><input id="rname" placeholder="Ej: Burger House"><label>Link / slug</label><input id="rslug" placeholder="burger-house"><label>Dominio propio</label><input id="rdomain" placeholder="menu.negocio.com"><label>WhatsApp</label><input id="rwa" placeholder="569..."><label>Dirección</label><input id="raddr"><label>Colores de la web</label><div class="three" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div><label>Principal</label><input id="rcolorPrimary" type="color" value="#ffc21a" style="height:46px;padding:4px"></div><div><label>Secundario</label><input id="rcolorSecondary" type="color" value="#1e1f24" style="height:46px;padding:4px"></div><div><label>Texto</label><input id="rcolorText" type="color" value="#1e1f24" style="height:46px;padding:4px"></div></div><button type="button" class="ghost" style="margin-top:10px" onclick="resetRestaurantColors()">Restablecer colores</button><label>Logo del restaurante</label><div class="uploadBox"><input id="rlogo" type="hidden"><input id="rlogoFile" type="file" accept="image/*" onchange="uploadRestaurantLogo(this)"><button type="button" class="ghost" onclick="rlogoFile.click()">📷 Elegir logo de la galería</button><img id="rlogoPreview" class="uploadPreview" hidden></div><div class="row" style="margin-top:15px"><button class="primary" onclick="saveRestaurant()">Guardar restaurante</button><button class="ghost" onclick="clearRestaurant()">Limpiar</button></div></div></div>
 <section id="dashboard" class="section active">
-<div class="dashboard-hero"><div><span class="eyebrow">CENTRO DE CONTROL</span><h2>Resumen del negocio</h2><p>Supervisa el rendimiento, el catálogo y el estado de tus restaurantes desde un solo lugar.</p></div><button class="ghost refresh-btn" onclick="refreshAll()">↻ Actualizar datos</button></div>
+<div class="dashboard-hero"><div><span class="eyebrow">CENTRO DE CONTROL</span><h2>Resumen del negocio</h2><p>Supervisa el rendimiento, el catálogo y el estado de tus restaurantes desde un solo lugar.</p></div><button class="ghost refresh-btn" id="refreshDashboardBtn" onclick="refreshAll()">↻ Actualizar datos</button></div>
 <div class="metric-grid">
 <article class="metric-card metric-blue"><div class="metric-icon">🏪</div><div><span>Restaurantes</span><strong id="metricRestaurants">0</strong><small>Negocios registrados</small></div></article>
 <article class="metric-card metric-green"><div class="metric-icon">✓</div><div><span>Suscripciones vigentes</span><strong id="metricActiveSubscriptions">0</strong><small>Activas y en prueba</small></div></article>
@@ -335,16 +335,25 @@ async function enter(user){
 }
 async function restoreSession(){try{const {data,error}=await sb.auth.getSession();if(error)throw error;if(data.session){await enter(data.session.user)}else{document.getElementById("login").classList.remove("hidden")}}catch(e){document.getElementById("login").classList.remove("hidden");document.getElementById("loginMsg").textContent=e.message||"No se pudo validar la sesión."}finally{document.body.classList.remove("auth-loading")}}restoreSession();
 document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById(b.dataset.tab)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){await loadAdminDashboardMetrics();if(currentRestaurant){await Promise.allSettled([loadCategories(),loadProducts(),loadOrders()]);renderBusinessStatus(restaurants.find(r=>Number(r.id)===Number(currentRestaurant)))}}else if(b.dataset.tab==="orders"&&currentRestaurant){await loadOrders()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
+let dashboardRefreshSequence=0;
+function setDashboardLoading(loading){
+ const btn=document.getElementById("refreshDashboardBtn");
+ if(btn){btn.disabled=loading;btn.setAttribute("aria-busy",String(loading));btn.textContent=loading?"↻ Actualizando…":"↻ Actualizar datos"}
+ if(isSuperAdmin&&loading){["metricRestaurants","metricActiveSubscriptions","metricPlans","metricProducts","metricCategories","metricOrders"].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent="—"})}
+}
 async function refreshAll(){
+ const refreshId=++dashboardRefreshSequence;
+ setDashboardLoading(true);
  bindRestaurantMpButtons();
- if(isSuperAdmin){
-   await loadAdminDashboardMetrics();
-   try{await loadRestaurants()}catch(e){console.error("Restaurantes",e)}
+ try{if(isSuperAdmin){
+   const base=await Promise.allSettled([loadRestaurants(),loadSubscriptionPlans(),loadStaff()]);
+   base.forEach((r,i)=>{if(r.status==="rejected")console.error("Carga base",i,r.reason)});
+   if(refreshId!==dashboardRefreshSequence)return;
    if(restaurants.length&&!currentRestaurant)currentRestaurant=restaurants[0].id;
-   try{await loadSubscriptionPlans()}catch(e){console.error("Planes",e)}
-   try{await loadStaff()}catch(e){console.error("Personal",e)}
    const detail=await Promise.allSettled([loadCategories(),loadProducts(),loadOrders()]);
    detail.forEach((r,i)=>{if(r.status==="rejected")console.error("Detalle métrica",i,r.reason)});
+   if(refreshId!==dashboardRefreshSequence)return;
+   await loadAdminDashboardMetrics(refreshId);
    renderBusinessStatus(restaurants.find(r=>Number(r.id)===Number(currentRestaurant)));
    return;
  }
@@ -357,6 +366,7 @@ async function refreshAll(){
  results.forEach((r,i)=>{if(r.status==="rejected")console.error("Carga "+jobs[i][0],r.reason)});
  try{await loadRestaurantMercadoPago()}catch(e){console.error("Mercado Pago",e)}
  renderRestaurantContent();
+ }finally{if(refreshId===dashboardRefreshSequence)setDashboardLoading(false)}
 }
 async function loadRestaurants(){let rq=sb.from("restaurants").select("*").order("created_at");if(!isSuperAdmin&&currentRole!=="manager"){const {data:m}=await sb.from("restaurant_staff").select("restaurant_id").eq("active",true);rq=rq.in("id",(m||[]).map(x=>x.restaurant_id));}const {data,error}=await rq;if(error)return toast(error.message);restaurants=data||[]; if(window.adminMpRestaurant){adminMpRestaurant.innerHTML=restaurants.map(r=>`<option value="${r.id}">${esc(r.name)}</option>`).join("");}if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;if((!isSuperAdmin||adminRestaurantMode)&&currentRestaurant){const bannerRestaurant=restaurants.find(r=>Number(r.id)===Number(currentRestaurant));if(bannerRestaurant)renderSubscriptionBanner(bannerRestaurant);}restaurantList.innerHTML=restaurants.map(r=>{const s=subscriptionInfo(r);return `<div class="item"><div class="row between"><div><h3>${esc(r.name)}</h3><div class="mut">Link: <a style="color:#ffb703" target="_blank" href="https://menu.yummypro.online/?r=${encodeURIComponent(r.slug)}">?r=${esc(r.slug)}</a></div><div class="mut">${r.custom_domain?esc(r.custom_domain):"Sin dominio propio"}</div><div class="pill subscription-${s.status}">${s.label}</div></div><div class="actions"><button class="primary" onclick="viewRestaurant(${r.id})">Ver restaurante</button><button class="ghost" onclick="editRestaurant(${r.id})">Editar</button><button class="danger" onclick="deleteRestaurant(${r.id})">Eliminar</button><button class="primary" onclick="manageRestaurantContent(${r.id})">Administrar contenido</button>${isSuperAdmin?`<button class="ghost" onclick="openRestaurantPanel(${r.id})">Panel</button>`:""}</div></div></div>`}).join("")||"<p class='mut'>Sin restaurantes.</p>";renderSubscriptions();renderQrPanel()}
 function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;const url=new URL("/", "https://menu.yummypro.online");url.searchParams.set("r",r.slug);window.open(url.toString(),"_blank")}async function openRestaurantPanel(id){
@@ -440,10 +450,11 @@ async function changeDashboardRestaurant(id){
  const sel=document.getElementById("dashboardRestaurantSelect");
  if(sel)sel.value=String(n);
 }
-async function loadAdminDashboardMetrics(){
+async function loadAdminDashboardMetrics(expectedRefreshId){
  if(!isSuperAdmin)return renderAdminMetrics();
  const {data,error}=await sb.rpc("admin_general_metrics");
  if(error){console.error("Métricas generales",error);return toast("No se pudieron cargar las métricas generales")}
+ if(expectedRefreshId&&expectedRefreshId!==dashboardRefreshSequence)return;
  const m=Array.isArray(data)?data[0]:data;
  if(!m)return;
  adminGeneralMetrics=m;
@@ -650,7 +661,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.1.0</footer><script>
+</script><footer class="admin-version">Versión v2.1.1</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
