@@ -1,6 +1,8 @@
 # Monitor de Express Delivery
 
-El workflow `Monitor de producción` comprueba cada cinco minutos cliente, restaurante, panel restaurante, administración, Supabase y la disponibilidad del servicio de pagos. Abre una única incidencia con la etiqueta `monitor`, añade eventos mientras persista el fallo y la cierra cuando el sistema se recupera.
+El workflow `Monitor de producción` comprueba cada cinco minutos cliente, restaurante, panel restaurante, administración, Supabase Data API, Auth, Storage y la disponibilidad del servicio de pagos. Abre una única incidencia con la etiqueta `monitor`, actualiza su estado sin generar spam y la cierra cuando el sistema se recupera.
+
+El workflow `Robot E2E de producción` recorre cada quince minutos el menú del cliente, productos, carrito, checkout y las pantallas de acceso. Cuando existen cuentas sintéticas también valida los accesos autenticados.
 
 ## Secretos opcionales
 
