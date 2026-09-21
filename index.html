@@ -406,11 +406,11 @@ function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;
   const target="https://web.yummypro.online/panel/?admin_preview="+encodeURIComponent(id)+"&tab="+encodeURIComponent(section);
   const w=window.open(target,"_blank");if(!w)return toast("Permite ventanas emergentes para abrir el panel");
   const panelOrigin="https://web.yummypro.online",payload={type:"YUMMY_ADMIN_PREVIEW",restaurant_id:id,tab:section,access_token:session.access_token,refresh_token:session.refresh_token};
-  let sent=false;
-  const send=()=>{if(sent||w.closed)return;sent=true;w.postMessage(payload,panelOrigin)};
-  const onReady=e=>{if(e.origin!==panelOrigin||e.source!==w||e.data?.type!=="YUMMY_ADMIN_PREVIEW_READY")return;send();window.removeEventListener("message",onReady)};
+  let readySent=false;
+  const send=()=>{if(w.closed)return;w.postMessage(payload,panelOrigin)};
+  const onReady=e=>{if(e.origin!==panelOrigin||e.source!==w||e.data?.type!=="YUMMY_ADMIN_PREVIEW_READY")return;readySent=true;send();window.removeEventListener("message",onReady)};
   window.addEventListener("message",onReady);
-  setTimeout(send,1200);
+  setTimeout(()=>{if(!readySent)send()},1200);
   setTimeout(()=>window.removeEventListener("message",onReady),10000);
 }
 async function returnToAdminPanel(){
