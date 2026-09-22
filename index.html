@@ -497,9 +497,33 @@ async function setSubscription(id,status){const r=restaurants.find(x=>x.id===id)
 const subscriptionModuleOptions=[["dashboard","Dashboard"],["products","Productos"],["categories","Categorías"],["qr","Código QR"],["table_qr","QR de Mesa"],["settings","Abrir/cerrar y configuración"],["orders","Pedidos"],["pos","Meseros / POS"],["cash","Caja"],["kitchen","Cocina"],["inventory","Inventario"],["staff","Personal"]];
 const trialSubscriptionModules=()=>{const p=subscriptionPlans.find(x=>x.is_default_trial===true);return Array.isArray(p?.modules)?p.modules:["dashboard","products","categories","qr","settings"]};
 function sameSubscriptionModules(a,b){const A=[...new Set(Array.isArray(a)?a:[])].sort(),B=[...new Set(Array.isArray(b)?b:[])].sort();return A.length===B.length&&A.every((x,i)=>x===B[i])}
+function localDateInputValue(value){
+ const d=value instanceof Date?value:new Date(value);
+ if(!d||Number.isNaN(d.getTime()))return "";
+ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
+ return y+"-"+m+"-"+day;
+}
+function localEndOfDayIso(dateValue){
+ const parts=String(dateValue||"").split("-").map(Number);
+ if(parts.length!==3||parts.some(x=>!Number.isFinite(x)))return null;
+ return new Date(parts[0],parts[1]-1,parts[2],23,59,59,999).toISOString();
+}
+function calendarDaysFromToday(dateValue){
+ const parts=String(dateValue||"").split("-").map(Number);
+ if(parts.length!==3||parts.some(x=>!Number.isFinite(x)))return 0;
+ const now=new Date();
+ const start=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate());
+ const end=Date.UTC(parts[0],parts[1]-1,parts[2]);
+ return Math.max(0,Math.round((end-start)/86400000));
+}
+function dateFromTodayPlusDays(days){
+ const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+Math.max(0,Number(days)||0));return localDateInputValue(d);
+}
 async function editSubscription(id){
  const r=restaurants.find(x=>Number(x.id)===Number(id));if(!r)return;
- subEditRestaurantId.value=r.id;subEditRestaurantName.textContent=r.name;subEditPrice.value=Number(r.subscription_price||0);subEditDays.value=subscriptionInfo(r).days;subEditExpiry.value=r.subscription_expires_at?new Date(r.subscription_expires_at).toISOString().slice(0,10):"";subEditNotes.value=r.subscription_notes||"";
+ subEditRestaurantId.value=r.id;subEditRestaurantName.textContent=r.name;subEditPrice.value=Number(r.subscription_price||0);subEditExpiry.value=r.subscription_expires_at?localDateInputValue(r.subscription_expires_at):"";subEditDays.value=subEditExpiry.value?calendarDaysFromToday(subEditExpiry.value):0;subEditNotes.value=r.subscription_notes||"";
+ subEditDays.onchange=()=>{const days=Math.max(0,Number(subEditDays.value)||0);subEditDays.value=days;subEditExpiry.value=dateFromTodayPlusDays(days)};
+ subEditExpiry.onchange=()=>{subEditDays.value=calendarDaysFromToday(subEditExpiry.value)};
  const defaultTrial=subscriptionPlans.find(x=>x.is_default_trial===true);
  subEditPlan.innerHTML=subscriptionPlans.map(p=>'<option value="'+p.id+'">'+esc(p.name)+(p.is_default_trial?' · 🎁 predeterminada':'')+' · '+Number(p.days||0)+' días · '+(p.is_default_trial?'Gratis':money(p.amount||0))+'</option>').join("");
  subEditPlan.value=r.subscription_plan_id||defaultTrial?.id||"";
@@ -539,14 +563,14 @@ function applySelectedPlanAccesses(){
  if(plan){
   subEditPrice.value=Number(plan.amount||0);
   subEditDays.value=Number(plan.days||30);
-  const d=new Date();d.setDate(d.getDate()+Number(plan.days||30));subEditExpiry.value=d.toISOString().slice(0,10)
+  subEditExpiry.value=dateFromTodayPlusDays(Number(plan.days||30))
  }else{subEditPrice.value=0}
 }
 async function saveRestaurantSubscriptionEdit(){
  const id=Number(subEditRestaurantId.value),r=restaurants.find(x=>Number(x.id)===id);if(!r)return;
  const planId=Number(subEditPlan.value||0);
  const modules=[...subEditModules.querySelectorAll('input[type="checkbox"]:checked')].map(x=>x.value);
- const expiry=subEditExpiry.value?new Date(subEditExpiry.value+"T23:59:59").toISOString():r.subscription_expires_at;
+ const expiry=subEditExpiry.value?localEndOfDayIso(subEditExpiry.value):r.subscription_expires_at;
  try{
   const {error}=await sb.rpc("admin_set_restaurant_subscription_access",{
    p_restaurant_id:id,
@@ -840,7 +864,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.2.6</footer><script>
+</script><footer class="admin-version">Versión v2.2.7</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -882,7 +906,7 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.2.6</div><script id="admin-drawer-js-v202">
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.2.7</div><script id="admin-drawer-js-v202">
 function toggleAdminSideMenu(){const m=document.getElementById("adminSideMenu"),b=document.getElementById("adminSideMenuBackdrop");if(!m)return;m.classList.toggle("open");if(b)b.classList.toggle("open",m.classList.contains("open"))}
 function closeAdminSideMenu(){document.getElementById("adminSideMenu")?.classList.remove("open");document.getElementById("adminSideMenuBackdrop")?.classList.remove("open")}
 document.addEventListener("click",function(e){const tab=e.target.closest("#adminSideMenu .tab");if(tab&&window.matchMedia("(max-width:800px)").matches)setTimeout(closeAdminSideMenu,0)});
