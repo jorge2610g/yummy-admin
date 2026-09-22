@@ -312,6 +312,103 @@ html[data-theme="light"] .product-modal-card::-webkit-scrollbar-thumb{background
  .section,.card{min-width:0!important;max-width:100%!important}
  table{max-width:100%!important}
 }
+</style><style id="yummypro-mobile-dashboard-compact-admin-v232">
+.mobile-dashboard-more{display:none}
+@media(max-width:600px){
+ #dashboard .dashboard-hero{margin:12px 0 10px!important;gap:10px!important}
+ #dashboard .dashboard-hero h2{font-size:24px!important;margin:2px 0 4px!important}
+ #dashboard .dashboard-hero p{font-size:12px!important;line-height:1.35!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ #dashboard .refresh-btn{min-height:40px!important;padding:8px 10px!important;font-size:12px!important}
+
+ #dashboard .metric-grid{
+   grid-template-columns:repeat(2,minmax(0,1fr))!important;
+   gap:8px!important;
+ }
+ #dashboard .metric-card{
+   min-height:82px!important;
+   padding:10px!important;
+   gap:8px!important;
+   border-radius:14px!important;
+   align-items:center!important;
+ }
+ #dashboard .metric-card:after{width:60px!important;height:60px!important;right:-26px!important;top:-28px!important}
+ #dashboard .metric-icon{
+   flex:0 0 32px!important;
+   width:32px!important;height:32px!important;
+   border-radius:10px!important;
+   font-size:15px!important;
+ }
+ #dashboard .metric-card span{
+   font-size:10px!important;
+   line-height:1.15!important;
+   white-space:nowrap!important;
+   overflow:hidden!important;
+   text-overflow:ellipsis!important;
+   max-width:100%!important;
+ }
+ #dashboard .metric-card strong{
+   font-size:22px!important;
+   margin:4px 0 0!important;
+   line-height:1!important;
+ }
+ #dashboard .metric-card small{display:none!important}
+
+ #dashboard .dashboard-columns{display:block!important;margin-top:9px!important}
+ #dashboard .business-card{display:none!important}
+ #dashboard.mobile-expanded .business-card{display:block!important}
+ #adminAuthenticatedActivity{display:none!important}
+ #dashboard.mobile-expanded + #adminAuthenticatedActivity{display:grid!important}
+
+ #dashboard .quick-card{padding:10px!important}
+ #dashboard .quick-card .section-heading{margin-bottom:8px!important}
+ #dashboard .quick-card .section-heading .eyebrow{display:none!important}
+ #dashboard .quick-card .section-heading h2{font-size:15px!important;margin:0!important}
+ #dashboard .quick-actions{
+   grid-template-columns:repeat(2,minmax(0,1fr))!important;
+   gap:7px!important;
+ }
+ #dashboard .quick-action{
+   min-height:58px!important;
+   grid-template-columns:30px minmax(0,1fr)!important;
+   gap:7px!important;
+   padding:8px!important;
+   border-radius:12px!important;
+ }
+ #dashboard .quick-action>span{
+   width:30px!important;height:30px!important;
+   border-radius:9px!important;font-size:14px!important;
+ }
+ #dashboard .quick-action b{font-size:11px!important;line-height:1.15!important}
+ #dashboard .quick-action small,#dashboard .quick-action i{display:none!important}
+
+ .mobile-dashboard-more{
+   display:block!important;
+   width:100%!important;
+   min-height:38px!important;
+   margin:9px 0 0!important;
+   padding:7px 10px!important;
+   font-size:12px!important;
+   border-radius:11px!important;
+ }
+ #dashboard.mobile-expanded .business-card{margin-top:8px!important;padding:12px!important}
+ #dashboard.mobile-expanded .business-status{gap:7px!important}
+ #dashboard.mobile-expanded .business-status .item{min-height:54px!important;padding:9px!important}
+ #dashboard.mobile-expanded .business-status .item:first-child{grid-column:1/-1!important}
+ #dashboard.mobile-expanded .section-heading{margin-bottom:9px!important}
+ #dashboard.mobile-expanded .section-heading h2{font-size:16px!important}
+ #dashboard.mobile-expanded .section-heading select{min-height:38px!important;font-size:12px!important}
+
+ #adminAuthenticatedActivity{grid-template-columns:1fr!important;gap:8px!important;margin-top:8px!important}
+ #adminAuthenticatedActivity .card{padding:12px!important}
+ #adminAuthenticatedActivity .section-heading{margin-bottom:8px!important}
+ #adminAuthenticatedActivity .mini-bars{height:100px!important;padding-top:8px!important}
+}
+@media(max-width:360px){
+ #dashboard .metric-card{padding:8px!important;gap:6px!important}
+ #dashboard .metric-icon{flex-basis:28px!important;width:28px!important;height:28px!important;font-size:13px!important}
+ #dashboard .metric-card strong{font-size:20px!important}
+ #dashboard .metric-card span{font-size:9px!important}
+}
 </style></head>
 <body class="auth-loading">
 <style>.auth-loading #login,.auth-loading #app{display:none!important}body:not(.admin-authenticated) #dashboard{display:none!important}</style>
@@ -344,8 +441,9 @@ html[data-theme="light"] .product-modal-card::-webkit-scrollbar-thumb{background
 <article class="metric-card metric-cyan"><div class="metric-icon">▦</div><div><span>Categorías</span><strong id="metricCategories">0</strong><small>Secciones del menú</small></div></article>
 <article class="metric-card metric-pink"><div class="metric-icon">↗</div><div><span>Pedidos pagados</span><strong id="metricOrders">0</strong><small>Mercado Pago</small></div></article><article class="metric-card metric-blue"><div class="metric-icon">👤</div><div><span>Clientes</span><strong id="metricCustomers">0</strong><small>Cuentas registradas</small></div></article><article class="metric-card metric-green"><div class="metric-icon">🛒</div><div><span>Pedidos hoy</span><strong id="metricOrdersToday">0</strong><small>Todos los restaurantes</small></div></article><article class="metric-card metric-orange"><div class="metric-icon">💰</div><div><span>Ventas hoy</span><strong id="metricSalesToday">$0</strong><small>Pedidos no cancelados</small></div></article><article class="metric-card metric-violet"><div class="metric-icon">◎</div><div><span>Ticket promedio</span><strong id="metricAverageTicket">$0</strong><small>Promedio del día</small></div></article>
 </div>
+<button id="mobileDashboardMoreBtn" class="ghost mobile-dashboard-more" type="button" onclick="toggleMobileDashboardDetails()">＋ Más detalles</button>
 <div class="dashboard-columns"><div class="card business-card"><div class="section-heading"><div><span class="eyebrow">OPERACIÓN</span><h2>Estado del sistema</h2></div><select id="dashboardRestaurantSelect" onchange="changeDashboardRestaurant(this.value)" aria-label="Seleccionar restaurante"></select></div><div id="businessStatus" class="business-status"></div></div>
-<div class="card quick-card"><div class="section-heading"><div><span class="eyebrow">ATAJOS</span><h2>Acciones rápidas</h2></div></div><div class="quick-actions"><button class="quick-action" type="button" onclick="showTab('products')"><span>🍔</span><div><b>Productos</b><small>Administrar catálogo</small></div><i>›</i></button><button class="quick-action" type="button" onclick="showTab('categories')"><span>📚</span><div><b>Categorías</b><small>Ordenar el menú</small></div><i>›</i></button><button class="quick-action" type="button" onclick="showTab('restaurants')"><span>🏪</span><div><b>Restaurantes</b><small>Gestionar negocios</small></div><i>›</i></button><button class="quick-action" type="button" onclick="showTab('users')"><span>👥</span><div><b>Usuarios</b><small>Roles y permisos</small></div><i>›</i></button></div></div></div>
+<div class="card quick-card"><div class="section-heading"><div><span class="eyebrow">ATAJOS</span><h2>Acciones rápidas</h2></div></div><div class="quick-actions"><button class="quick-action" type="button" onclick="showTab('restaurants')"><span>🏪</span><div><b>Restaurantes</b><small>Gestionar negocios</small></div><i>›</i></button><button class="quick-action" type="button" onclick="showTab('subscriptions')"><span>💳</span><div><b>Suscripciones</b><small>Planes y accesos</small></div><i>›</i></button><button class="quick-action" type="button" onclick="showTab('orders')"><span>📦</span><div><b>Pedidos</b><small>Actividad global</small></div><i>›</i></button><button class="quick-action" type="button" onclick="showTab('users')"><span>👥</span><div><b>Personal</b><small>Roles y permisos</small></div><i>›</i></button></div></div></div>
 </div><div id="adminAuthenticatedActivity" class="overview-grid hidden"><article class="card"><div class="section-heading"><div><span class="eyebrow">ÚLTIMOS 7 DÍAS</span><h2>Ventas de la plataforma</h2></div></div><div id="adminSalesChart" class="mini-bars"></div></article><article class="card"><div class="section-heading"><div><span class="eyebrow">ACTIVIDAD RECIENTE</span><h2>Últimos pedidos</h2></div><button class="ghost" onclick="showTab('orders')">Ver todos</button></div><div id="adminRecentOrders" class="list"></div></article></div></section>
 
 <section id="orders" class="section"><div class="grid"><div class="card span12"><div class="row between"><div><h2>Pedidos Mercado Pago</h2><p class="mut">Gestiona los pedidos pagados en línea y actualiza el estado que verá el cliente.</p></div><button class="ghost" onclick="loadOrders()">Actualizar</button></div><div class="row" style="margin-top:14px;flex-wrap:wrap"><button class="ghost" onclick="filterOrdersStatus('all')">Todos <b id="countAll">0</b></button><button class="ghost" onclick="filterOrdersStatus('entregado')">Entregados <b id="countDelivered">0</b></button><button class="ghost" onclick="filterOrdersStatus('cancelado')">Cancelados <b id="countCancelled">0</b></button></div><div id="orderList" class="list" style="margin-top:16px"></div></div></div></section>
@@ -397,6 +495,12 @@ const SB_KEY="sb_publishable__moppTxObowifx6rJbW_tw_3GiCkqhG";
 const sb=supabase.createClient(SB_URL,SB_KEY);
 function applyAdminTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("admin_theme",theme);const b=document.getElementById("themeBtn");if(b)b.textContent=theme==="dark"?"☀️ Modo claro":"🌙 Modo oscuro"}
 function toggleAdminTheme(){applyAdminTheme(document.documentElement.dataset.theme==="light"?"dark":"light")}
+function toggleMobileDashboardDetails(){
+ const d=document.getElementById("dashboard"),b=document.getElementById("mobileDashboardMoreBtn");if(!d||!b)return;
+ const open=d.classList.toggle("mobile-expanded");
+ b.textContent=open?"− Menos detalles":"＋ Más detalles";
+ b.setAttribute("aria-expanded",open?"true":"false");
+}
 applyAdminTheme(localStorage.getItem("admin_theme")||"dark");setTimeout(bindRestaurantMpButtons,0);
 let categories=[],products=[],orders=[],restaurants=[],staff=[],subscriptionPlans=[],adminCustomers=[],adminCashSessions=[],adminPayments=[],adminInventory=[],adminPromotions=[],adminReviews=[],adminPlatformOrders=[],platformCountries=[],currentRestaurant=null,currentRestaurantConfig=null,isSuperAdmin=false,currentRole="",adminRestaurantMode=false;
 const countryByCode=code=>platformCountries.find(c=>c.code===code)||{code:"CL",currency_code:"CLP",locale:"es-CL",timezone:"America/Santiago",mercadopago_enabled:true};
@@ -994,7 +1098,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.1</footer><script>
+</script><footer class="admin-version">Versión v2.3.2</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -1036,7 +1140,7 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.1</div><script id="admin-drawer-js-v202">
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.2</div><script id="admin-drawer-js-v202">
 const ADMIN_SIDEBAR_STATE_KEY="yummy_admin_sidebar_collapsed";
 function applyAdminSidebarState(collapsed){
  const m=document.getElementById("adminSideMenu"),app=document.getElementById("app"),btn=document.getElementById("adminSidebarCollapseBtn");
