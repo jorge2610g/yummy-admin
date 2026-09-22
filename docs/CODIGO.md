@@ -37,3 +37,14 @@ No poner service-role, tokens de Mercado Pago, Resend ni Meta en HTML/JS. Las ac
 
 ## Diagnóstico
 Si un filtro no actualiza, comprobar estado del selector, consulta Supabase y render posterior. Si la fecha cambia un día, buscar conversiones `toISOString().slice(0,10)` sobre fechas locales. Si “Abrir panel” restringe módulos, revisar el modo de previsualización administrativa.
+
+## Productos demo
+El superadministrador puede cargar o quitar productos demo por restaurante desde **Productos**. El selector `#demoProductRestaurantSelect` define el restaurante objetivo y sincroniza `currentRestaurant` antes de crear categorías/productos. `addDemoProducts()` y `removeDemoProducts()` están limitadas al superadministrador; nunca asumir un restaurante si el selector está vacío.
+
+## Planes y suscripción actuales
+El restaurante dispone de dos caminos separados cuando Mercado Pago está habilitado:
+- **Pagar plan**: pago único por la duración configurada.
+- **Suscripción automática**: cobro recurrente mediante la Edge Function correspondiente.
+
+Los módulos siguen viniendo de `subscription_plans.modules`. La prueba de 30 días conserva Dashboard, Productos, Categorías, QR y Configuración; Planes permanece accesible para renovar.
+
