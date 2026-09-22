@@ -1158,6 +1158,944 @@ body{margin:0!important}
   .restaurant-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
   .dashboard-quick-actions{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
+</style>
+<!-- CSS visual compartido literalmente desde Restaurante v2.4.50 -->
+<style id="restaurant-pro-v200">
+:root{--surface:color-mix(in srgb,var(--card) 92%,#fff 8%);--surface-2:color-mix(in srgb,var(--item) 88%,#fff 12%);--ring:0 0 0 3px color-mix(in srgb,var(--a) 20%,transparent)}
+body{background:radial-gradient(circle at 12% 0,#19385b55 0,transparent 34%),linear-gradient(145deg,var(--bg),var(--bg2));letter-spacing:-.01em}.wrap{max-width:1500px;padding:28px clamp(14px,3vw,38px) 50px}.card{background:linear-gradient(145deg,var(--surface),var(--card));border-color:color-mix(in srgb,var(--line) 76%,#fff 24%);border-radius:22px;box-shadow:0 14px 38px var(--shadow)}
+.top{padding:4px 2px 20px;border-bottom:1px solid var(--line);margin-bottom:18px}.top h1{font-size:clamp(24px,3vw,32px)!important;letter-spacing:-.04em}.top #who{margin-top:5px}.side-menu{border-radius:20px;padding:12px}.side-menu .tab{border:1px solid transparent;background:transparent}.side-menu .tab:hover{background:var(--ghost);color:var(--txt)}.side-menu .tab.active{box-shadow:0 7px 20px color-mix(in srgb,var(--a) 20%,transparent)}
+.side-menu .tab.active,html[data-theme="dark"] .side-menu .tab.active{background:var(--a)!important;color:#171000!important;border-color:var(--a)!important;box-shadow:0 7px 20px color-mix(in srgb,var(--a) 28%,transparent)!important}
+.side-menu .tab.active span{color:inherit!important}
+.side-menu .tab[hidden],.side-menu .tab.role-hidden{display:none!important}
+button{transition:transform .16s ease,box-shadow .16s ease,background .16s ease}button:hover{transform:translateY(-1px)}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:none;border-color:var(--a);box-shadow:var(--ring)}.primary{box-shadow:0 7px 20px color-mix(in srgb,var(--a) 18%,transparent)}
+#subscriptionBanner{position:relative;overflow:hidden;padding:22px 24px!important;border-color:color-mix(in srgb,var(--a) 48%,var(--line));background:linear-gradient(125deg,color-mix(in srgb,var(--a) 15%,var(--card)),var(--card) 58%);box-shadow:0 18px 48px var(--shadow)}
+#subscriptionBanner:before{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 45%,color-mix(in srgb,var(--a) 7%,transparent));pointer-events:none}
+#subscriptionBanner:after{content:"";position:absolute;right:-50px;top:-75px;width:210px;height:210px;border-radius:50%;background:var(--a);opacity:.09;pointer-events:none}
+.subscription-banner-content{position:relative;z-index:1}.subscription-plan-name{font-size:20px;font-weight:900;letter-spacing:-.025em;margin-top:4px}.subscription-meta{display:flex;gap:8px 14px;align-items:center;flex-wrap:wrap;margin-top:6px;color:var(--mut);font-size:13px}.subscription-meta span{display:inline-flex;align-items:center;gap:5px}
+.subscription-countdown{display:grid;grid-template-columns:repeat(4,minmax(58px,82px));gap:8px;margin-top:16px}.countdown-unit{padding:10px 8px;text-align:center;border:1px solid color-mix(in srgb,var(--a) 28%,var(--line));border-radius:13px;background:color-mix(in srgb,var(--card) 78%,transparent);backdrop-filter:blur(8px)}.countdown-unit strong{display:block;color:var(--txt);font-size:20px;line-height:1;font-variant-numeric:tabular-nums}.countdown-unit small{display:block;margin-top:5px;color:var(--mut);font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+#subscriptionBanner .sub-progress{height:9px;margin:15px 0 0;background:color-mix(in srgb,var(--ghost) 80%,transparent);border-radius:999px;overflow:hidden}#subscriptionBanner .sub-progress>i{background:linear-gradient(90deg,var(--a),#ffd166);box-shadow:0 0 14px color-mix(in srgb,var(--a) 45%,transparent);transition:width .5s ease}
+@media(max-width:600px){#subscriptionBanner{padding:17px!important}.subscription-plan-name{font-size:18px}.subscription-countdown{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.countdown-unit{padding:9px 3px;border-radius:10px}.countdown-unit strong{font-size:17px}.countdown-unit small{font-size:8px}}
+.module-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px}.module-head h2{margin:0 0 5px}
+.orders-center{padding:clamp(16px,2.5vw,28px)!important}.orders-heading h2{font-size:clamp(25px,3vw,34px);letter-spacing:-.04em}.order-icon-btn{width:44px!important;min-width:44px!important;height:44px!important;padding:0!important;display:inline-grid!important;place-items:center!important;font-size:19px!important;border:1px solid var(--line)!important;background:var(--ghost)!important;color:var(--txt)!important}.orders-command-bar{display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:10px;align-items:center;margin-top:20px;padding:12px;border:1px solid var(--line);border-radius:17px;background:var(--surface-2)}.orders-search{display:flex;align-items:center;gap:9px;min-width:0;padding:0 13px;border:1px solid var(--line);border-radius:12px;background:var(--field)}.orders-search span{font-size:22px;color:var(--mut)}.orders-search input{border:0!important;background:transparent!important;box-shadow:none!important;padding-left:0!important}.orders-actions{display:flex;gap:7px}.auto-print-toggle{margin:0!important;display:flex!important;align-items:center;gap:8px;padding:9px 11px;border-radius:12px;background:var(--ghost);color:var(--txt)!important;font-weight:750;white-space:nowrap;cursor:pointer}.auto-print-toggle input{position:absolute;opacity:0;pointer-events:none}.toggle-track{position:relative;width:36px;height:20px;border-radius:999px;background:var(--line);transition:.2s}.toggle-track:after{content:"";position:absolute;width:14px;height:14px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.2s}.auto-print-toggle input:checked+.toggle-track{background:var(--a)}.auto-print-toggle input:checked+.toggle-track:after{transform:translateX(16px);background:#171000}.orders-filter-panel{display:grid;grid-template-columns:auto minmax(280px,1fr) minmax(170px,220px);gap:16px;align-items:end;margin-top:14px;padding:15px;border:1px solid var(--line);border-radius:17px;background:color-mix(in srgb,var(--surface-2) 82%,var(--card))}.filter-block{min-width:0}.filter-label{display:block;margin:0 0 7px;color:var(--mut);font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.date-filter-tabs{display:flex;gap:5px;padding:4px;border-radius:12px;background:var(--ghost)}.date-filter-tabs button{min-height:36px;padding:7px 12px;background:transparent!important;color:var(--mut)!important;border:0!important}.date-filter-tabs button.active{background:var(--card)!important;color:var(--txt)!important;box-shadow:0 4px 12px var(--shadow)!important}.date-range{display:grid;grid-template-columns:minmax(125px,1fr) auto minmax(125px,1fr);gap:7px;align-items:center}.date-range input,.status-select-block select{min-height:44px;padding:9px 10px}.date-range span{color:var(--mut)}.order-summary-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.summary-chip{display:flex;align-items:center;gap:8px;min-height:38px;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:var(--ghost);color:var(--txt)}.summary-chip b{display:grid;place-items:center;min-width:24px;height:24px;padding:0 6px;border-radius:999px;background:var(--pill)}.summary-chip.active{background:var(--a);color:#171000;border-color:var(--a);box-shadow:0 7px 18px color-mix(in srgb,var(--a) 24%,transparent)}.summary-chip.active b{background:#ffffff85;color:#171000}.orders-empty{text-align:center;padding:30px 16px;margin:16px 0 0;border:1px dashed var(--line);border-radius:16px;color:var(--mut);background:var(--surface-2)}@media(max-width:900px){.orders-command-bar{grid-template-columns:minmax(0,1fr) auto}.auto-print-toggle{grid-column:1/-1;justify-content:center}.orders-filter-panel{grid-template-columns:1fr 1fr}.status-select-block{grid-column:1/-1}}@media(max-width:600px){.orders-command-bar{grid-template-columns:1fr}.orders-actions{justify-content:center}.auto-print-toggle{grid-column:auto}.orders-filter-panel{grid-template-columns:1fr;padding:12px}.status-select-block{grid-column:auto}.date-filter-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.date-filter-tabs button{padding:7px 4px;font-size:11px}.date-range{grid-template-columns:1fr}.date-range span{display:none}.order-summary-chips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.summary-chip{justify-content:center;padding:7px 5px;font-size:11px}}.order-tools,.order-filters{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px}.order-tools{padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2)}.order-tools label{margin:0;display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:11px;background:var(--ghost);color:var(--txt)}.order-tools label input{width:18px;height:18px}.order-filters button b{display:inline-grid;place-items:center;min-width:22px;height:22px;margin-left:5px;border-radius:999px;background:var(--pill)}.order-filters button{background:var(--ghost)!important;color:var(--txt)!important;border:1px solid var(--line)!important}.order-filters button.active,.order-filters button[aria-pressed="true"]{color:#171000!important;background:var(--a)!important;border-color:var(--a)!important;box-shadow:0 8px 22px color-mix(in srgb,var(--a) 28%,transparent)!important}.order-filters button.active b,.order-filters button[aria-pressed="true"] b{color:#171000;background:#ffffff80}[data-theme="dark"] .order-filters button:not(.active){background:#13243a!important;color:#f6f8fb!important;border-color:#2b405c!important}
+.restaurant-dashboard-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:18px}.restaurant-dashboard-hero h2{font-size:clamp(28px,4vw,42px);letter-spacing:-.045em;margin:5px 0}.restaurant-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.restaurant-metric{min-height:125px;padding:18px;border:1px solid var(--line);border-radius:18px;background:linear-gradient(145deg,var(--surface-2),var(--card));box-shadow:0 10px 28px var(--shadow)}.restaurant-metric span{color:var(--mut);font-size:13px;font-weight:750}.restaurant-metric strong{display:block;margin-top:13px;font-size:29px;letter-spacing:-.04em}.restaurant-analytics{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-top:14px}.health-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.health-service{padding:15px;border:1px solid var(--line);border-radius:15px;background:var(--surface-2)}.health-service b{display:block}.health-service small{display:block;color:var(--mut);margin-top:5px}.health-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;background:var(--mut)}.health-dot.ok{background:var(--ok);box-shadow:0 0 12px color-mix(in srgb,var(--ok) 60%,transparent)}.health-dot.bad{background:var(--bad)}.health-dot.wait{background:var(--a)}
+.kds-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.kds-column{min-height:380px;padding:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface-2)}.kds-column-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.kds-column-head h3{margin:0}.kds-ticket{padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--card);box-shadow:0 10px 24px var(--shadow)}.kds-ticket+.kds-ticket{margin-top:10px}.kds-ticket-items{margin:12px 0;line-height:1.55}.kds-ticket .primary{width:100%}.cash-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}.cash-form{display:grid;grid-template-columns:180px minmax(120px,1fr) minmax(180px,2fr) auto;gap:9px;align-items:end}.cash-form label{margin:0}
+.pos-layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,.8fr);gap:14px}.pos-products{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.pos-product{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:15px;background:var(--surface-2)}.pos-product img{width:58px;height:58px;object-fit:cover;border-radius:12px}.pos-product button{width:42px;height:42px;padding:0}.pos-cart{position:sticky;top:14px}.pos-cart-row,.cash-history-row,.staff-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}.pos-qty{display:flex;align-items:center;gap:7px}.pos-qty button{width:32px;height:32px;padding:0}.staff-form{display:grid;grid-template-columns:minmax(180px,1.5fr) minmax(150px,1fr) minmax(180px,1fr) auto;gap:9px;align-items:end}.staff-form label{margin:0}.role-chip{display:inline-flex;padding:5px 9px;border-radius:999px;background:var(--pill);font-size:12px;font-weight:800}.cash-history-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}.cash-history-grid span{color:var(--mut);font-size:12px}.cash-history-grid b{display:block;margin-top:3px}
+.list{gap:12px}.item{background:linear-gradient(145deg,var(--surface-2),var(--item));border-radius:16px;padding:16px}.actions{justify-content:flex-end}.actions button{min-height:36px}.product-card{display:grid;grid-template-columns:88px minmax(0,1fr) auto;gap:16px;align-items:center}.product-thumb{width:88px;height:88px;object-fit:cover;border-radius:15px;border:1px solid var(--line);background:var(--ghost)}.product-thumb-placeholder{display:grid;place-items:center;font-size:30px}.product-info{min-width:0}.product-info h3{margin:0 0 5px;font-size:17px}.product-info .mut{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.45}.product-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:9px}.product-card .actions{max-width:280px}.status-active{color:var(--ok)}.status-inactive{color:var(--bad)}
+#categoryList{grid-template-columns:repeat(2,minmax(0,1fr))}#categoryList .item{min-height:110px}#qrPanel>.grid{align-items:center}#qrPanel img{box-shadow:0 14px 36px #0005;border-radius:20px!important}.settings-group{grid-column:1/-1;padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--surface-2)}.local-status-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}.local-status-actions button{width:100%;min-height:48px}.delivery-zone-builder{display:grid;gap:9px;margin-top:10px}.delivery-zone-row{display:grid;grid-template-columns:1fr 1fr auto;gap:9px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}.delivery-zone-row label{margin:0}.delivery-zone-row button{height:42px}.delivery-empty{text-align:center;padding:18px;border:1px dashed var(--line);border-radius:14px;color:var(--mut)}.mp-status-card{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--card);line-height:1.5}.mp-status-card.checking{border-color:var(--a)}.mp-status-card.connected{border-color:var(--ok);color:var(--ok)}.mp-status-card.error{border-color:var(--bad);color:var(--bad)}
+@media(max-width:1050px){.product-card{grid-template-columns:74px minmax(0,1fr)}.product-thumb{width:74px;height:74px}.product-card .actions{grid-column:1/-1;max-width:none}}
+@media(max-width:800px){.wrap{padding:14px 12px 34px!important}.side-menu{width:min(330px,86vw)!important;max-width:min(330px,86vw)!important}.side-menu-backdrop{left:0!important;background:#0008!important;backdrop-filter:blur(2px)}.module-head,.restaurant-dashboard-hero{flex-direction:column;align-items:stretch}.module-head>button,.module-head>.actions{width:100%}#categoryList{grid-template-columns:1fr}.local-status-actions{grid-template-columns:1fr}.restaurant-metrics{grid-template-columns:1fr 1fr}.restaurant-analytics{grid-template-columns:1fr}.kds-board{grid-template-columns:1fr}.kds-column{min-height:0}.cash-grid{grid-template-columns:1fr 1fr}.cash-form{grid-template-columns:1fr 1fr}.cash-form label:last-of-type{grid-column:1/-1}.cash-form button{grid-column:1/-1}.pos-layout{grid-template-columns:1fr}.pos-products{grid-template-columns:1fr}.pos-cart{position:static}.staff-form{grid-template-columns:1fr 1fr}.staff-form label:first-child{grid-column:1/-1}.staff-form button{grid-column:1/-1}.cash-history-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.restaurant-metrics,.health-grid{grid-template-columns:1fr}.restaurant-metric{min-height:104px}}
+@media(max-width:600px){.top>.row{display:grid!important;grid-template-columns:1fr 1fr!important}.top>.row>a{grid-column:1/-1}.top>.row button{width:100%}.card{padding:15px!important;border-radius:18px!important}.order-tools{display:grid;grid-template-columns:1fr 1fr}.order-tools label{grid-column:1/-1}.order-tools button{width:100%}.order-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.order-filters button{width:100%;padding:9px 5px!important;font-size:11px!important}.product-card{grid-template-columns:64px minmax(0,1fr);gap:11px}.product-thumb{width:64px;height:64px}.product-card .actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px!important}.product-card .actions button{width:100%;font-size:10px!important;padding:7px 4px!important}.actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:8px!important}.actions button,.actions a,.actions a button{width:100%}.delivery-zone-row{grid-template-columns:1fr 1fr}.delivery-zone-row button{grid-column:1/-1;width:100%}.settings-group{padding:14px}.toast{left:12px;right:12px;bottom:12px;text-align:center}}
+.pos-cart-mobile-close,.pos-cart-fab,.pos-cart-backdrop{display:none}
+@media(max-width:600px){
+ #pos{padding-bottom:86px}
+ #pos .pos-layout{display:block!important}
+ #pos .pos-cart{display:none;position:fixed!important;left:10px;right:10px;bottom:10px;top:auto!important;z-index:2102;max-height:88dvh;overflow:auto;margin:0!important;border-radius:22px!important;box-shadow:0 22px 70px #000b}
+ #pos .pos-cart.mobile-open{display:block!important}
+ #pos .pos-cart-mobile-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+ #pos .pos-cart-mobile-close{display:flex!important;width:40px!important;min-width:40px!important;height:40px!important;min-height:40px!important;padding:0!important;align-items:center;justify-content:center}
+ #pos .pos-cart-backdrop{display:none;position:fixed;inset:0;z-index:2101;background:#0009;backdrop-filter:blur(2px)}
+ #pos .pos-cart-backdrop.open{display:block}
+ #pos .pos-cart-fab{display:flex;position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));z-index:2099;align-items:center;justify-content:space-between;gap:8px;min-height:56px!important;padding:10px 14px!important;border-radius:17px!important;box-shadow:0 14px 38px #0009}
+ #pos .pos-cart-fab span{font-weight:900}#pos .pos-cart-fab b{display:grid;place-items:center;min-width:28px;height:28px;padding:0 7px;border-radius:999px;background:#171000;color:#fff}#pos .pos-cart-fab strong{font-size:15px;white-space:nowrap}
+ #pos .pos-cart-row{padding:10px!important;border-radius:13px!important}
+}
+@media(max-width:600px){
+ .pos-products{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ .pos-product{min-width:0;min-height:82px;grid-template-columns:42px minmax(0,1fr) 34px!important;gap:7px!important;padding:9px!important;border-radius:13px!important}
+ .pos-product img,.pos-product .product-thumb-placeholder{width:42px!important;height:42px!important;min-width:42px;display:grid;place-items:center;object-fit:cover;border-radius:10px;font-size:23px;background:var(--ghost)}
+ .pos-product>div:nth-child(2){min-width:0}.pos-product b{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:12px;line-height:1.18;overflow-wrap:anywhere}.pos-product .mut{margin-top:3px;font-size:11px;white-space:nowrap}
+ .pos-product button{width:34px!important;min-width:34px!important;height:34px!important;min-height:34px!important;padding:0!important;border-radius:10px!important;font-size:17px!important}
+}
+@media(max-width:390px){.top>.row,.order-tools,.order-filters{grid-template-columns:1fr!important}.top>.row>a,.order-tools label{grid-column:auto}.product-card .actions,.actions{grid-template-columns:1fr!important}}
+</style>
+<style id="yummypro-sidebar-dashboard-restaurant-v2438">
+@media(min-width:801px){
+ .wrap{max-width:none!important;width:100%!important;padding:18px 24px 34px!important}
+ .panel-layout{grid-template-columns:68px minmax(0,1fr)!important;gap:16px!important;align-items:start!important}
+ .side-menu{position:sticky!important;top:14px!important;width:68px!important;min-width:68px!important;max-height:calc(100vh - 28px)!important;padding:9px 7px!important;border-radius:18px!important;overflow-x:hidden!important;overflow-y:auto!important;z-index:40!important;transition:width .2s ease,box-shadow .2s ease!important;background:color-mix(in srgb,var(--card) 96%,transparent)!important;backdrop-filter:blur(14px)!important}
+ .side-menu:hover,.side-menu:focus-within{width:246px!important;box-shadow:0 20px 60px #0007!important}
+ .sidebar-brand{display:flex;align-items:center;gap:10px;height:48px;padding:3px 4px 10px;margin-bottom:7px;border-bottom:1px solid var(--line);overflow:hidden}
+ .sidebar-brand-mark{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,var(--a),#ff9d00);color:#181008;font-weight:950;font-size:20px;box-shadow:0 8px 20px color-mix(in srgb,var(--a) 30%,transparent)}
+ .sidebar-brand-name{font-weight:900;font-size:17px;white-space:nowrap;opacity:0;transform:translateX(-6px);transition:.15s ease}
+ .side-menu:hover .sidebar-brand-name,.side-menu:focus-within .sidebar-brand-name{opacity:1;transform:none}
+ .side-menu-title{display:block!important;height:17px!important;overflow:hidden!important;white-space:nowrap!important;font-size:9px!important;letter-spacing:.13em!important;padding:3px 10px!important;margin:0 0 5px!important;opacity:0;transition:.15s}
+ .side-menu:hover .side-menu-title,.side-menu:focus-within .side-menu-title{opacity:1}
+ .side-menu .tabs{display:grid!important;grid-template-columns:1fr!important;gap:4px!important}
+ .side-menu .tab{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;gap:11px!important;width:100%!important;min-width:0!important;min-height:44px!important;padding:5px!important;border:0!important;border-radius:12px!important;background:transparent!important;color:var(--mut)!important;overflow:hidden!important;white-space:nowrap!important;text-align:left!important}
+ .side-menu .tab:hover{background:var(--ghost)!important;color:var(--txt)!important}
+ .side-menu .tab.active{background:color-mix(in srgb,var(--a) 17%,var(--ghost))!important;color:var(--a)!important;box-shadow:inset 3px 0 0 var(--a)!important}
+ .side-menu .nav-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:36px;font-size:18px;line-height:1}
+ .side-menu .nav-label{opacity:0;transform:translateX(-6px);transition:.15s ease;font-size:13px!important;font-weight:780;display:block!important}
+ .side-menu:hover .nav-label,.side-menu:focus-within .nav-label{opacity:1;transform:none}
+ .panel-content{min-width:0!important}
+ .side-menu-toggle{display:none!important}
+ .restaurant-dashboard-hero{padding:8px 2px 2px!important}
+ .restaurant-dashboard-hero h2{font-size:32px!important;letter-spacing:-.04em!important}
+ .dashboard-ref-metrics{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important}
+ .dashboard-ref-metrics .restaurant-metric{display:flex!important;align-items:flex-start!important;gap:13px!important;min-height:132px!important;padding:18px!important;border-radius:18px!important}
+ .dashboard-ref-metrics .restaurant-metric>div{min-width:0}
+ .dashboard-ref-metrics .restaurant-metric strong{font-size:30px!important;margin:8px 0 6px!important}
+ .dashboard-ref-metrics .restaurant-metric small{display:block;color:var(--mut);font-size:11px}
+ .dashboard-metric-icon{display:grid!important;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:13px;font-size:18px}
+ .dashboard-metric-icon.metric-green{background:#22c55e1c}.dashboard-metric-icon.metric-blue{background:#3b82f61c}.dashboard-metric-icon.metric-orange{background:#f59e0b1c}.dashboard-metric-icon.metric-violet{background:#8b5cf61c}
+ .restaurant-control-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr);gap:14px;margin:14px 0}
+ .dashboard-quick-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+ .dashboard-quick-action{display:grid!important;grid-template-columns:42px minmax(0,1fr) auto!important;align-items:center!important;gap:11px!important;min-height:96px!important;padding:14px!important;border:1px solid var(--line)!important;border-radius:16px!important;background:var(--surface-2)!important;color:var(--txt)!important;text-align:left!important}
+ .dashboard-quick-action>span{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--ghost);font-size:20px}
+ .dashboard-quick-action div{display:grid;gap:3px}.dashboard-quick-action small{color:var(--mut);font-size:11px;font-weight:500}.dashboard-quick-action i{font-size:24px;color:var(--mut);font-style:normal}
+ .dashboard-quick-action:nth-child(1)>span{background:#22c55e1a}.dashboard-quick-action:nth-child(2)>span{background:#f59e0b1a}.dashboard-quick-action:nth-child(3)>span{background:#3b82f61a}
+ .system-status-list{display:grid;gap:9px;margin-top:14px}.system-status-list>div{display:grid;grid-template-columns:20px 1fr;gap:9px;padding:10px 0;border-bottom:1px solid var(--line)}.system-status-list>div:last-child{border-bottom:0}.system-status-list b{display:block;font-size:13px}.system-status-list small{display:block;color:var(--mut);font-size:11px;margin-top:2px}.status-badge{color:#22c55e;font-size:12px;padding-top:2px}
+ .restaurant-analytics{margin-top:14px!important}
+}
+@media(max-width:1150px) and (min-width:801px){.dashboard-ref-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}.restaurant-control-grid{grid-template-columns:1fr!important}.dashboard-quick-actions{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:800px){
+ .side-menu{width:min(84vw,310px)!important;max-width:min(84vw,310px)!important}
+ .sidebar-brand{display:flex;align-items:center;gap:10px;padding:0 6px 13px;margin-bottom:8px;border-bottom:1px solid var(--line)}
+ .sidebar-brand-mark{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:var(--a);color:#171000;font-weight:950}
+ .sidebar-brand-name{font-weight:900;font-size:18px}
+ .side-menu .tab{display:flex!important;flex-direction:row!important;align-items:center!important;gap:10px!important}
+ .side-menu .nav-icon{display:grid;place-items:center;width:34px;flex:0 0 34px;font-size:18px}
+ .side-menu .nav-label{display:inline!important;font-size:14px!important;font-weight:750}
+ .restaurant-control-grid{display:grid;grid-template-columns:1fr;gap:10px;margin:10px 0}
+ .dashboard-quick-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+ .dashboard-quick-action{display:grid!important;grid-template-columns:40px minmax(0,1fr) auto!important;gap:10px!important;align-items:center!important;text-align:left!important}
+ .dashboard-ref-metrics .restaurant-metric small{display:block;color:var(--mut);font-size:11px}
+ .dashboard-metric-icon{display:grid!important;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--ghost)}
+}
+</style>
+<style id="yummypro-manual-sidebar-restaurant-v2439">
+@media(min-width:801px){
+ .panel-layout{grid-template-columns:246px minmax(0,1fr)!important;transition:grid-template-columns .2s ease!important}
+ .panel-layout.sidebar-collapsed{grid-template-columns:68px minmax(0,1fr)!important}
+ .side-menu{width:246px!important;min-width:0!important;transition:width .2s ease!important;overflow-x:hidden!important;overflow-y:auto!important}
+ .side-menu:hover,.side-menu:focus-within{width:246px!important;box-shadow:0 18px 50px var(--shadow)!important}
+ .side-menu.collapsed{width:68px!important}
+ .side-menu.collapsed:hover,.side-menu.collapsed:focus-within{width:68px!important}
+ .sidebar-brand{position:sticky;top:0;z-index:2;background:inherit;overflow:visible!important}
+ .sidebar-brand-name{opacity:1!important;transform:none!important;transition:opacity .15s ease!important}
+ .side-menu.collapsed .sidebar-brand-name{opacity:0!important;width:0!important;pointer-events:none}
+ .sidebar-collapse-btn{margin-left:auto;display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;min-height:28px!important;padding:0!important;border:1px solid var(--line)!important;border-radius:9px!important;background:var(--ghost)!important;color:var(--txt)!important;font-size:22px!important;line-height:1!important;cursor:pointer}
+ .side-menu.collapsed .sidebar-collapse-btn{position:absolute;right:-2px;top:9px}
+ .side-menu-title{opacity:1!important;transition:none!important}
+ .side-menu.collapsed .side-menu-title{opacity:0!important;height:7px!important;padding:0!important;margin:0!important}
+ .side-menu .nav-label{opacity:1!important;transform:none!important;transition:opacity .15s ease!important}
+ .side-menu.collapsed .nav-label{opacity:0!important;width:0!important;pointer-events:none}
+ .side-menu .tab{padding:5px 7px!important}
+ .side-menu.collapsed .tab{justify-content:flex-start!important;padding:5px!important}
+ .nav-group-label{font-size:9px;letter-spacing:.14em;font-weight:900;color:var(--mut);padding:10px 10px 4px;white-space:nowrap;overflow:hidden}
+ .side-menu.collapsed .nav-group-label{height:8px;padding:0;margin:3px 0;border-top:1px solid var(--line);font-size:0}
+ .side-menu.collapsed .nav-group-label:first-child{border-top:0}
+}
+@media(max-width:800px){
+ .sidebar-collapse-btn{display:none!important}
+ .nav-group-label{font-size:10px;letter-spacing:.13em;font-weight:900;color:var(--mut);padding:12px 10px 5px}
+}
+</style>
+<style id="yummypro-sidebar-scroll-responsive-restaurant-v2440">
+html,body{overflow-x:hidden!important}
+html{scrollbar-width:thin;scrollbar-color:#111827 transparent}
+body::-webkit-scrollbar,.side-menu::-webkit-scrollbar,.product-modal-card::-webkit-scrollbar,.admin-form-card::-webkit-scrollbar{width:3px!important;height:3px!important}
+body::-webkit-scrollbar-track,.side-menu::-webkit-scrollbar-track,.product-modal-card::-webkit-scrollbar-track,.admin-form-card::-webkit-scrollbar-track{background:transparent!important}
+body::-webkit-scrollbar-thumb,.side-menu::-webkit-scrollbar-thumb,.product-modal-card::-webkit-scrollbar-thumb,.admin-form-card::-webkit-scrollbar-thumb{background:#090d13!important;border-radius:999px!important}
+html[data-theme="light"]{scrollbar-color:#9aa7b5 transparent}
+html[data-theme="light"] body::-webkit-scrollbar-thumb,
+html[data-theme="light"] .side-menu::-webkit-scrollbar-thumb,
+html[data-theme="light"] .product-modal-card::-webkit-scrollbar-thumb,
+html[data-theme="light"] .admin-form-card::-webkit-scrollbar-thumb{background:#9aa7b5!important}
+
+@media(min-width:801px){
+ .wrap{width:100%!important;max-width:none!important;padding:14px 18px 30px!important;overflow-x:hidden!important}
+ .panel-layout{
+   width:100%!important;max-width:100%!important;min-width:0!important;
+   grid-template-columns:240px minmax(0,1fr)!important;gap:14px!important;
+   align-items:start!important;
+ }
+ .panel-layout.sidebar-collapsed{grid-template-columns:62px minmax(0,1fr)!important}
+ .side-menu{
+   position:sticky!important;top:10px!important;
+   width:240px!important;max-width:240px!important;min-width:0!important;
+   height:auto!important;max-height:calc(100dvh - 20px)!important;
+   padding:9px 7px 16px!important;box-sizing:border-box!important;
+   overflow-y:auto!important;overflow-x:hidden!important;
+   scrollbar-width:thin!important;scrollbar-color:#090d13 transparent!important;
+   scrollbar-gutter:stable both-edges;
+ }
+ .side-menu.collapsed{width:62px!important;max-width:62px!important}
+ .side-menu .tabs{width:100%!important;min-width:0!important;padding-bottom:12px!important}
+ .side-menu .tab{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+ .side-menu .nav-icon{flex:0 0 36px!important;width:36px!important}
+ .side-menu.collapsed .nav-icon{flex-basis:36px!important;width:36px!important}
+ .side-menu.collapsed .sidebar-brand-mark{flex-basis:36px!important;width:36px!important;height:36px!important}
+ .side-menu.collapsed .sidebar-collapse-btn{right:0!important}
+ .panel-content{width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:hidden!important}
+ .panel-content>.section,.panel-content>.card,.restaurant-control-grid,.restaurant-analytics,.restaurant-metrics{min-width:0!important;max-width:100%!important}
+ .card,.item,.restaurant-metric{min-width:0!important}
+}
+@media(max-width:800px){
+ body.mobile-menu-open{overflow:hidden!important}
+ .wrap{width:100%!important;max-width:100%!important;padding:12px!important;overflow-x:hidden!important}
+ .panel-layout{display:block!important;width:100%!important;max-width:100%!important;min-width:0!important}
+ .side-menu{
+   position:fixed!important;left:0!important;top:0!important;bottom:0!important;z-index:1600!important;
+   width:min(86vw,320px)!important;max-width:min(86vw,320px)!important;
+   height:100dvh!important;max-height:100dvh!important;border-radius:0 18px 18px 0!important;
+   overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;
+   padding:14px 10px 24px!important;box-sizing:border-box!important;
+   scrollbar-width:thin!important;scrollbar-color:#090d13 transparent!important;
+ }
+ .side-menu .tabs{padding-bottom:32px!important}
+ .side-menu .tab{width:100%!important;max-width:100%!important}
+ .side-menu-backdrop.open{position:fixed!important;inset:0!important;z-index:1500!important;background:#0008!important}
+ .panel-content{width:100%!important;max-width:100%!important;min-width:0!important;overflow-x:hidden!important}
+ .restaurant-dashboard-hero{align-items:stretch!important;flex-direction:column!important}
+ .restaurant-metrics,.dashboard-ref-metrics{grid-template-columns:1fr!important}
+ .restaurant-control-grid,.restaurant-analytics{grid-template-columns:1fr!important}
+ .row{max-width:100%!important}
+ .card,.item{min-width:0!important;max-width:100%!important}
+ table{max-width:100%!important}
+}
+</style>
+<style id="yummypro-sidebar-visual-balance-restaurant-v2442">
+@media(min-width:801px){
+  .panel-layout{grid-template-columns:234px minmax(0,1fr)!important;gap:14px!important}
+  .panel-layout.sidebar-collapsed{grid-template-columns:68px minmax(0,1fr)!important}
+
+  .side-menu{
+    width:234px!important;
+    max-width:234px!important;
+    padding:10px 8px 16px!important;
+    border-radius:18px!important;
+  }
+  .side-menu.collapsed{
+    width:68px!important;
+    max-width:68px!important;
+    padding:9px 7px 14px!important;
+  }
+
+  .side-menu .sidebar-brand{
+    min-height:52px!important;
+    height:auto!important;
+    padding:2px 4px 10px!important;
+    gap:9px!important;
+    overflow:visible!important;
+  }
+  .side-menu .sidebar-brand-mark{
+    flex:0 0 36px!important;
+    width:36px!important;
+    height:36px!important;
+    border-radius:11px!important;
+    font-size:17px!important;
+    box-shadow:none!important;
+  }
+  .side-menu .sidebar-brand-name{
+    font-size:15px!important;
+    font-weight:850!important;
+  }
+  .side-menu .sidebar-collapse-btn{
+    flex:0 0 26px!important;
+    width:26px!important;
+    height:26px!important;
+    min-height:26px!important;
+    border-radius:8px!important;
+    border:1px solid var(--line)!important;
+    background:color-mix(in srgb,var(--ghost) 78%,transparent)!important;
+    color:var(--mut)!important;
+    box-shadow:none!important;
+    font-size:19px!important;
+  }
+  .side-menu .sidebar-collapse-btn:hover{
+    background:color-mix(in srgb,var(--ghost) 92%,var(--card))!important;
+    color:var(--txt)!important;
+  }
+
+  .side-menu.collapsed .sidebar-brand{
+    min-height:78px!important;
+    padding:1px 0 8px!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:7px!important;
+  }
+  .side-menu.collapsed .sidebar-brand-mark{
+    margin:0 auto!important;
+    flex-basis:34px!important;
+    width:34px!important;
+    height:34px!important;
+  }
+  .side-menu.collapsed .sidebar-collapse-btn{
+    position:static!important;
+    margin:0 auto!important;
+    width:24px!important;
+    height:24px!important;
+    min-height:24px!important;
+    flex-basis:24px!important;
+  }
+
+  .side-menu .tabs{gap:4px!important}
+  .side-menu .tab{
+    min-height:42px!important;
+    padding:4px 6px!important;
+    gap:9px!important;
+    border-radius:11px!important;
+    border:1px solid transparent!important;
+    background:transparent!important;
+    color:var(--mut)!important;
+    box-shadow:none!important;
+    transition:background .15s ease,border-color .15s ease,color .15s ease!important;
+  }
+  .side-menu .tab:hover{
+    background:color-mix(in srgb,var(--ghost) 78%,transparent)!important;
+    border-color:color-mix(in srgb,var(--line) 78%,transparent)!important;
+    color:var(--txt)!important;
+  }
+  .side-menu .nav-icon{
+    display:grid!important;
+    place-items:center!important;
+    flex:0 0 34px!important;
+    width:34px!important;
+    height:32px!important;
+    margin:0!important;
+    border-radius:9px!important;
+    background:color-mix(in srgb,var(--ghost) 64%,transparent)!important;
+    border:1px solid color-mix(in srgb,var(--line) 55%,transparent)!important;
+    color:inherit!important;
+    font-size:16px!important;
+    line-height:1!important;
+  }
+  .side-menu .nav-label{
+    font-size:12px!important;
+    font-weight:760!important;
+    letter-spacing:0!important;
+  }
+  .side-menu .tab.active{
+    background:color-mix(in srgb,var(--a) 9%,var(--surface-2))!important;
+    border-color:color-mix(in srgb,var(--a) 28%,var(--line))!important;
+    color:var(--txt)!important;
+    box-shadow:inset 3px 0 0 var(--a)!important;
+  }
+  .side-menu .tab.active .nav-icon{
+    background:color-mix(in srgb,var(--a) 15%,var(--ghost))!important;
+    border-color:color-mix(in srgb,var(--a) 34%,var(--line))!important;
+    color:var(--a)!important;
+  }
+
+  .side-menu.collapsed .tab{
+    width:100%!important;
+    min-height:42px!important;
+    padding:4px!important;
+    margin:1px 0!important;
+    display:grid!important;
+    place-items:center!important;
+    background:transparent!important;
+    border-color:transparent!important;
+    box-shadow:none!important;
+  }
+  .side-menu.collapsed .tab:hover{
+    background:color-mix(in srgb,var(--ghost) 55%,transparent)!important;
+  }
+  .side-menu.collapsed .nav-icon{
+    width:36px!important;
+    height:34px!important;
+    margin:0 auto!important;
+    background:color-mix(in srgb,var(--ghost) 56%,transparent)!important;
+  }
+  .side-menu.collapsed .tab.active{
+    background:transparent!important;
+    border-color:transparent!important;
+    box-shadow:none!important;
+  }
+  .side-menu.collapsed .tab.active .nav-icon{
+    background:color-mix(in srgb,var(--a) 14%,var(--ghost))!important;
+    border-color:color-mix(in srgb,var(--a) 40%,var(--line))!important;
+    color:var(--a)!important;
+    box-shadow:inset 2px 0 0 var(--a)!important;
+  }
+  .side-menu.collapsed .nav-group-label{
+    width:30px!important;
+    margin:5px auto!important;
+    border-top-color:color-mix(in srgb,var(--line) 55%,transparent)!important;
+  }
+}
+@media(max-width:800px){
+  .side-menu{
+    width:min(84vw,300px)!important;
+    max-width:min(84vw,300px)!important;
+    padding:14px 10px 22px!important;
+  }
+  .side-menu .sidebar-brand{
+    min-height:50px!important;
+    padding:2px 4px 10px!important;
+  }
+  .side-menu .sidebar-brand-mark{
+    width:36px!important;
+    height:36px!important;
+    flex-basis:36px!important;
+    border-radius:11px!important;
+    font-size:17px!important;
+  }
+  .side-menu .sidebar-brand-name{font-size:15px!important}
+  .side-menu .tab{
+    min-height:44px!important;
+    padding:6px 7px!important;
+    gap:9px!important;
+    border-radius:11px!important;
+    border:1px solid transparent!important;
+    background:transparent!important;
+    color:var(--mut)!important;
+  }
+  .side-menu .nav-icon{
+    width:34px!important;
+    height:32px!important;
+    flex:0 0 34px!important;
+    display:grid!important;
+    place-items:center!important;
+    border-radius:9px!important;
+    background:color-mix(in srgb,var(--ghost) 64%,transparent)!important;
+    border:1px solid color-mix(in srgb,var(--line) 55%,transparent)!important;
+    font-size:16px!important;
+  }
+  .side-menu .nav-label{font-size:12px!important}
+  .side-menu .tab.active{
+    background:color-mix(in srgb,var(--a) 9%,var(--surface-2))!important;
+    border-color:color-mix(in srgb,var(--a) 28%,var(--line))!important;
+    color:var(--txt)!important;
+    box-shadow:inset 3px 0 0 var(--a)!important;
+  }
+  .side-menu .tab.active .nav-icon{
+    background:color-mix(in srgb,var(--a) 15%,var(--ghost))!important;
+    border-color:color-mix(in srgb,var(--a) 34%,var(--line))!important;
+    color:var(--a)!important;
+  }
+}
+html[data-theme="light"] .side-menu .tab.active{
+  background:color-mix(in srgb,var(--a) 10%,#fff)!important;
+  color:#243244!important;
+}
+html[data-theme="light"] .side-menu .tab.active .nav-icon{
+  background:color-mix(in srgb,var(--a) 18%,#fff)!important;
+  color:#9a6500!important;
+}
+</style>
+<style id="yummypro-fullwidth-fixed-sidebar-v2443">
+@media(min-width:801px){
+  html,body{width:100%!important;max-width:none!important;overflow-x:hidden!important}
+  body{margin:0!important}
+
+  #app.wrap{
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+    padding:10px 14px 34px 254px!important;
+    transition:padding-left .2s ease!important;
+  }
+  #app.wrap.sidebar-collapsed{
+    padding-left:82px!important;
+  }
+
+  #subscriptionBanner,
+  #app>.top,
+  #panelLayout,
+  .panel-content{
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    margin-left:0!important;
+    margin-right:0!important;
+  }
+
+  #subscriptionBanner{
+    margin:0 0 12px!important;
+    padding:16px 18px!important;
+  }
+
+  #app>.top{
+    margin:0 0 12px!important;
+    padding:2px 0 12px!important;
+  }
+
+  #panelLayout,
+  #panelLayout.sidebar-collapsed{
+    display:block!important;
+    grid-template-columns:none!important;
+    gap:0!important;
+  }
+
+  .panel-content{
+    display:block!important;
+    overflow:visible!important;
+  }
+
+  .side-menu{
+    position:fixed!important;
+    left:8px!important;
+    top:8px!important;
+    bottom:8px!important;
+    z-index:1450!important;
+    width:234px!important;
+    max-width:234px!important;
+    height:auto!important;
+    max-height:none!important;
+    margin:0!important;
+    border-radius:16px!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    box-shadow:0 14px 36px var(--shadow)!important;
+  }
+
+  .side-menu.collapsed{
+    width:60px!important;
+    max-width:60px!important;
+  }
+
+  .side-menu-backdrop{display:none!important}
+
+  #dashboard,
+  #orders,
+  #pos,
+  #kitchen,
+  #cash,
+  #products,
+  #categories,
+  #inventory,
+  #staff,
+  #table_qr,
+  #qr,
+  #plans,
+  #settings{
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+  }
+
+  .restaurant-dashboard-hero,
+  .restaurant-metrics,
+  .restaurant-control-grid,
+  .restaurant-analytics{
+    width:100%!important;
+    max-width:none!important;
+  }
+}
+@media(min-width:1400px){
+  #app.wrap{padding-right:18px!important}
+}
+@media(max-width:800px){
+  #app.wrap{
+    width:100%!important;
+    max-width:100%!important;
+    margin:0!important;
+    padding:10px 12px 28px!important;
+  }
+  .side-menu{
+    left:0!important;
+    top:0!important;
+    bottom:0!important;
+    width:min(86vw,310px)!important;
+    max-width:min(86vw,310px)!important;
+    height:100dvh!important;
+    border-radius:0 16px 16px 0!important;
+  }
+}
+</style>
+<style id="yummypro-sidebar-icon-centering-v2444">
+@media(min-width:801px){
+  .side-menu.collapsed{
+    width:68px!important;
+    max-width:68px!important;
+    padding:9px 12px 14px 8px!important;
+    scrollbar-gutter:auto!important;
+  }
+  #app.wrap.sidebar-collapsed{
+    padding-left:90px!important;
+  }
+  .side-menu.collapsed .tabs{
+    width:100%!important;
+    max-width:100%!important;
+    padding:0!important;
+    margin:0!important;
+    display:grid!important;
+    justify-items:center!important;
+    align-items:start!important;
+    gap:4px!important;
+  }
+  .side-menu.collapsed .tab{
+    width:40px!important;
+    max-width:40px!important;
+    min-width:40px!important;
+    min-height:42px!important;
+    padding:3px 2px!important;
+    margin:1px auto!important;
+    display:grid!important;
+    place-items:center!important;
+    border-radius:11px!important;
+  }
+  .side-menu.collapsed .nav-icon{
+    width:36px!important;
+    height:34px!important;
+    margin:0 auto!important;
+    display:grid!important;
+    place-items:center!important;
+  }
+  .side-menu.collapsed .nav-group-label{
+    width:30px!important;
+    margin:5px auto!important;
+  }
+  .side-menu.collapsed .sidebar-brand{
+    width:100%!important;
+    padding-left:0!important;
+    padding-right:0!important;
+    align-items:center!important;
+  }
+  .side-menu.collapsed .sidebar-brand-mark,
+  .side-menu.collapsed .sidebar-collapse-btn{
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+  .side-menu::-webkit-scrollbar{width:2px!important}
+  .side-menu::-webkit-scrollbar-track{background:transparent!important}
+  .side-menu::-webkit-scrollbar-thumb{
+    background:#0a0d12!important;
+    border-radius:999px!important;
+  }
+  html[data-theme="light"] .side-menu::-webkit-scrollbar-thumb{
+    background:#aab3bf!important;
+  }
+}
+</style>
+<style id="yummypro-sidebar-scroll-mask-v2445">
+@media(min-width:801px){
+  .side-menu{
+    overflow:hidden!important;
+    scrollbar-width:none!important;
+  }
+  .side-menu::-webkit-scrollbar{display:none!important}
+
+  .side-menu .sidebar-brand{
+    position:relative!important;
+    top:auto!important;
+    z-index:5!important;
+    flex:0 0 auto!important;
+    margin:0!important;
+    background:var(--card)!important;
+    border-bottom:1px solid color-mix(in srgb,var(--line) 70%,transparent)!important;
+  }
+  .side-menu .sidebar-brand::after{
+    content:"";
+    position:absolute;
+    left:-8px;
+    right:-8px;
+    bottom:-10px;
+    height:10px;
+    pointer-events:none;
+    background:linear-gradient(to bottom,var(--card),transparent);
+  }
+
+  .side-menu .side-menu-title{
+    position:relative!important;
+    z-index:4!important;
+    flex:0 0 auto!important;
+    background:var(--card)!important;
+    margin-top:0!important;
+  }
+
+  .side-menu .tabs{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    max-height:none!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain!important;
+    scrollbar-width:thin!important;
+    scrollbar-color:rgba(255,255,255,.10) transparent!important;
+    padding-right:3px!important;
+    -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 8px,#000 calc(100% - 4px),transparent 100%);
+    mask-image:linear-gradient(to bottom,transparent 0,#000 8px,#000 calc(100% - 4px),transparent 100%);
+  }
+
+  .side-menu .tabs::-webkit-scrollbar{
+    width:1px!important;
+    height:1px!important;
+  }
+  .side-menu .tabs::-webkit-scrollbar-track{
+    background:transparent!important;
+  }
+  .side-menu .tabs::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,.10)!important;
+    border-radius:999px!important;
+  }
+  .side-menu .tabs::-webkit-scrollbar-thumb:hover{
+    background:rgba(255,255,255,.16)!important;
+  }
+
+  html[data-theme="light"] .side-menu .sidebar-brand,
+  html[data-theme="light"] .side-menu .side-menu-title{
+    background:var(--card)!important;
+  }
+  html[data-theme="light"] .side-menu .tabs{
+    scrollbar-color:rgba(20,35,55,.12) transparent!important;
+  }
+  html[data-theme="light"] .side-menu .tabs::-webkit-scrollbar-thumb{
+    background:rgba(20,35,55,.12)!important;
+  }
+  html[data-theme="light"] .side-menu .tabs::-webkit-scrollbar-thumb:hover{
+    background:rgba(20,35,55,.18)!important;
+  }
+
+  .side-menu.collapsed{
+    display:flex!important;
+    flex-direction:column!important;
+  }
+  .side-menu:not(.collapsed){
+    display:flex!important;
+    flex-direction:column!important;
+  }
+}
+</style>
+<style id="yummypro-reference-sidebar-v2446">
+:root{
+  --ref-side-dark:#191c22;
+  --ref-side-dark-cell:#2a2e35;
+  --ref-side-dark-cell-hover:#333840;
+  --ref-side-dark-line:rgba(255,255,255,.07);
+  --ref-side-dark-icon:#d7dbe0;
+  --ref-side-light:#f2f3f1;
+  --ref-side-light-cell:#e7e8e5;
+  --ref-side-light-cell-hover:#dddeda;
+  --ref-side-light-line:rgba(20,25,30,.08);
+  --ref-side-light-icon:#4f5359;
+  --ref-side-active:#0b72f6;
+}
+@media(min-width:801px){
+  #app.wrap{padding-left:246px!important}
+  #app.wrap.sidebar-collapsed{padding-left:78px!important}
+
+  .side-menu{
+    left:7px!important;top:7px!important;bottom:7px!important;
+    width:224px!important;max-width:224px!important;
+    padding:8px 7px 10px!important;
+    border-radius:9px!important;
+    border:1px solid var(--ref-side-dark-line)!important;
+    background:var(--ref-side-dark)!important;
+    box-shadow:0 10px 28px rgba(0,0,0,.16)!important;
+  }
+  html[data-theme="light"] .side-menu{
+    background:var(--ref-side-light)!important;
+    border-color:var(--ref-side-light-line)!important;
+    box-shadow:0 8px 22px rgba(20,25,30,.08)!important;
+  }
+
+  .side-menu.collapsed{
+    width:58px!important;max-width:58px!important;
+    padding:8px 7px 10px!important;
+  }
+
+  .side-menu .sidebar-brand{
+    min-height:42px!important;height:42px!important;
+    padding:0!important;margin:0 0 7px!important;
+    display:flex!important;align-items:center!important;gap:7px!important;
+    background:transparent!important;
+    border-bottom:1px solid var(--ref-side-dark-line)!important;
+  }
+  html[data-theme="light"] .side-menu .sidebar-brand{border-bottom-color:var(--ref-side-light-line)!important}
+  .side-menu .sidebar-brand::after{display:none!important}
+  .side-menu .sidebar-brand-mark{
+    width:30px!important;height:30px!important;flex:0 0 30px!important;
+    border-radius:8px!important;
+    background:#f6b91f!important;color:#17191d!important;
+    font-size:14px!important;font-weight:900!important;
+  }
+  .side-menu .sidebar-brand-name{
+    font-size:13px!important;font-weight:800!important;color:#eef0f3!important;
+  }
+  html[data-theme="light"] .side-menu .sidebar-brand-name{color:#25282d!important}
+
+  .side-menu .sidebar-collapse-btn{
+    margin-left:auto!important;
+    width:30px!important;height:30px!important;min-height:30px!important;flex:0 0 30px!important;
+    padding:0!important;border:0!important;border-radius:7px!important;
+    display:grid!important;place-items:center!important;
+    background:var(--ref-side-dark-cell)!important;color:var(--ref-side-dark-icon)!important;
+    box-shadow:none!important;
+  }
+  html[data-theme="light"] .side-menu .sidebar-collapse-btn{
+    background:var(--ref-side-light-cell)!important;color:var(--ref-side-light-icon)!important;
+  }
+  .side-menu .sidebar-collapse-btn svg{
+    width:15px!important;height:15px!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important;
+    transition:transform .18s ease!important;
+  }
+  .side-menu .sidebar-collapse-btn.is-collapsed svg{transform:rotate(180deg)!important}
+
+  .side-menu.collapsed .sidebar-brand{
+    min-height:42px!important;height:42px!important;
+    display:grid!important;place-items:center!important;
+    margin-bottom:7px!important;
+  }
+  .side-menu.collapsed .sidebar-brand-mark,
+  .side-menu.collapsed .sidebar-brand-name{display:none!important}
+  .side-menu.collapsed .sidebar-collapse-btn{
+    position:static!important;margin:0 auto!important;
+    width:34px!important;height:34px!important;min-height:34px!important;flex-basis:34px!important;
+  }
+
+  .side-menu .side-menu-title{
+    display:block!important;
+    height:auto!important;padding:4px 7px 6px!important;margin:0!important;
+    font-size:8px!important;letter-spacing:.14em!important;font-weight:800!important;
+    color:#7f858e!important;background:transparent!important;
+  }
+  .side-menu.collapsed .side-menu-title{display:none!important}
+
+  .side-menu .tabs{
+    gap:4px!important;padding:0 2px 0 0!important;
+    -webkit-mask-image:none!important;mask-image:none!important;
+    scrollbar-width:thin!important;
+    scrollbar-color:rgba(190,194,198,.28) transparent!important;
+  }
+  .side-menu .tabs::-webkit-scrollbar{width:3px!important}
+  .side-menu .tabs::-webkit-scrollbar-track{background:transparent!important}
+  .side-menu .tabs::-webkit-scrollbar-thumb{
+    background:rgba(190,194,198,.28)!important;border-radius:999px!important;
+  }
+  html[data-theme="light"] .side-menu .tabs{
+    scrollbar-color:rgba(80,84,90,.20) transparent!important;
+  }
+  html[data-theme="light"] .side-menu .tabs::-webkit-scrollbar-thumb{
+    background:rgba(80,84,90,.20)!important;
+  }
+
+  .side-menu .nav-group-label{
+    font-size:0!important;height:1px!important;
+    padding:0!important;margin:7px 5px!important;
+    border:0!important;border-top:1px solid var(--ref-side-dark-line)!important;
+  }
+  html[data-theme="light"] .side-menu .nav-group-label{border-top-color:var(--ref-side-light-line)!important}
+  .side-menu .nav-group-label:first-child{display:none!important}
+
+  .side-menu .tab{
+    min-height:38px!important;height:38px!important;
+    padding:2px 5px!important;margin:0!important;gap:8px!important;
+    border:0!important;border-radius:8px!important;
+    background:transparent!important;color:#aeb3ba!important;
+    box-shadow:none!important;
+  }
+  html[data-theme="light"] .side-menu .tab{color:#5b6067!important}
+  .side-menu .tab:hover{
+    background:rgba(255,255,255,.035)!important;color:#f0f2f5!important;border:0!important;
+  }
+  html[data-theme="light"] .side-menu .tab:hover{
+    background:rgba(20,25,30,.035)!important;color:#25292e!important;
+  }
+
+  .side-menu .nav-icon{
+    width:32px!important;height:32px!important;flex:0 0 32px!important;margin:0!important;
+    display:grid!important;place-items:center!important;
+    border:0!important;border-radius:8px!important;
+    background:var(--ref-side-dark-cell)!important;color:var(--ref-side-dark-icon)!important;
+    box-shadow:none!important;
+  }
+  html[data-theme="light"] .side-menu .nav-icon{
+    background:var(--ref-side-light-cell)!important;color:var(--ref-side-light-icon)!important;
+  }
+  .side-menu .nav-icon svg{
+    width:16px!important;height:16px!important;
+    fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;
+    stroke-linecap:round!important;stroke-linejoin:round!important;
+  }
+  .side-menu .nav-label{
+    font-size:11px!important;font-weight:650!important;color:inherit!important;
+  }
+
+  .side-menu .tab.active,
+  .side-menu .tab.active:hover{
+    background:transparent!important;color:#eef1f5!important;border:0!important;box-shadow:none!important;
+  }
+  html[data-theme="light"] .side-menu .tab.active{color:#24282d!important}
+  .side-menu .tab.active .nav-icon{
+    background:var(--ref-side-active)!important;color:#fff!important;border:0!important;
+    box-shadow:0 0 0 1px rgba(255,255,255,.05),0 3px 10px rgba(11,114,246,.22)!important;
+  }
+
+  .side-menu.collapsed .tabs{
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+    gap:11px!important;width:100%!important;padding:4px 2px 6px 0!important;
+  }
+  .side-menu.collapsed .tab{
+    width:36px!important;min-width:36px!important;max-width:36px!important;
+    height:36px!important;min-height:36px!important;
+    padding:0!important;margin:0 auto!important;
+    display:grid!important;place-items:center!important;border-radius:8px!important;
+  }
+  .side-menu.collapsed .nav-icon{
+    width:34px!important;height:34px!important;flex:0 0 34px!important;margin:0 auto!important;
+  }
+  .side-menu.collapsed .nav-group-label{
+    display:block!important;width:28px!important;height:1px!important;margin:10px auto!important;
+  }
+  .side-menu.collapsed .nav-label{display:none!important}
+}
+@media(max-width:800px){
+  .side-menu{
+    background:var(--ref-side-dark)!important;
+  }
+  html[data-theme="light"] .side-menu{background:var(--ref-side-light)!important}
+  .side-menu .sidebar-brand-mark{background:#f6b91f!important;color:#17191d!important}
+  .side-menu .sidebar-collapse-btn{display:none!important}
+  .side-menu .nav-icon{
+    border:0!important;background:var(--ref-side-dark-cell)!important;color:var(--ref-side-dark-icon)!important;
+  }
+  html[data-theme="light"] .side-menu .nav-icon{
+    background:var(--ref-side-light-cell)!important;color:var(--ref-side-light-icon)!important;
+  }
+  .side-menu .nav-icon svg{
+    width:16px!important;height:16px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important;
+  }
+  .side-menu .tab.active{
+    background:transparent!important;color:inherit!important;box-shadow:none!important;border:0!important;
+  }
+  .side-menu .tab.active .nav-icon{background:var(--ref-side-active)!important;color:#fff!important}
+}
+</style>
+<style id="yummypro-mobile-sidebar-icon-scale-v2450">
+@media(max-width:800px){
+  #adminSideMenu .tab{
+    min-height:58px!important;
+    padding:5px 10px!important;
+    gap:12px!important;
+  }
+  #adminSideMenu .nav-icon{
+    width:46px!important;
+    height:46px!important;
+    flex:0 0 46px!important;
+    border-radius:12px!important;
+    display:grid!important;
+    place-items:center!important;
+  }
+  #adminSideMenu .nav-icon svg{
+    width:23px!important;
+    height:23px!important;
+    stroke-width:1.9!important;
+  }
+  #adminSideMenu .nav-label{
+    font-size:15px!important;
+    line-height:1.2!important;
+    font-weight:700!important;
+  }
+}
+</style>
+<style id="admin-restaurant-shared-adapter-v237">
+@media(min-width:801px){
+ #dashboard,#restaurants,#subscriptions,#users,#orders,#customers,#kitchenAdmin,#financeAdmin,#inventoryAdmin,#promotionsAdmin,#reviewsAdmin,#settings{
+  width:100%!important;max-width:none!important;min-width:0!important
+ }
+}
+#adminRestaurantScopeBar{border-radius:18px!important}
+.admin-secondary-card{margin-top:14px!important}
+.admin-secondary-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.admin-mini-metric{padding:15px;border:1px solid var(--line);border-radius:15px;background:var(--surface-2)}
+.admin-mini-metric span{color:var(--mut);font-size:12px;font-weight:750}.admin-mini-metric strong{display:block;margin-top:8px;font-size:24px}.admin-mini-metric small{display:block;color:var(--mut);font-size:10px;margin-top:4px}
+@media(max-width:800px){.admin-secondary-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head>
 <body class="auth-loading">
 <style>.auth-loading #login,.auth-loading #app{display:none!important}body:not(.admin-authenticated) #dashboard{display:none!important}</style>
@@ -1170,14 +2108,14 @@ body{margin:0!important}
 <div id="subscriptionBanner" class="card" style="margin-bottom:14px;display:none"></div>
 <div id="adminRestaurantBanner" class="card admin-mode-banner" style="display:none;margin-bottom:14px"><div class="row between"><div><b id="adminRestaurantModeName">Viendo como restaurante</b><div class="mut">Sesión protegida del administrador general</div></div><button class="primary" onclick="returnToAdminPanel()">← Volver al panel administrador</button></div></div>
 <div class="top admin-top"><div><h1 id="panelMainTitle">Panel Administrativo</h1><div id="who" class="mut"></div></div><div class="row"><a id="viewMenuLink" href="#" target="_blank" style="display:none"><button class="ghost header-action" type="button" aria-label="Ver menú" title="Ver menú"><span class="header-action-icon" aria-hidden="true">◉</span><span class="action-label">Ver menú</span></button></a><button class="ghost header-action" id="themeBtn" type="button" onclick="toggleAdminTheme()" aria-label="Cambiar modo de color" title="Cambiar tema"><span id="adminThemeIcon" class="header-action-icon" aria-hidden="true">☀</span><span id="adminThemeLabel" class="action-label">Modo claro</span></button><button class="ghost header-action" type="button" onclick="logout()" aria-label="Salir" title="Salir"><span class="header-action-icon" aria-hidden="true">↪</span><span class="action-label">Salir</span></button><button id="adminSideMenuToggle" class="ghost admin-side-menu-toggle header-action" type="button" onclick="toggleAdminSideMenu()" aria-label="Abrir menú del panel" title="Menú del panel"><span class="header-action-icon" aria-hidden="true">☰</span><span class="action-label">Menú</span></button></div></div>
-<div id="adminSideMenuBackdrop" class="admin-side-menu-backdrop" onclick="closeAdminSideMenu()"></div>
-<aside id="adminSideMenu" class="admin-side-menu">
+<div id="adminSideMenuBackdrop" class="side-menu-backdrop admin-side-menu-backdrop" onclick="closeAdminSideMenu()"></div>
+<aside id="adminSideMenu" class="side-menu admin-side-menu">
 <div class="sidebar-brand">
   <span class="sidebar-brand-mark">Y</span>
   <span class="sidebar-brand-name">YummyPro</span>
   <button id="adminSidebarCollapseBtn" class="sidebar-collapse-btn" type="button" onclick="toggleAdminSideMenu(event)" aria-label="Contraer menú" title="Contraer menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
 </div>
-<div class="admin-side-menu-title">NAVEGACIÓN</div>
+<div class="side-menu-title admin-side-menu-title">NAVEGACIÓN</div>
 <div class="tabs">
   <div class="nav-group-label">PRINCIPAL</div>
   <button class="tab active" data-tab="dashboard" title="Resumen"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></span><span class="nav-label">Resumen</span></button>
@@ -1206,7 +2144,7 @@ body{margin:0!important}
 <section id="plans" class="section"><div class="grid"><div class="card span12"><h2>Planes disponibles</h2><p class="mut">Elige un plan para mantener activo tu restaurante.</p><div id="restaurantPlanList" class="list"></div></div></div></section><section id="qr" class="section"><div class="grid"><div class="card span12"><h2>Código QR del restaurante</h2><p class="mut">Enlace directo para compartir el menú. Puedes copiarlo o abrirlo para generar/imprimir su QR desde el teléfono.</p><div id="qrPanel" class="list"></div></div></div></section>
 <section id="users" class="section"><div class="card"><div class="row between"><h2>Usuarios asignados</h2><div class="actions"><button class="primary" onclick="openUserAdminModal()">＋ Crear usuario</button><button class="ghost" onclick="loadStaff()">Actualizar</button></div></div><div id="staffList" class="list"></div></div></section><div id="adminUserModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('adminUserModal')"></div><div class="card admin-form-card"><div class="row between"><h2>Usuario de restaurante</h2><button class="ghost" type="button" onclick="closeAdminFormModal('adminUserModal')">✕</button></div><h2>Usuario de restaurante</h2><p class="mut">Crea una cuenta en Supabase y asígnala directamente a un restaurante.</p><label>Correo</label><input id="staffEmail" type="email" placeholder="usuario@restaurante.com"><label>Contraseña inicial</label><div class="row"><input id="staffPassword" type="password" minlength="8" placeholder="Mínimo 8 caracteres"><button type="button" class="ghost" aria-label="Mostrar contraseña" onclick="return togglePassword('staffPassword',this)">Ver</button></div><label>Restaurante</label><select id="staffRestaurant"></select><label>Rol</label><select id="staffRole"><option value="restaurant">Solo restaurante</option><option value="editor">Editor</option><option value="manager">Administrador</option></select><label>Permisos</label><div class="item"><label><input id="permProducts" type="checkbox" checked> Productos</label><label><input id="permCategories" type="checkbox" checked> Categorías</label><label><input id="permBusiness" type="checkbox"> Datos del negocio</label></div><button class="primary" style="margin-top:15px" onclick="createStaffUser()">Crear usuario y asignar</button></div></div>
 <section id="restaurants" class="section"><div class="card"><div class="row between"><h2>Mis restaurantes</h2><div class="actions"><button class="primary" onclick="openRestaurantAdminModal()">＋ Crear restaurante</button><button class="ghost" onclick="loadRestaurants()">Actualizar</button></div></div><div id="restaurantList" class="list"></div></div></section><div id="adminRestaurantModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('adminRestaurantModal')"></div><div class="card admin-form-card"><div class="row between"><h2>Restaurante</h2><button class="ghost" type="button" onclick="closeAdminFormModal('adminRestaurantModal')">✕</button></div><h2>Crear restaurante</h2><input id="rid" type="hidden"><label>Nombre</label><input id="rname" placeholder="Ej: Burger House"><label>Link / slug</label><input id="rslug" placeholder="burger-house"><label>Dominio propio</label><input id="rdomain" placeholder="menu.negocio.com"><label>WhatsApp</label><input id="rwa" placeholder="569..."><label>Dirección</label><input id="raddr"><label>Colores de la web</label><div class="three" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div><label>Principal</label><input id="rcolorPrimary" type="color" value="#ffc21a" style="height:46px;padding:4px"></div><div><label>Secundario</label><input id="rcolorSecondary" type="color" value="#1e1f24" style="height:46px;padding:4px"></div><div><label>Texto</label><input id="rcolorText" type="color" value="#1e1f24" style="height:46px;padding:4px"></div></div><button type="button" class="ghost" style="margin-top:10px" onclick="resetRestaurantColors()">Restablecer colores</button><label>Logo del restaurante</label><div class="uploadBox"><input id="rlogo" type="hidden"><input id="rlogoFile" type="file" accept="image/*" onchange="uploadRestaurantLogo(this)"><button type="button" class="ghost" onclick="rlogoFile.click()">📷 Elegir logo de la galería</button><img id="rlogoPreview" class="uploadPreview" hidden></div><div class="row" style="margin-top:15px"><button class="primary" onclick="saveRestaurant()">Guardar restaurante</button><button class="ghost" onclick="clearRestaurant()">Limpiar</button></div></div></div>
-<section id="dashboard" class="section">
+<section id="dashboard" class="section active">
 <div class="restaurant-dashboard-hero admin-dashboard-hero"><div><span class="eyebrow">PANEL PRINCIPAL</span><h2>Todo bajo control</h2><p class="mut">Restaurantes, suscripciones, pedidos y operación de la plataforma en una vista clara y rápida.</p></div><button class="ghost admin-refresh-btn" id="refreshDashboardBtn" onclick="refreshAll()">↻ Actualizar</button></div>
 
 <div class="restaurant-metrics dashboard-ref-metrics admin-primary-metrics">
@@ -1373,7 +2311,7 @@ async function enter(user){
     document.getElementById("app").classList.remove("hidden");
     document.body.classList.remove("auth-loading");
     document.getElementById("who").textContent=user.email;
-    if(isSuperAdmin){document.querySelectorAll(".admin-only").forEach(x=>x.style.display="");document.getElementById("demoProductActions").style.display="";document.getElementById("viewMenuLink").style.display="none";document.querySelector('[data-tab="settings"]')?.style.setProperty("display","none");document.getElementById("settings")?.classList.remove("active");document.getElementById("subscriptionBanner").style.display="none";document.querySelector('[data-tab="plans"]').style.display="none";document.getElementById("mpCredentialsCard").style.display="block";document.getElementById("planCreatorCard").style.display="block";document.querySelectorAll(".tab,.section").forEach(x=>x.classList.remove("active"));document.querySelector('[data-tab="dashboard"]')?.classList.add("active");document.getElementById("dashboard")?.classList.add("active");}else{document.getElementById("demoProductActions").style.display="none";document.getElementById("mpCredentialsCard").style.display="none";document.getElementById("planCreatorCard").style.display="none";document.querySelector('[data-tab="plans"]').style.display="";}
+    if(isSuperAdmin){document.querySelectorAll(".admin-only").forEach(x=>{if(x.id!=="adminRestaurantScopeBar")x.style.display=""});document.getElementById("adminRestaurantScopeBar")?.style.setProperty("display","none");document.getElementById("demoProductActions").style.display="";document.getElementById("viewMenuLink").style.display="none";document.querySelector('[data-tab="settings"]')?.style.setProperty("display","none");document.getElementById("settings")?.classList.remove("active");document.getElementById("subscriptionBanner").style.display="none";document.querySelector('[data-tab="plans"]')?.style.setProperty("display","none");document.getElementById("mpCredentialsCard").style.display="block";document.getElementById("planCreatorCard").style.display="block";document.querySelectorAll(".tab,.section").forEach(x=>x.classList.remove("active"));document.querySelector('[data-tab="dashboard"]')?.classList.add("active");document.getElementById("dashboard")?.classList.add("active");}else{document.getElementById("demoProductActions").style.display="none";document.getElementById("mpCredentialsCard").style.display="none";document.getElementById("planCreatorCard").style.display="none";document.querySelector('[data-tab="plans"]')?.style.setProperty("display","");}
     msg.textContent="";
     await refreshAll();
     if(isSuperAdmin){
@@ -1908,7 +2846,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.6</footer><script>
+</script><footer class="admin-version">Versión v2.3.7</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -1950,7 +2888,7 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.6</div><script id="admin-drawer-js-v202">
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.7</div><script id="admin-drawer-js-v202">
 const ADMIN_SIDEBAR_STATE_KEY="yummy_admin_sidebar_collapsed";
 function applyAdminSidebarState(collapsed){
  const m=document.getElementById("adminSideMenu"),app=document.getElementById("app"),btn=document.getElementById("adminSidebarCollapseBtn");
