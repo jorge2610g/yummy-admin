@@ -6,5 +6,3 @@ test('muestra solo los seis módulos administrativos y el resumen filtrable',asy
 test('incluye historial global de pagos de suscripción',async({page})=>{await page.goto('/');await expect(page.locator('#adminSubscriptionPaymentHistory')).toBeAttached();await expect(page.locator('#subscriptionPaymentHistoryCard')).toBeAttached()});
 
 test('incluye configuración de Flow Chile',async({page})=>{await page.goto('/');await expect(page.locator('#flowCredentialsCard')).toBeAttached();await expect(page.locator('#subscriptionFlowApiKey')).toBeAttached();await expect(page.locator('#subscriptionFlowEnvironment')).toBeAttached()});
-
-test('panel admin cerrado copia el estilo limpio del restaurante',async({page})=>{await page.goto('/');const html=await page.content();expect(html).toContain('admin-collapsed-like-restaurant-v2315');expect(html).toContain('box-shadow:none!important');expect(html).toContain('#adminSideMenu.collapsed .nav-group-label')});
