@@ -6,3 +6,5 @@ test('muestra solo los seis módulos administrativos y el resumen filtrable',asy
 test('incluye historial global de pagos de suscripción',async({page})=>{await page.goto('/');await expect(page.locator('#adminSubscriptionPaymentHistory')).toBeAttached();await expect(page.locator('#subscriptionPaymentHistoryCard')).toBeAttached()});
 
 test('incluye configuración de Flow Chile',async({page})=>{await page.goto('/');await expect(page.locator('#flowCredentialsCard')).toBeAttached();await expect(page.locator('#subscriptionFlowApiKey')).toBeAttached();await expect(page.locator('#subscriptionFlowEnvironment')).toBeAttached()});
+
+test('permite configurar precio y meses de regalo del plan anual',async({page})=>{await page.goto('/');const html=await page.content();expect(html).toContain('planAnnualEnabled');expect(html).toContain('planAnnualBonusMonths');expect(html).toContain('planAnnualAmount');expect(html).toContain('updateAnnualPlanPreview')});
