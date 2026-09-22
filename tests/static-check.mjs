@@ -13,3 +13,5 @@ for(const file of ['index.html','panel.html','panel/index.html']){
     }
   }
 }
+
+const admin=readFileSync('index.html','utf8');for(const marker of ['currencyDigits','minimumFractionDigits:shown','maximumFractionDigits:shown','restaurantMoney(value,rid)'])if(!admin.includes(marker))throw new Error('index.html: falta formato monetario adaptable '+marker);
