@@ -763,6 +763,195 @@ html[data-theme="light"] .admin-side-menu .tab.active .nav-icon{
   background:color-mix(in srgb,var(--a) 18%,#fff)!important;
   color:#9a6500!important;
 }
+</style><style id="yummypro-admin-reference-ui-v235">
+:root{
+  --ref-side-dark:#191c22;
+  --ref-side-dark-cell:#2a2e35;
+  --ref-side-dark-line:rgba(255,255,255,.07);
+  --ref-side-dark-icon:#d7dbe0;
+  --ref-side-light:#f2f3f1;
+  --ref-side-light-cell:#e7e8e5;
+  --ref-side-light-line:rgba(20,25,30,.08);
+  --ref-side-light-icon:#4f5359;
+  --ref-side-active:#0b72f6;
+}
+html,body{overflow-x:hidden!important}
+@media(min-width:801px){
+  #app.wrap{
+    width:100%!important;max-width:none!important;margin:0!important;
+    padding-left:246px!important;padding-right:16px!important;
+    transition:padding-left .2s ease!important;
+  }
+  #app.wrap.sidebar-collapsed{padding-left:78px!important}
+
+  .admin-side-menu{
+    position:fixed!important;left:7px!important;top:7px!important;bottom:7px!important;z-index:1450!important;
+    width:224px!important;max-width:224px!important;height:auto!important;max-height:none!important;
+    padding:8px 7px 10px!important;margin:0!important;
+    border-radius:9px!important;border:1px solid var(--ref-side-dark-line)!important;
+    background:var(--ref-side-dark)!important;
+    box-shadow:0 10px 28px rgba(0,0,0,.16)!important;
+    display:flex!important;flex-direction:column!important;overflow:hidden!important;
+  }
+  html[data-theme="light"] .admin-side-menu{
+    background:var(--ref-side-light)!important;
+    border-color:var(--ref-side-light-line)!important;
+    box-shadow:0 8px 22px rgba(20,25,30,.08)!important;
+  }
+  .admin-side-menu.collapsed{
+    width:58px!important;max-width:58px!important;padding:8px 7px 10px!important;
+  }
+
+  .admin-side-menu .sidebar-brand{
+    position:relative!important;top:auto!important;z-index:5!important;
+    min-height:42px!important;height:42px!important;flex:0 0 42px!important;
+    padding:0!important;margin:0 0 7px!important;
+    display:flex!important;align-items:center!important;gap:7px!important;
+    background:transparent!important;border-bottom:1px solid var(--ref-side-dark-line)!important;
+    overflow:visible!important;
+  }
+  html[data-theme="light"] .admin-side-menu .sidebar-brand{border-bottom-color:var(--ref-side-light-line)!important}
+  .admin-side-menu .sidebar-brand-mark{
+    width:30px!important;height:30px!important;flex:0 0 30px!important;
+    border-radius:8px!important;background:#f6b91f!important;color:#17191d!important;
+    font-size:14px!important;font-weight:900!important;box-shadow:none!important;
+  }
+  .admin-side-menu .sidebar-brand-name{
+    font-size:13px!important;font-weight:800!important;color:#eef0f3!important;
+    opacity:1!important;transform:none!important;
+  }
+  html[data-theme="light"] .admin-side-menu .sidebar-brand-name{color:#25282d!important}
+  .admin-side-menu .sidebar-collapse-btn{
+    margin-left:auto!important;width:30px!important;height:30px!important;min-height:30px!important;flex:0 0 30px!important;
+    padding:0!important;border:0!important;border-radius:7px!important;
+    display:grid!important;place-items:center!important;
+    background:var(--ref-side-dark-cell)!important;color:var(--ref-side-dark-icon)!important;box-shadow:none!important;
+  }
+  html[data-theme="light"] .admin-side-menu .sidebar-collapse-btn{
+    background:var(--ref-side-light-cell)!important;color:var(--ref-side-light-icon)!important;
+  }
+  .admin-side-menu .sidebar-collapse-btn svg{
+    width:15px!important;height:15px!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important;
+    stroke-linecap:round!important;stroke-linejoin:round!important;transition:transform .18s ease!important;
+  }
+  .admin-side-menu .sidebar-collapse-btn.is-collapsed svg{transform:rotate(180deg)!important}
+  .admin-side-menu.collapsed .sidebar-brand{
+    min-height:42px!important;height:42px!important;display:grid!important;place-items:center!important;margin-bottom:7px!important;
+  }
+  .admin-side-menu.collapsed .sidebar-brand-mark,
+  .admin-side-menu.collapsed .sidebar-brand-name{display:none!important}
+  .admin-side-menu.collapsed .sidebar-collapse-btn{
+    position:static!important;margin:0 auto!important;width:34px!important;height:34px!important;min-height:34px!important;flex-basis:34px!important;
+  }
+
+  .admin-side-menu .admin-side-menu-title{
+    display:block!important;height:auto!important;padding:4px 7px 6px!important;margin:0!important;
+    font-size:8px!important;letter-spacing:.14em!important;font-weight:800!important;
+    color:#7f858e!important;background:transparent!important;opacity:1!important;
+  }
+  .admin-side-menu.collapsed .admin-side-menu-title{display:none!important}
+
+  .admin-side-menu .tabs{
+    flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+    display:flex!important;flex-direction:column!important;
+    gap:4px!important;padding:0 2px 0 0!important;margin:0!important;
+    scrollbar-width:thin!important;scrollbar-color:rgba(190,194,198,.28) transparent!important;
+    -webkit-mask-image:none!important;mask-image:none!important;
+  }
+  .admin-side-menu .tabs::-webkit-scrollbar{width:3px!important}
+  .admin-side-menu .tabs::-webkit-scrollbar-track{background:transparent!important}
+  .admin-side-menu .tabs::-webkit-scrollbar-thumb{background:rgba(190,194,198,.28)!important;border-radius:999px!important}
+  html[data-theme="light"] .admin-side-menu .tabs{scrollbar-color:rgba(80,84,90,.20) transparent!important}
+  html[data-theme="light"] .admin-side-menu .tabs::-webkit-scrollbar-thumb{background:rgba(80,84,90,.20)!important}
+
+  .admin-side-menu .nav-group-label{
+    font-size:0!important;height:1px!important;padding:0!important;margin:7px 5px!important;
+    border:0!important;border-top:1px solid var(--ref-side-dark-line)!important;opacity:1!important;
+  }
+  html[data-theme="light"] .admin-side-menu .nav-group-label{border-top-color:var(--ref-side-light-line)!important}
+  .admin-side-menu .nav-group-label:first-child{display:none!important}
+
+  .admin-side-menu .tab{
+    min-height:38px!important;height:38px!important;padding:2px 5px!important;margin:0!important;gap:8px!important;
+    border:0!important;border-radius:8px!important;background:transparent!important;color:#aeb3ba!important;
+    box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  }
+  html[data-theme="light"] .admin-side-menu .tab{color:#5b6067!important}
+  .admin-side-menu .tab:hover{background:rgba(255,255,255,.035)!important;color:#f0f2f5!important;border:0!important}
+  html[data-theme="light"] .admin-side-menu .tab:hover{background:rgba(20,25,30,.035)!important;color:#25292e!important}
+
+  .admin-side-menu .nav-icon{
+    width:32px!important;height:32px!important;flex:0 0 32px!important;margin:0!important;
+    display:grid!important;place-items:center!important;border:0!important;border-radius:8px!important;
+    background:var(--ref-side-dark-cell)!important;color:var(--ref-side-dark-icon)!important;box-shadow:none!important;
+  }
+  html[data-theme="light"] .admin-side-menu .nav-icon{background:var(--ref-side-light-cell)!important;color:var(--ref-side-light-icon)!important}
+  .admin-side-menu .nav-icon svg{
+    width:16px!important;height:16px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;
+    stroke-linecap:round!important;stroke-linejoin:round!important;
+  }
+  .admin-side-menu .nav-label{font-size:11px!important;font-weight:650!important;color:inherit!important;opacity:1!important;transform:none!important}
+
+  .admin-side-menu .tab.active,
+  .admin-side-menu .tab.active:hover{
+    background:transparent!important;color:#eef1f5!important;border:0!important;box-shadow:none!important;
+  }
+  html[data-theme="light"] .admin-side-menu .tab.active{color:#24282d!important}
+  .admin-side-menu .tab.active .nav-icon{
+    background:var(--ref-side-active)!important;color:#fff!important;border:0!important;
+    box-shadow:0 0 0 1px rgba(255,255,255,.05),0 3px 10px rgba(11,114,246,.22)!important;
+  }
+
+  .admin-side-menu.collapsed .tabs{
+    display:flex!important;flex-direction:column!important;align-items:center!important;
+    gap:11px!important;width:100%!important;padding:4px 2px 6px 0!important;
+  }
+  .admin-side-menu.collapsed .tab{
+    width:36px!important;min-width:36px!important;max-width:36px!important;height:36px!important;min-height:36px!important;
+    padding:0!important;margin:0 auto!important;display:grid!important;place-items:center!important;border-radius:8px!important;
+    background:transparent!important;border:0!important;box-shadow:none!important;
+  }
+  .admin-side-menu.collapsed .nav-icon{
+    width:34px!important;height:34px!important;flex:0 0 34px!important;margin:0 auto!important;
+  }
+  .admin-side-menu.collapsed .nav-label{display:none!important}
+  .admin-side-menu.collapsed .nav-group-label{
+    display:block!important;width:28px!important;height:1px!important;margin:10px auto!important;
+  }
+
+  #app>.top,#app>.section,#app>.card,#adminRestaurantScopeBar{
+    width:100%!important;max-width:none!important;min-width:0!important;
+  }
+}
+@media(max-width:800px){
+  #app.wrap{width:100%!important;max-width:100%!important;margin:0!important;padding:10px 12px 28px!important}
+  .admin-side-menu{
+    width:min(86vw,310px)!important;max-width:min(86vw,310px)!important;
+    background:var(--ref-side-dark)!important;border-radius:0 10px 10px 0!important;
+    padding:14px 10px 22px!important;
+  }
+  html[data-theme="light"] .admin-side-menu{background:var(--ref-side-light)!important}
+  .admin-side-menu .sidebar-brand-mark{background:#f6b91f!important;color:#17191d!important}
+  .admin-side-menu .sidebar-brand-name{font-size:15px!important}
+  .admin-side-menu .sidebar-collapse-btn{display:none!important}
+  .admin-side-menu .tab{
+    min-height:58px!important;padding:5px 10px!important;gap:12px!important;
+    background:transparent!important;border:0!important;box-shadow:none!important;
+  }
+  .admin-side-menu .nav-icon{
+    width:46px!important;height:46px!important;flex:0 0 46px!important;border-radius:12px!important;
+    display:grid!important;place-items:center!important;border:0!important;
+    background:var(--ref-side-dark-cell)!important;color:var(--ref-side-dark-icon)!important;
+  }
+  html[data-theme="light"] .admin-side-menu .nav-icon{background:var(--ref-side-light-cell)!important;color:var(--ref-side-light-icon)!important}
+  .admin-side-menu .nav-icon svg{
+    width:23px!important;height:23px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.9!important;
+    stroke-linecap:round!important;stroke-linejoin:round!important;
+  }
+  .admin-side-menu .nav-label{font-size:15px!important;line-height:1.2!important;font-weight:700!important}
+  .admin-side-menu .tab.active{background:transparent!important;color:inherit!important;box-shadow:none!important;border:0!important}
+  .admin-side-menu .tab.active .nav-icon{background:var(--ref-side-active)!important;color:#fff!important}
+}
 </style></head>
 <body class="auth-loading">
 <style>.auth-loading #login,.auth-loading #app{display:none!important}body:not(.admin-authenticated) #dashboard{display:none!important}</style>
@@ -776,9 +965,35 @@ html[data-theme="light"] .admin-side-menu .tab.active .nav-icon{
 <div id="adminRestaurantBanner" class="card" style="display:none;margin-bottom:14px"><div class="row between"><div><b id="adminRestaurantModeName">Viendo como restaurante</b><div class="mut">Sesión protegida del administrador general</div></div><button class="primary" onclick="returnToAdminPanel()">← Volver al panel administrador</button></div></div><div class="top"><div><h1 id="panelMainTitle">Panel Administrativo</h1><div id="who" class="mut"></div></div><div class="row"><a id="viewMenuLink" href="#" target="_blank" style="display:none"><button class="ghost">Ver menú</button></a><button class="ghost" id="themeBtn" type="button" onclick="toggleAdminTheme()">☀️ Modo claro</button><button class="ghost" onclick="logout()">Salir</button></div></div>
 <button id="adminSideMenuToggle" class="ghost admin-side-menu-toggle" type="button" onclick="toggleAdminSideMenu()">☰ Menú del panel</button>
 <div id="adminSideMenuBackdrop" class="admin-side-menu-backdrop" onclick="closeAdminSideMenu()"></div>
-<aside id="adminSideMenu" class="admin-side-menu"><div class="sidebar-brand"><span class="sidebar-brand-mark">Y</span><span class="sidebar-brand-name">YummyPro</span><button id="adminSidebarCollapseBtn" class="sidebar-collapse-btn" type="button" onclick="toggleAdminSideMenu(event)" aria-label="Contraer menú" title="Contraer menú">‹</button></div><div class="admin-side-menu-title">NAVEGACIÓN</div><div class="tabs">
-<div class="nav-group-label">PRINCIPAL</div><button class="tab active" data-tab="dashboard" title="Resumen"><span class="nav-icon">⌂</span><span class="nav-label">Resumen</span></button><button class="tab" data-tab="restaurants" title="Restaurantes"><span class="nav-icon">🏪</span><span class="nav-label">Restaurantes</span></button><button class="tab" data-tab="subscriptions" title="Suscripciones"><span class="nav-icon">💳</span><span class="nav-label">Suscripciones</span></button><button class="tab" data-tab="users" title="Personal"><span class="nav-icon">👥</span><span class="nav-label">Personal</span></button><div class="nav-group-label">OPERACIÓN</div><button class="tab" data-tab="orders" title="Pedidos"><span class="nav-icon">📦</span><span class="nav-label">Pedidos</span></button><button class="tab admin-only" data-tab="customers" title="Clientes"><span class="nav-icon">👤</span><span class="nav-label">Clientes</span></button><button class="tab admin-only" data-tab="kitchenAdmin" title="Cocina global"><span class="nav-icon">👨‍🍳</span><span class="nav-label">Cocina global</span></button><button class="tab admin-only" data-tab="financeAdmin" title="Caja y pagos"><span class="nav-icon">💵</span><span class="nav-label">Caja y pagos</span></button><button class="tab admin-only" data-tab="inventoryAdmin" title="Inventario global"><span class="nav-icon">📋</span><span class="nav-label">Inventario global</span></button><div class="nav-group-label admin-only">GESTIÓN</div><button class="tab admin-only" data-tab="promotionsAdmin" title="Promociones"><span class="nav-icon">🎟️</span><span class="nav-label">Promociones</span></button><button class="tab admin-only" data-tab="reviewsAdmin" title="Reseñas"><span class="nav-icon">⭐</span><span class="nav-label">Reseñas</span></button><div class="nav-group-label">SISTEMA</div><button class="tab" data-tab="settings" title="Configuración"><span class="nav-icon">⚙️</span><span class="nav-label">Configuración</span></button>
-</div></aside>
+<aside id="adminSideMenu" class="admin-side-menu">
+<div class="sidebar-brand">
+  <span class="sidebar-brand-mark">Y</span>
+  <span class="sidebar-brand-name">YummyPro</span>
+  <button id="adminSidebarCollapseBtn" class="sidebar-collapse-btn" type="button" onclick="toggleAdminSideMenu(event)" aria-label="Contraer menú" title="Contraer menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button>
+</div>
+<div class="admin-side-menu-title">NAVEGACIÓN</div>
+<div class="tabs">
+  <div class="nav-group-label">PRINCIPAL</div>
+  <button class="tab active" data-tab="dashboard" title="Resumen"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg></span><span class="nav-label">Resumen</span></button>
+  <button class="tab" data-tab="restaurants" title="Restaurantes"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v10H4z"/><path d="M3 10 5 4h14l2 6"/><path d="M8 20v-6h8v6M6 10a2 2 0 0 0 4 0M10 10a2 2 0 0 0 4 0M14 10a2 2 0 0 0 4 0"/></svg></span><span class="nav-label">Restaurantes</span></button>
+  <button class="tab" data-tab="subscriptions" title="Suscripciones"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h4"/></svg></span><span class="nav-label">Suscripciones</span></button>
+  <button class="tab" data-tab="users" title="Personal"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2"/><path d="M15.5 14.5A4.5 4.5 0 0 1 21 19"/></svg></span><span class="nav-label">Personal</span></button>
+
+  <div class="nav-group-label">OPERACIÓN</div>
+  <button class="tab" data-tab="orders" title="Pedidos"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5z"/><path d="M4.5 7.5 12 12l7.5-4.5M12 12v9"/></svg></span><span class="nav-label">Pedidos</span></button>
+  <button class="tab admin-only" data-tab="customers" title="Clientes"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span class="nav-label">Clientes</span></button>
+  <button class="tab admin-only" data-tab="kitchenAdmin" title="Cocina global"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v8M8 3v8M5 7h3M6.5 11v10M15 3c-2 3-2 7 0 9h3V3zM16.5 12v9"/></svg></span><span class="nav-label">Cocina global</span></button>
+  <button class="tab admin-only" data-tab="financeAdmin" title="Caja y pagos"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 9a3 3 0 0 1-1 2v2a3 3 0 0 1 1 2M17 9a3 3 0 0 0 1 2v2a3 3 0 0 0-1 2"/><circle cx="12" cy="12" r="2.2"/></svg></span><span class="nav-label">Caja y pagos</span></button>
+  <button class="tab admin-only" data-tab="inventoryAdmin" title="Inventario global"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5V3h6v1.5M8 9h8M8 13h8M8 17h5"/></svg></span><span class="nav-label">Inventario global</span></button>
+
+  <div class="nav-group-label admin-only">GESTIÓN</div>
+  <button class="tab admin-only" data-tab="promotionsAdmin" title="Promociones"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4z"/><path d="M12 7v12"/></svg></span><span class="nav-label">Promociones</span></button>
+  <button class="tab admin-only" data-tab="reviewsAdmin" title="Reseñas"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg></span><span class="nav-label">Reseñas</span></button>
+
+  <div class="nav-group-label">SISTEMA</div>
+  <button class="tab" data-tab="settings" title="Configuración"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.2 2.3 2.6.4.8 2.5 2.3 1.2-.7 2.6.7 2.6-2.3 1.2-.8 2.5-2.6.4L12 21l-1.2-2.3-2.6-.4-.8-2.5-2.3-1.2.7-2.6-.7-2.6 2.3-1.2.8-2.5 2.6-.4z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="nav-label">Configuración</span></button>
+</div>
+</aside>
 
 <div id="adminRestaurantScopeBar" class="card admin-only" style="margin:0 0 16px;display:none"><div class="row" style="flex-wrap:wrap"><div style="min-width:260px;flex:1"><label style="margin-top:0">Ver información del restaurante</label><select id="adminRestaurantScope" onchange="changeAdminRestaurantScope(this.value)"><option value="all">Todos los restaurantes</option></select></div><button class="ghost" type="button" onclick="refreshCurrentScopedTab()">Actualizar vista</button></div></div>
 <section id="subscriptions" class="section"><div class="grid"><div class="card span12" id="planCreatorCard"><div class="row between"><div><h2>Planes de suscripción</h2><p class="mut">Crea y administra los planes disponibles.</p></div><button class="primary" onclick="openPlanAdminModal()">＋ Crear plan</button></div><div id="planList" class="list" style="margin-top:16px"></div></div><div id="adminPlanModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('adminPlanModal')"></div><div class="card admin-form-card"><div class="row between"><h2>Plan de suscripción</h2><button class="ghost" type="button" onclick="closeAdminFormModal('adminPlanModal')">✕</button></div><label>Nombre del plan</label><input id="planName" placeholder="Ej: Básico"><label>Monto (CLP)</label><input id="planAmount" type="number" min="0" step="1" placeholder="Ej: 19990"><div id="planTrialHint" class="mut" style="font-size:12px;margin-top:6px" hidden>🎁 Esta es la prueba gratuita predeterminada. El monto se mantiene en $0; puedes editar duración y módulos.</div><label>Días</label><input id="planDays" type="number" min="1" step="1" placeholder="Ej: 30"><label>Módulos incluidos</label><div id="planModules" class="item" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px"><label><input type="checkbox" value="dashboard"> Dashboard</label><label><input type="checkbox" value="products"> Productos</label><label><input type="checkbox" value="categories"> Categorías</label><label><input type="checkbox" value="qr"> Código QR</label><label><input type="checkbox" value="table_qr"> QR de Mesa</label><label><input type="checkbox" value="settings"> Abrir/cerrar y configuración</label><label><input type="checkbox" value="orders"> Pedidos</label><label><input type="checkbox" value="pos"> Meseros / POS</label><label><input type="checkbox" value="cash"> Caja</label><label><input type="checkbox" value="kitchen"> Cocina</label><label><input type="checkbox" value="inventory"> Inventario</label><label><input type="checkbox" value="staff"> Personal</label><label><input type="checkbox" value="whatsapp"> WhatsApp Bot</label></div><p class="mut" style="font-size:12px">Selecciona exactamente qué módulos se habilitarán al restaurante cuando compre este plan.</p><div class="row" style="margin-top:15px"><button class="primary" onclick="saveSubscriptionPlan()">Guardar plan</button><button class="ghost" onclick="closeAdminFormModal('adminPlanModal')">Cancelar</button></div></div></div><div class="card span12"><div class="row between"><div><h2>Suscripciones</h2><p class="mut">Cada restaurante recibe 30 días gratis. Desde aquí puedes gestionar estado, plan, precio y vencimiento.</p></div><button class="ghost" onclick="loadRestaurants()">Actualizar</button></div><div id="subscriptionList" class="list"></div></div><div class="card span12" id="mpCredentialsCard"><div class="row between"><div><h2>Mercado Pago · Suscripciones</h2><p class="mut">Verifica la conexión de Mercado Pago Express usada únicamente para cobrar los planes de suscripción.</p></div><button class="ghost" onclick="verifySubscriptionMercadoPago()">Verificar conexión</button></div><div class="two" style="margin-top:14px"><div><label>Public Key de Express</label><input id="subscriptionMpPublicKey" placeholder="APP_USR-..."></div><div><label>Access Token de Express</label><input id="subscriptionMpAccessToken" type="password" placeholder="APP_USR-..."><div class="mut" id="subscriptionMpTokenHint" style="font-size:12px;margin-top:5px"></div></div></div><div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="primary" onclick="saveSubscriptionMercadoPago()">Guardar credenciales</button><button class="ghost" onclick="loadSubscriptionMercadoPagoSettings()">Cargar estado</button></div><div id="subscriptionMpStatus" class="item" style="margin-top:14px"><b>Estado:</b> <span class="mut">Pulsa “Verificar conexión”.</span></div></div></div></section>
@@ -1463,7 +1678,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.4</footer><script>
+</script><footer class="admin-version">Versión v2.3.5</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -1505,15 +1720,15 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.4</div><script id="admin-drawer-js-v202">
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.5</div><script id="admin-drawer-js-v202">
 const ADMIN_SIDEBAR_STATE_KEY="yummy_admin_sidebar_collapsed";
 function applyAdminSidebarState(collapsed){
  const m=document.getElementById("adminSideMenu"),app=document.getElementById("app"),btn=document.getElementById("adminSidebarCollapseBtn");
  if(!m)return;
  const desktop=window.matchMedia("(min-width:801px)").matches;
- if(!desktop){m.classList.remove("collapsed");app?.classList.remove("sidebar-collapsed");if(btn){btn.textContent="‹";btn.title="Contraer menú";btn.setAttribute("aria-label","Contraer menú")}return}
+ if(!desktop){m.classList.remove("collapsed");app?.classList.remove("sidebar-collapsed");if(btn){btn.classList.remove("is-collapsed");btn.title="Contraer menú";btn.setAttribute("aria-label","Contraer menú")}return}
  m.classList.toggle("collapsed",!!collapsed);app?.classList.toggle("sidebar-collapsed",!!collapsed);
- if(btn){btn.textContent=collapsed?"›":"‹";btn.title=collapsed?"Expandir menú":"Contraer menú";btn.setAttribute("aria-label",btn.title)}
+ if(btn){btn.classList.toggle("is-collapsed",!!collapsed);btn.title=collapsed?"Expandir menú":"Contraer menú";btn.setAttribute("aria-label",btn.title)}
 }
 function restoreAdminSidebarState(){let collapsed=false;try{collapsed=localStorage.getItem(ADMIN_SIDEBAR_STATE_KEY)==="1"}catch(_){}applyAdminSidebarState(collapsed)}
 function toggleAdminSideMenu(e){
