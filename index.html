@@ -952,6 +952,212 @@ html,body{overflow-x:hidden!important}
   .admin-side-menu .tab.active{background:transparent!important;color:inherit!important;box-shadow:none!important;border:0!important}
   .admin-side-menu .tab.active .nav-icon{background:var(--ref-side-active)!important;color:#fff!important}
 }
+</style><style id="yummypro-admin-full-restaurant-style-v236">
+/* El panel admin comparte el mismo sistema visual del panel restaurante. */
+html,body{width:100%!important;max-width:none!important;overflow-x:hidden!important}
+body{margin:0!important}
+
+.header-action{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important}
+.header-action-icon{font-size:19px!important;line-height:1!important}
+.top>.row{display:flex!important;align-items:center!important;gap:7px!important}
+.top>.row>a{width:44px!important;min-width:44px!important;flex:0 0 44px!important}
+.top>.row>.header-action,.top>.row>a .header-action{
+  width:44px!important;min-width:44px!important;max-width:44px!important;height:44px!important;min-height:44px!important;
+  padding:0!important;border-radius:12px!important;
+}
+.top .header-action .action-label{display:none!important}
+
+#app.wrap{
+  width:100%!important;max-width:none!important;margin:0!important;
+  padding:10px 14px 34px 246px!important;
+  transition:padding-left .2s ease!important;
+}
+#app.wrap.sidebar-collapsed{padding-left:78px!important}
+
+#subscriptionBanner,#adminRestaurantBanner,#app>.top,#adminRestaurantScopeBar,
+#dashboard,#restaurants,#subscriptions,#users,#orders,#customers,#kitchenAdmin,#financeAdmin,#inventoryAdmin,#promotionsAdmin,#reviewsAdmin,#settings{
+  width:100%!important;max-width:none!important;min-width:0!important;margin-left:0!important;margin-right:0!important;
+}
+#app>.top{margin:0 0 12px!important;padding:2px 0 12px!important}
+#app>.top h1{font-size:24px!important;margin:0!important;letter-spacing:-.025em!important}
+#app>.top .mut{margin-top:4px!important}
+.admin-mode-banner{padding:14px 16px!important;border-radius:16px!important}
+
+.restaurant-dashboard-hero{
+  display:flex!important;align-items:flex-end!important;justify-content:space-between!important;gap:18px!important;
+  margin:0 0 18px!important;padding:8px 2px 2px!important;
+}
+.restaurant-dashboard-hero h2{
+  font-size:32px!important;letter-spacing:-.04em!important;margin:5px 0!important;
+}
+.restaurant-dashboard-hero p{margin:0!important;max-width:760px!important;line-height:1.5!important}
+.admin-refresh-btn{white-space:nowrap!important}
+
+.restaurant-metrics{
+  display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:12px!important;
+}
+.restaurant-metric{
+  display:flex!important;align-items:flex-start!important;gap:13px!important;min-height:132px!important;padding:18px!important;
+  border:1px solid var(--line)!important;border-radius:18px!important;
+  background:linear-gradient(145deg,var(--surface-2),var(--card))!important;box-shadow:0 10px 28px var(--shadow)!important;
+}
+.restaurant-metric>div{min-width:0!important}
+.restaurant-metric span:not(.dashboard-metric-icon){color:var(--mut)!important;font-size:13px!important;font-weight:750!important}
+.restaurant-metric strong{display:block!important;font-size:30px!important;margin:8px 0 6px!important;line-height:1!important;letter-spacing:-.04em!important}
+.restaurant-metric small{display:block!important;color:var(--mut)!important;font-size:11px!important}
+.dashboard-metric-icon{
+  display:grid!important;place-items:center!important;flex:0 0 42px!important;width:42px!important;height:42px!important;
+  border-radius:13px!important;font-size:18px!important;font-weight:900!important;
+}
+.dashboard-metric-icon.metric-green{background:#22c55e1c!important;color:#34d399!important}
+.dashboard-metric-icon.metric-blue{background:#3b82f61c!important;color:#60a5fa!important}
+.dashboard-metric-icon.metric-orange{background:#f59e0b1c!important;color:#fbbf24!important}
+.dashboard-metric-icon.metric-violet{background:#8b5cf61c!important;color:#a78bfa!important}
+
+.restaurant-control-grid{
+  display:grid!important;grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr)!important;gap:14px!important;margin:14px 0!important;
+}
+.quick-control-card,.system-status-card,.admin-secondary-card{
+  border-radius:18px!important;padding:18px!important;
+}
+.module-head{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;margin-bottom:12px!important;
+}
+.module-head h2{margin:3px 0 0!important;font-size:20px!important;letter-spacing:-.025em!important}
+.module-head select{width:auto!important;min-width:200px!important}
+
+.dashboard-quick-actions{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;margin-top:14px!important;
+}
+.dashboard-quick-action{
+  display:grid!important;grid-template-columns:42px minmax(0,1fr) auto!important;align-items:center!important;gap:11px!important;
+  min-height:96px!important;padding:14px!important;border:1px solid var(--line)!important;border-radius:16px!important;
+  background:var(--surface-2)!important;color:var(--txt)!important;text-align:left!important;
+}
+.dashboard-quick-action>span{display:grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:12px!important;background:var(--ghost)!important;font-size:20px!important}
+.dashboard-quick-action div{display:grid!important;gap:3px!important}
+.dashboard-quick-action small{color:var(--mut)!important;font-size:11px!important;font-weight:500!important}
+.dashboard-quick-action i{font-size:24px!important;color:var(--mut)!important;font-style:normal!important}
+.dashboard-quick-action:nth-child(1)>span{background:#22c55e1a!important}
+.dashboard-quick-action:nth-child(2)>span{background:#f59e0b1a!important}
+.dashboard-quick-action:nth-child(3)>span{background:#3b82f61a!important}
+
+.admin-business-status{display:grid!important;gap:8px!important;margin-top:8px!important}
+.admin-business-status .item{
+  min-height:0!important;padding:10px 11px!important;border-radius:13px!important;background:var(--surface-2)!important;
+}
+.admin-business-status .item:first-child{border-left:3px solid var(--a)!important}
+.admin-business-status .mut{font-size:11px!important}
+
+.admin-secondary-card{margin:14px 0!important}
+.admin-secondary-metrics{
+  display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:9px!important;
+}
+.admin-mini-metric{
+  min-width:0!important;padding:13px!important;border:1px solid var(--line)!important;border-radius:14px!important;background:var(--surface-2)!important;
+}
+.admin-mini-metric span{display:block!important;color:var(--mut)!important;font-size:11px!important;font-weight:700!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.admin-mini-metric strong{display:block!important;margin:7px 0 4px!important;font-size:22px!important;letter-spacing:-.03em!important}
+.admin-mini-metric small{color:var(--mut)!important;font-size:10px!important}
+
+.restaurant-analytics{
+  display:grid!important;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr)!important;gap:14px!important;margin-top:14px!important;
+}
+.restaurant-analytics .card{margin:0!important;padding:18px!important;border-radius:18px!important;min-width:0!important}
+#adminSalesChart{height:118px!important;margin-top:4px!important}
+#adminRecentOrders{gap:7px!important}
+#adminRecentOrders .item{padding:10px 11px!important;border-radius:12px!important;min-height:0!important}
+.compact-action{min-height:36px!important;padding:7px 10px!important;font-size:12px!important}
+
+.section>.card,.section>.grid>.card{
+  border-radius:18px!important;padding:18px!important;box-shadow:0 10px 28px var(--shadow)!important;
+}
+.section>.grid{gap:14px!important}
+.section>.card>.row.between:first-child,.section>.grid>.card>.row.between:first-child{margin-bottom:12px!important}
+.section h2{letter-spacing:-.025em!important}
+.item{background:linear-gradient(145deg,var(--surface-2),var(--item))!important;border-radius:16px!important}
+.admin-toolbar{padding:12px!important;border:1px solid var(--line)!important;border-radius:15px!important;background:var(--surface-2)!important}
+.admin-form-card{border-radius:18px!important}
+
+.mobile-dashboard-more{display:none!important}
+
+@media(max-width:1150px) and (min-width:801px){
+  .restaurant-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .restaurant-control-grid{grid-template-columns:1fr!important}
+  .admin-secondary-metrics{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+  .restaurant-analytics{grid-template-columns:1fr!important}
+}
+
+@media(max-width:800px){
+  #app.wrap{width:100%!important;max-width:100%!important;margin:0!important;padding:10px 12px 28px!important}
+  .top{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:10px!important}
+  .top>div:first-child{min-width:0!important}
+  .top>.row{width:auto!important;display:flex!important;flex-wrap:nowrap!important;justify-content:flex-end!important;gap:6px!important}
+  .top>.row>a{display:block!important;width:44px!important;flex:0 0 44px!important}
+  .top>.row>button,.top>.row>a button,.top .admin-side-menu-toggle{
+    width:44px!important;min-width:44px!important;max-width:44px!important;height:44px!important;min-height:44px!important;
+    margin:0!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;border-radius:12px!important;
+  }
+  .top .action-label{display:none!important}
+  .top .header-action-icon{font-size:19px!important}
+  #adminSideMenuToggle{display:flex!important}
+
+  .restaurant-dashboard-hero{align-items:stretch!important;flex-direction:column!important;margin-bottom:10px!important}
+  .restaurant-dashboard-hero h2{font-size:25px!important}
+  .admin-refresh-btn{width:100%!important;min-height:40px!important}
+
+  .restaurant-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .restaurant-metric{min-height:88px!important;padding:10px!important;gap:8px!important;border-radius:14px!important}
+  .dashboard-metric-icon{width:32px!important;height:32px!important;flex-basis:32px!important;border-radius:10px!important;font-size:14px!important}
+  .restaurant-metric span:not(.dashboard-metric-icon){font-size:10px!important}
+  .restaurant-metric strong{font-size:22px!important;margin:4px 0 0!important}
+  .restaurant-metric small{display:none!important}
+
+  .restaurant-control-grid{grid-template-columns:1fr!important;gap:8px!important;margin:9px 0!important}
+  .quick-control-card{padding:10px!important}
+  .quick-control-card .eyebrow{display:none!important}
+  .quick-control-card .module-head h2{font-size:15px!important}
+  .dashboard-quick-actions{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important;margin-top:8px!important}
+  .dashboard-quick-action{
+    min-height:58px!important;grid-template-columns:30px minmax(0,1fr)!important;gap:7px!important;padding:8px!important;border-radius:12px!important;
+  }
+  .dashboard-quick-action>span{width:30px!important;height:30px!important;border-radius:9px!important;font-size:14px!important}
+  .dashboard-quick-action b{font-size:10px!important}
+  .dashboard-quick-action small,.dashboard-quick-action i{display:none!important}
+
+  .mobile-dashboard-more{display:block!important;width:100%!important;min-height:38px!important;margin:8px 0!important;padding:7px 10px!important;font-size:12px!important;border-radius:11px!important}
+
+  .admin-system-card,.admin-secondary-card,#adminAuthenticatedActivity{display:none!important}
+  #dashboard.mobile-expanded .admin-system-card,
+  #dashboard.mobile-expanded .admin-secondary-card,
+  #dashboard.mobile-expanded #adminAuthenticatedActivity{display:block!important}
+  #dashboard.mobile-expanded #adminAuthenticatedActivity{display:grid!important}
+
+  .admin-secondary-card{padding:10px!important;margin:8px 0!important}
+  .admin-secondary-card .module-head{margin-bottom:8px!important}
+  .admin-secondary-card .module-head h2{font-size:15px!important}
+  .admin-secondary-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+  .admin-mini-metric{padding:9px!important;border-radius:11px!important}
+  .admin-mini-metric strong{font-size:18px!important;margin:4px 0 2px!important}
+
+  .restaurant-analytics{grid-template-columns:1fr!important;gap:8px!important;margin-top:8px!important}
+  .restaurant-analytics .card{padding:10px!important;border-radius:13px!important}
+  #adminSalesChart{height:92px!important}
+
+  .section>.card,.section>.grid>.card{padding:14px!important;border-radius:16px!important}
+  .admin-toolbar{display:grid!important;grid-template-columns:1fr!important;padding:10px!important}
+  .admin-toolbar label{min-width:0!important;width:100%!important}
+}
+
+@media(max-width:390px){
+  .top h1{font-size:21px!important}
+  .top>.row{gap:4px!important}
+  .top>.row>button,.top>.row>a,.top>.row>a button,.top .admin-side-menu-toggle{
+    width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;min-height:40px!important;
+  }
+  .restaurant-metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .dashboard-quick-actions{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
 </style></head>
 <body class="auth-loading">
 <style>.auth-loading #login,.auth-loading #app{display:none!important}body:not(.admin-authenticated) #dashboard{display:none!important}</style>
@@ -962,8 +1168,8 @@ html,body{overflow-x:hidden!important}
 
 <div id="app" class="wrap hidden">
 <div id="subscriptionBanner" class="card" style="margin-bottom:14px;display:none"></div>
-<div id="adminRestaurantBanner" class="card" style="display:none;margin-bottom:14px"><div class="row between"><div><b id="adminRestaurantModeName">Viendo como restaurante</b><div class="mut">Sesión protegida del administrador general</div></div><button class="primary" onclick="returnToAdminPanel()">← Volver al panel administrador</button></div></div><div class="top"><div><h1 id="panelMainTitle">Panel Administrativo</h1><div id="who" class="mut"></div></div><div class="row"><a id="viewMenuLink" href="#" target="_blank" style="display:none"><button class="ghost">Ver menú</button></a><button class="ghost" id="themeBtn" type="button" onclick="toggleAdminTheme()">☀️ Modo claro</button><button class="ghost" onclick="logout()">Salir</button></div></div>
-<button id="adminSideMenuToggle" class="ghost admin-side-menu-toggle" type="button" onclick="toggleAdminSideMenu()">☰ Menú del panel</button>
+<div id="adminRestaurantBanner" class="card admin-mode-banner" style="display:none;margin-bottom:14px"><div class="row between"><div><b id="adminRestaurantModeName">Viendo como restaurante</b><div class="mut">Sesión protegida del administrador general</div></div><button class="primary" onclick="returnToAdminPanel()">← Volver al panel administrador</button></div></div>
+<div class="top admin-top"><div><h1 id="panelMainTitle">Panel Administrativo</h1><div id="who" class="mut"></div></div><div class="row"><a id="viewMenuLink" href="#" target="_blank" style="display:none"><button class="ghost header-action" type="button" aria-label="Ver menú" title="Ver menú"><span class="header-action-icon" aria-hidden="true">◉</span><span class="action-label">Ver menú</span></button></a><button class="ghost header-action" id="themeBtn" type="button" onclick="toggleAdminTheme()" aria-label="Cambiar modo de color" title="Cambiar tema"><span id="adminThemeIcon" class="header-action-icon" aria-hidden="true">☀</span><span id="adminThemeLabel" class="action-label">Modo claro</span></button><button class="ghost header-action" type="button" onclick="logout()" aria-label="Salir" title="Salir"><span class="header-action-icon" aria-hidden="true">↪</span><span class="action-label">Salir</span></button><button id="adminSideMenuToggle" class="ghost admin-side-menu-toggle header-action" type="button" onclick="toggleAdminSideMenu()" aria-label="Abrir menú del panel" title="Menú del panel"><span class="header-action-icon" aria-hidden="true">☰</span><span class="action-label">Menú</span></button></div></div>
 <div id="adminSideMenuBackdrop" class="admin-side-menu-backdrop" onclick="closeAdminSideMenu()"></div>
 <aside id="adminSideMenu" class="admin-side-menu">
 <div class="sidebar-brand">
@@ -1001,19 +1207,43 @@ html,body{overflow-x:hidden!important}
 <section id="users" class="section"><div class="card"><div class="row between"><h2>Usuarios asignados</h2><div class="actions"><button class="primary" onclick="openUserAdminModal()">＋ Crear usuario</button><button class="ghost" onclick="loadStaff()">Actualizar</button></div></div><div id="staffList" class="list"></div></div></section><div id="adminUserModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('adminUserModal')"></div><div class="card admin-form-card"><div class="row between"><h2>Usuario de restaurante</h2><button class="ghost" type="button" onclick="closeAdminFormModal('adminUserModal')">✕</button></div><h2>Usuario de restaurante</h2><p class="mut">Crea una cuenta en Supabase y asígnala directamente a un restaurante.</p><label>Correo</label><input id="staffEmail" type="email" placeholder="usuario@restaurante.com"><label>Contraseña inicial</label><div class="row"><input id="staffPassword" type="password" minlength="8" placeholder="Mínimo 8 caracteres"><button type="button" class="ghost" aria-label="Mostrar contraseña" onclick="return togglePassword('staffPassword',this)">Ver</button></div><label>Restaurante</label><select id="staffRestaurant"></select><label>Rol</label><select id="staffRole"><option value="restaurant">Solo restaurante</option><option value="editor">Editor</option><option value="manager">Administrador</option></select><label>Permisos</label><div class="item"><label><input id="permProducts" type="checkbox" checked> Productos</label><label><input id="permCategories" type="checkbox" checked> Categorías</label><label><input id="permBusiness" type="checkbox"> Datos del negocio</label></div><button class="primary" style="margin-top:15px" onclick="createStaffUser()">Crear usuario y asignar</button></div></div>
 <section id="restaurants" class="section"><div class="card"><div class="row between"><h2>Mis restaurantes</h2><div class="actions"><button class="primary" onclick="openRestaurantAdminModal()">＋ Crear restaurante</button><button class="ghost" onclick="loadRestaurants()">Actualizar</button></div></div><div id="restaurantList" class="list"></div></div></section><div id="adminRestaurantModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('adminRestaurantModal')"></div><div class="card admin-form-card"><div class="row between"><h2>Restaurante</h2><button class="ghost" type="button" onclick="closeAdminFormModal('adminRestaurantModal')">✕</button></div><h2>Crear restaurante</h2><input id="rid" type="hidden"><label>Nombre</label><input id="rname" placeholder="Ej: Burger House"><label>Link / slug</label><input id="rslug" placeholder="burger-house"><label>Dominio propio</label><input id="rdomain" placeholder="menu.negocio.com"><label>WhatsApp</label><input id="rwa" placeholder="569..."><label>Dirección</label><input id="raddr"><label>Colores de la web</label><div class="three" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div><label>Principal</label><input id="rcolorPrimary" type="color" value="#ffc21a" style="height:46px;padding:4px"></div><div><label>Secundario</label><input id="rcolorSecondary" type="color" value="#1e1f24" style="height:46px;padding:4px"></div><div><label>Texto</label><input id="rcolorText" type="color" value="#1e1f24" style="height:46px;padding:4px"></div></div><button type="button" class="ghost" style="margin-top:10px" onclick="resetRestaurantColors()">Restablecer colores</button><label>Logo del restaurante</label><div class="uploadBox"><input id="rlogo" type="hidden"><input id="rlogoFile" type="file" accept="image/*" onchange="uploadRestaurantLogo(this)"><button type="button" class="ghost" onclick="rlogoFile.click()">📷 Elegir logo de la galería</button><img id="rlogoPreview" class="uploadPreview" hidden></div><div class="row" style="margin-top:15px"><button class="primary" onclick="saveRestaurant()">Guardar restaurante</button><button class="ghost" onclick="clearRestaurant()">Limpiar</button></div></div></div>
 <section id="dashboard" class="section">
-<div class="dashboard-hero"><div><span class="eyebrow">CENTRO DE CONTROL</span><h2>Resumen del negocio</h2><p>Supervisa el rendimiento, el catálogo y el estado de tus restaurantes desde un solo lugar.</p></div><button class="ghost refresh-btn" id="refreshDashboardBtn" onclick="refreshAll()">↻ Actualizar datos</button></div>
-<div class="metric-grid">
-<article class="metric-card metric-blue"><div class="metric-icon">🏪</div><div><span>Restaurantes</span><strong id="metricRestaurants">0</strong><small>Negocios registrados</small></div></article>
-<article class="metric-card metric-green"><div class="metric-icon">✓</div><div><span>Suscripciones vigentes</span><strong id="metricActiveSubscriptions">0</strong><small>Activas y en prueba</small></div></article>
-<article class="metric-card metric-violet"><div class="metric-icon">◆</div><div><span>Planes disponibles</span><strong id="metricPlans">0</strong><small>Opciones publicadas</small></div></article>
-<article class="metric-card metric-orange"><div class="metric-icon">🍔</div><div><span>Productos</span><strong id="metricProducts">0</strong><small>En el catálogo</small></div></article>
-<article class="metric-card metric-cyan"><div class="metric-icon">▦</div><div><span>Categorías</span><strong id="metricCategories">0</strong><small>Secciones del menú</small></div></article>
-<article class="metric-card metric-pink"><div class="metric-icon">↗</div><div><span>Pedidos pagados</span><strong id="metricOrders">0</strong><small>Mercado Pago</small></div></article><article class="metric-card metric-blue"><div class="metric-icon">👤</div><div><span>Clientes</span><strong id="metricCustomers">0</strong><small>Cuentas registradas</small></div></article><article class="metric-card metric-green"><div class="metric-icon">🛒</div><div><span>Pedidos hoy</span><strong id="metricOrdersToday">0</strong><small>Todos los restaurantes</small></div></article><article class="metric-card metric-orange"><div class="metric-icon">💰</div><div><span>Ventas hoy</span><strong id="metricSalesToday">$0</strong><small>Pedidos no cancelados</small></div></article><article class="metric-card metric-violet"><div class="metric-icon">◎</div><div><span>Ticket promedio</span><strong id="metricAverageTicket">$0</strong><small>Promedio del día</small></div></article>
+<div class="restaurant-dashboard-hero admin-dashboard-hero"><div><span class="eyebrow">PANEL PRINCIPAL</span><h2>Todo bajo control</h2><p class="mut">Restaurantes, suscripciones, pedidos y operación de la plataforma en una vista clara y rápida.</p></div><button class="ghost admin-refresh-btn" id="refreshDashboardBtn" onclick="refreshAll()">↻ Actualizar</button></div>
+
+<div class="restaurant-metrics dashboard-ref-metrics admin-primary-metrics">
+  <article class="restaurant-metric"><span class="dashboard-metric-icon metric-blue">⌂</span><div><span>Restaurantes</span><strong id="metricRestaurants">0</strong><small>Negocios registrados</small></div></article>
+  <article class="restaurant-metric"><span class="dashboard-metric-icon metric-green">✓</span><div><span>Suscripciones vigentes</span><strong id="metricActiveSubscriptions">0</strong><small>Activas y en prueba</small></div></article>
+  <article class="restaurant-metric"><span class="dashboard-metric-icon metric-orange">□</span><div><span>Pedidos de hoy</span><strong id="metricOrdersToday">0</strong><small>Todos los restaurantes</small></div></article>
+  <article class="restaurant-metric"><span class="dashboard-metric-icon metric-violet">$</span><div><span>Ventas de hoy</span><strong id="metricSalesToday">$0</strong><small>Pedidos no cancelados</small></div></article>
 </div>
+
+<div class="restaurant-control-grid admin-control-grid">
+  <article class="card quick-control-card"><div class="module-head"><div><span class="eyebrow">ACCIONES RÁPIDAS</span><h2>Gestiona lo importante</h2></div></div><div class="dashboard-quick-actions">
+    <button type="button" class="dashboard-quick-action" onclick="showTab('restaurants')"><span>⌂</span><div><b>Restaurantes</b><small>Gestionar negocios</small></div><i>›</i></button>
+    <button type="button" class="dashboard-quick-action" onclick="showTab('subscriptions')"><span>◇</span><div><b>Suscripciones</b><small>Planes y accesos</small></div><i>›</i></button>
+    <button type="button" class="dashboard-quick-action" onclick="showTab('orders')"><span>□</span><div><b>Pedidos</b><small>Actividad global</small></div><i>›</i></button>
+  </div></article>
+  <article class="card system-status-card admin-system-card"><div class="module-head admin-status-head"><div><span class="eyebrow">OPERACIÓN</span><h2>Estado del sistema</h2></div><select id="dashboardRestaurantSelect" onchange="changeDashboardRestaurant(this.value)" aria-label="Seleccionar restaurante"></select></div><div id="businessStatus" class="business-status admin-business-status"></div></article>
+</div>
+
 <button id="mobileDashboardMoreBtn" class="ghost mobile-dashboard-more" type="button" onclick="toggleMobileDashboardDetails()">＋ Más detalles</button>
-<div class="dashboard-columns"><div class="card business-card"><div class="section-heading"><div><span class="eyebrow">OPERACIÓN</span><h2>Estado del sistema</h2></div><select id="dashboardRestaurantSelect" onchange="changeDashboardRestaurant(this.value)" aria-label="Seleccionar restaurante"></select></div><div id="businessStatus" class="business-status"></div></div>
-<div class="card quick-card"><div class="section-heading"><div><span class="eyebrow">ATAJOS</span><h2>Acciones rápidas</h2></div></div><div class="quick-actions"><button class="quick-action" type="button" onclick="showTab('restaurants')"><span>🏪</span><div><b>Restaurantes</b><small>Gestionar negocios</small></div><i>›</i></button><button class="quick-action" type="button" onclick="showTab('subscriptions')"><span>💳</span><div><b>Suscripciones</b><small>Planes y accesos</small></div><i>›</i></button><button class="quick-action" type="button" onclick="showTab('orders')"><span>📦</span><div><b>Pedidos</b><small>Actividad global</small></div><i>›</i></button><button class="quick-action" type="button" onclick="showTab('users')"><span>👥</span><div><b>Personal</b><small>Roles y permisos</small></div><i>›</i></button></div></div></div>
-</div><div id="adminAuthenticatedActivity" class="overview-grid hidden"><article class="card"><div class="section-heading"><div><span class="eyebrow">ÚLTIMOS 7 DÍAS</span><h2>Ventas de la plataforma</h2></div></div><div id="adminSalesChart" class="mini-bars"></div></article><article class="card"><div class="section-heading"><div><span class="eyebrow">ACTIVIDAD RECIENTE</span><h2>Últimos pedidos</h2></div><button class="ghost" onclick="showTab('orders')">Ver todos</button></div><div id="adminRecentOrders" class="list"></div></article></div></section>
+
+<div class="card admin-secondary-card">
+  <div class="module-head"><div><span class="eyebrow">RESUMEN DE PLATAFORMA</span><h2>Indicadores generales</h2></div></div>
+  <div class="admin-secondary-metrics">
+    <div class="admin-mini-metric"><span>Planes</span><strong id="metricPlans">0</strong><small>Disponibles</small></div>
+    <div class="admin-mini-metric"><span>Productos</span><strong id="metricProducts">0</strong><small>En catálogo</small></div>
+    <div class="admin-mini-metric"><span>Categorías</span><strong id="metricCategories">0</strong><small>Secciones</small></div>
+    <div class="admin-mini-metric"><span>Pedidos pagados</span><strong id="metricOrders">0</strong><small>Mercado Pago</small></div>
+    <div class="admin-mini-metric"><span>Clientes</span><strong id="metricCustomers">0</strong><small>Cuentas</small></div>
+    <div class="admin-mini-metric"><span>Ticket promedio</span><strong id="metricAverageTicket">$0</strong><small>Del día</small></div>
+  </div>
+</div>
+
+<div id="adminAuthenticatedActivity" class="restaurant-analytics admin-analytics hidden">
+  <article class="card"><div class="module-head"><div><span class="eyebrow">ÚLTIMOS 7 DÍAS</span><h2>Ventas de la plataforma</h2></div></div><div id="adminSalesChart" class="mini-bars"></div></article>
+  <article class="card"><div class="module-head"><div><span class="eyebrow">ACTIVIDAD RECIENTE</span><h2>Últimos pedidos</h2></div><button class="ghost compact-action" onclick="showTab('orders')">Ver todos</button></div><div id="adminRecentOrders" class="list"></div></article>
+</div>
+</section>
 
 <section id="orders" class="section"><div class="grid"><div class="card span12"><div class="row between"><div><h2>Pedidos Mercado Pago</h2><p class="mut">Gestiona los pedidos pagados en línea y actualiza el estado que verá el cliente.</p></div><button class="ghost" onclick="loadOrders()">Actualizar</button></div><div class="row" style="margin-top:14px;flex-wrap:wrap"><button class="ghost" onclick="filterOrdersStatus('all')">Todos <b id="countAll">0</b></button><button class="ghost" onclick="filterOrdersStatus('entregado')">Entregados <b id="countDelivered">0</b></button><button class="ghost" onclick="filterOrdersStatus('cancelado')">Cancelados <b id="countCancelled">0</b></button></div><div id="orderList" class="list" style="margin-top:16px"></div></div></div></section>
 
@@ -1062,7 +1292,7 @@ html,body{overflow-x:hidden!important}
 const SB_URL="https://gulctljitzlwokqydigx.supabase.co";
 const SB_KEY="sb_publishable__moppTxObowifx6rJbW_tw_3GiCkqhG";
 const sb=supabase.createClient(SB_URL,SB_KEY);
-function applyAdminTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("admin_theme",theme);const b=document.getElementById("themeBtn");if(b)b.textContent=theme==="dark"?"☀️ Modo claro":"🌙 Modo oscuro"}
+function applyAdminTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("admin_theme",theme);const icon=document.getElementById("adminThemeIcon"),label=document.getElementById("adminThemeLabel");if(icon)icon.textContent=theme==="dark"?"☀":"☾";if(label)label.textContent=theme==="dark"?"Modo claro":"Modo oscuro"}
 function toggleAdminTheme(){applyAdminTheme(document.documentElement.dataset.theme==="light"?"dark":"light")}
 function toggleMobileDashboardDetails(){
  const d=document.getElementById("dashboard"),b=document.getElementById("mobileDashboardMoreBtn");if(!d||!b)return;
@@ -1678,7 +1908,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.5</footer><script>
+</script><footer class="admin-version">Versión v2.3.6</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -1720,7 +1950,7 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.5</div><script id="admin-drawer-js-v202">
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.6</div><script id="admin-drawer-js-v202">
 const ADMIN_SIDEBAR_STATE_KEY="yummy_admin_sidebar_collapsed";
 function applyAdminSidebarState(collapsed){
  const m=document.getElementById("adminSideMenu"),app=document.getElementById("app"),btn=document.getElementById("adminSidebarCollapseBtn");
