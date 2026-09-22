@@ -17,3 +17,5 @@ for(const file of ['index.html','panel.html','panel/index.html']){
 const admin=readFileSync('index.html','utf8');for(const marker of ['currencyDigits','minimumFractionDigits:shown','maximumFractionDigits:shown','restaurantMoney(value,rid)'])if(!admin.includes(marker))throw new Error('index.html: falta formato monetario adaptable '+marker);
 
 const flowMarkers=['flowCredentialsCard','subscriptionFlowApiKey','subscriptionFlowSecretKey','subscriptionFlowEnvironment','loadSubscriptionFlowSettings','saveSubscriptionFlowSettings','subscription-flow-settings'];for(const marker of flowMarkers)if(!admin.includes(marker))throw new Error('index.html: falta configuración Flow '+marker);
+
+for(const marker of ['admin-collapsed-like-restaurant-v2315','#adminSideMenu.side-menu.collapsed{','border:0!important','box-shadow:none!important','#adminSideMenu.collapsed .nav-group-label{'])if(!admin.includes(marker))throw new Error('index.html: falta estilo colapsado del restaurante '+marker);
