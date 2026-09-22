@@ -409,6 +409,137 @@ html[data-theme="light"] .product-modal-card::-webkit-scrollbar-thumb{background
  #dashboard .metric-card strong{font-size:20px!important}
  #dashboard .metric-card span{font-size:9px!important}
 }
+</style><style id="yummypro-admin-refresh-layout-fix-v233">
+@media(min-width:801px){
+ .admin-side-menu.collapsed{
+   width:72px!important;
+   max-width:72px!important;
+   padding-left:8px!important;
+   padding-right:8px!important;
+   scrollbar-gutter:auto!important;
+ }
+ #app.sidebar-collapsed{padding-left:96px!important}
+ .admin-side-menu.collapsed .sidebar-brand{
+   justify-content:center!important;
+   padding-left:0!important;
+   padding-right:0!important;
+ }
+ .admin-side-menu.collapsed .sidebar-brand-mark{
+   flex:0 0 38px!important;
+   width:38px!important;
+   height:38px!important;
+   margin:0 auto!important;
+ }
+ .admin-side-menu.collapsed .sidebar-collapse-btn{
+   right:2px!important;
+   top:7px!important;
+   width:26px!important;
+   height:26px!important;
+   flex-basis:26px!important;
+   background:var(--card)!important;
+   box-shadow:0 3px 10px var(--shadow)!important;
+ }
+ .admin-side-menu.collapsed .tab{
+   display:grid!important;
+   place-items:center!important;
+   width:100%!important;
+   min-height:46px!important;
+   padding:5px!important;
+   margin:1px 0!important;
+   border-radius:12px!important;
+ }
+ .admin-side-menu.collapsed .nav-icon{
+   display:grid!important;
+   place-items:center!important;
+   flex:none!important;
+   width:40px!important;
+   height:36px!important;
+   margin:0 auto!important;
+   font-size:18px!important;
+ }
+ .admin-side-menu.collapsed .tab.active{
+   box-shadow:inset 3px 0 0 var(--a),0 5px 14px color-mix(in srgb,var(--a) 12%,transparent)!important;
+ }
+ .admin-side-menu.collapsed .nav-group-label{
+   width:34px!important;
+   margin:5px auto!important;
+   border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent)!important;
+ }
+
+ #adminAuthenticatedActivity.overview-grid{
+   grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr)!important;
+   gap:12px!important;
+   margin-top:12px!important;
+   align-items:stretch!important;
+   width:100%!important;
+   min-width:0!important;
+ }
+ #adminAuthenticatedActivity .card{
+   min-width:0!important;
+   min-height:0!important;
+   height:auto!important;
+   padding:15px!important;
+   overflow:hidden!important;
+   border-radius:17px!important;
+ }
+ #adminAuthenticatedActivity .section-heading{
+   margin-bottom:10px!important;
+   min-width:0!important;
+ }
+ #adminAuthenticatedActivity .section-heading h2{
+   font-size:17px!important;
+ }
+ #adminAuthenticatedActivity .mini-bars{
+   height:118px!important;
+   padding-top:8px!important;
+   gap:6px!important;
+   width:100%!important;
+   min-width:0!important;
+ }
+ #adminAuthenticatedActivity .mini-bar b{font-size:11px!important;white-space:nowrap!important}
+ #adminAuthenticatedActivity .mini-bar small{font-size:9px!important}
+ #adminRecentOrders{
+   gap:6px!important;
+   width:100%!important;
+   min-width:0!important;
+ }
+ #adminRecentOrders .item{
+   padding:9px 10px!important;
+   min-height:0!important;
+   border-radius:11px!important;
+   font-size:12px!important;
+ }
+ #adminRecentOrders .item b{font-size:12px!important}
+ #adminRecentOrders .item .mut{font-size:10px!important}
+}
+@media(max-width:1050px) and (min-width:801px){
+ #adminAuthenticatedActivity.overview-grid{
+   grid-template-columns:minmax(0,1fr) minmax(300px,.9fr)!important;
+ }
+}
+@media(max-width:860px){
+ #adminAuthenticatedActivity.overview-grid{
+   grid-template-columns:1fr!important;
+ }
+}
+@media(max-width:600px){
+ #adminAuthenticatedActivity.overview-grid{
+   grid-template-columns:1fr!important;
+   gap:8px!important;
+   margin-top:8px!important;
+ }
+ #adminAuthenticatedActivity .card{
+   padding:10px!important;
+   border-radius:13px!important;
+ }
+ #adminAuthenticatedActivity .mini-bars{
+   height:92px!important;
+   gap:4px!important;
+ }
+ #adminRecentOrders .item{
+   padding:8px!important;
+ }
+}
 </style></head>
 <body class="auth-loading">
 <style>.auth-loading #login,.auth-loading #app{display:none!important}body:not(.admin-authenticated) #dashboard{display:none!important}</style>
@@ -577,10 +708,21 @@ async function enter(user){
     if(isSuperAdmin){document.querySelectorAll(".admin-only").forEach(x=>x.style.display="");document.getElementById("demoProductActions").style.display="";document.getElementById("viewMenuLink").style.display="none";document.querySelector('[data-tab="settings"]')?.style.setProperty("display","none");document.getElementById("settings")?.classList.remove("active");document.getElementById("subscriptionBanner").style.display="none";document.querySelector('[data-tab="plans"]').style.display="none";document.getElementById("mpCredentialsCard").style.display="block";document.getElementById("planCreatorCard").style.display="block";document.querySelectorAll(".tab,.section").forEach(x=>x.classList.remove("active"));document.querySelector('[data-tab="dashboard"]')?.classList.add("active");document.getElementById("dashboard")?.classList.add("active");}else{document.getElementById("demoProductActions").style.display="none";document.getElementById("mpCredentialsCard").style.display="none";document.getElementById("planCreatorCard").style.display="none";document.querySelector('[data-tab="plans"]').style.display="";}
     msg.textContent="";
     await refreshAll();
+    if(isSuperAdmin){
+      const dashboardTab=document.querySelector('#adminSideMenu .tab[data-tab="dashboard"]');
+      const dashboardSection=document.getElementById("dashboard");
+      document.querySelectorAll("#adminSideMenu .tab").forEach(x=>x.classList.remove("active"));
+      document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+      dashboardTab?.classList.add("active");
+      dashboardSection?.classList.add("active");
+      document.getElementById("adminAuthenticatedActivity")?.classList.remove("hidden");
+      await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview()]);
+      if(currentRestaurant)renderBusinessStatus(restaurants.find(r=>Number(r.id)===Number(currentRestaurant)));
+    }
   }catch(e){msg.textContent=e.message||"No se pudo abrir el panel."}
 }
 async function restoreSession(){try{const {data,error}=await sb.auth.getSession();if(error)throw error;if(data.session){await enter(data.session.user)}else{document.getElementById("login").classList.remove("hidden")}}catch(e){document.getElementById("login").classList.remove("hidden");document.getElementById("loginMsg").textContent=e.message||"No se pudo validar la sesión."}finally{document.body.classList.remove("auth-loading")}}restoreSession();
-document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));const activity=document.getElementById("adminAuthenticatedActivity");if(activity)activity.classList.toggle("hidden",name!=="dashboard");b.classList.add("active");document.getElementById(b.dataset.tab)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview()]);if(currentRestaurant){await Promise.allSettled([loadCategories(),loadProducts()]);renderBusinessStatus(restaurants.find(r=>Number(r.id)===Number(currentRestaurant)))}}else if(b.dataset.tab==="orders"){await loadOrders()}else if(b.dataset.tab==="customers"){await loadAdminCustomers()}else if(b.dataset.tab==="kitchenAdmin"){await loadAdminKitchen()}else if(b.dataset.tab==="financeAdmin"){await loadAdminFinance()}else if(b.dataset.tab==="inventoryAdmin"){await loadAdminInventory()}else if(b.dataset.tab==="promotionsAdmin"){await loadAdminPromotions()}else if(b.dataset.tab==="reviewsAdmin"){await loadAdminReviews()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{const tabName=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));const activity=document.getElementById("adminAuthenticatedActivity");if(activity)activity.classList.toggle("hidden",tabName!=="dashboard");b.classList.add("active");document.getElementById(tabName)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview()]);if(currentRestaurant){await Promise.allSettled([loadCategories(),loadProducts()]);renderBusinessStatus(restaurants.find(r=>Number(r.id)===Number(currentRestaurant)))}}else if(b.dataset.tab==="orders"){await loadOrders()}else if(b.dataset.tab==="customers"){await loadAdminCustomers()}else if(b.dataset.tab==="kitchenAdmin"){await loadAdminKitchen()}else if(b.dataset.tab==="financeAdmin"){await loadAdminFinance()}else if(b.dataset.tab==="inventoryAdmin"){await loadAdminInventory()}else if(b.dataset.tab==="promotionsAdmin"){await loadAdminPromotions()}else if(b.dataset.tab==="reviewsAdmin"){await loadAdminReviews()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
 let dashboardRefreshSequence=0;
 function setDashboardLoading(loading){
  const btn=document.getElementById("refreshDashboardBtn");
@@ -1098,7 +1240,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.2</footer><script>
+</script><footer class="admin-version">Versión v2.3.3</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -1140,7 +1282,7 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.2</div><script id="admin-drawer-js-v202">
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.3</div><script id="admin-drawer-js-v202">
 const ADMIN_SIDEBAR_STATE_KEY="yummy_admin_sidebar_collapsed";
 function applyAdminSidebarState(collapsed){
  const m=document.getElementById("adminSideMenu"),app=document.getElementById("app"),btn=document.getElementById("adminSidebarCollapseBtn");
