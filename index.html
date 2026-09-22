@@ -256,6 +256,61 @@ button{transition:transform .16s ease,box-shadow .16s ease,border-color .16s eas
  .sidebar-collapse-btn{display:none!important}
  .nav-group-label{font-size:10px;letter-spacing:.13em;font-weight:900;color:var(--mut);padding:12px 10px 5px}
 }
+</style><style id="yummypro-sidebar-scroll-responsive-admin-v231">
+html,body{overflow-x:hidden!important}
+html{scrollbar-width:thin;scrollbar-color:#111827 transparent}
+body::-webkit-scrollbar,.admin-side-menu::-webkit-scrollbar,.admin-form-card::-webkit-scrollbar,.product-modal-card::-webkit-scrollbar{width:3px!important;height:3px!important}
+body::-webkit-scrollbar-track,.admin-side-menu::-webkit-scrollbar-track,.admin-form-card::-webkit-scrollbar-track,.product-modal-card::-webkit-scrollbar-track{background:transparent!important}
+body::-webkit-scrollbar-thumb,.admin-side-menu::-webkit-scrollbar-thumb,.admin-form-card::-webkit-scrollbar-thumb,.product-modal-card::-webkit-scrollbar-thumb{background:#090d13!important;border-radius:999px!important}
+html[data-theme="light"]{scrollbar-color:#9aa7b5 transparent}
+html[data-theme="light"] body::-webkit-scrollbar-thumb,
+html[data-theme="light"] .admin-side-menu::-webkit-scrollbar-thumb,
+html[data-theme="light"] .admin-form-card::-webkit-scrollbar-thumb,
+html[data-theme="light"] .product-modal-card::-webkit-scrollbar-thumb{background:#9aa7b5!important}
+
+#products,#categories,#qr,#plans{display:none!important}
+
+@media(min-width:801px){
+ #app.wrap{width:100%!important;max-width:none!important;padding-left:274px!important;padding-right:22px!important;min-width:0!important}
+ #app.sidebar-collapsed{padding-left:88px!important}
+ .admin-side-menu{
+   left:10px!important;top:10px!important;bottom:10px!important;
+   width:240px!important;max-width:240px!important;
+   height:auto!important;max-height:calc(100dvh - 20px)!important;
+   padding:9px 7px!important;box-sizing:border-box!important;
+   overflow-y:auto!important;overflow-x:hidden!important;
+   scrollbar-width:thin!important;scrollbar-color:#090d13 transparent!important;
+   scrollbar-gutter:stable both-edges;
+ }
+ .admin-side-menu.collapsed{width:62px!important;max-width:62px!important}
+ .admin-side-menu .tabs{min-width:0!important;width:100%!important}
+ .admin-side-menu .tab{max-width:100%!important;box-sizing:border-box!important}
+ .admin-side-menu .nav-icon{flex:0 0 36px!important;width:36px!important}
+ .admin-side-menu.collapsed .nav-icon{flex-basis:36px!important;width:36px!important}
+ .admin-side-menu.collapsed .sidebar-brand-mark{flex-basis:36px!important;width:36px!important;height:36px!important}
+ .admin-side-menu.collapsed .sidebar-collapse-btn{right:0!important}
+ #app>.top,#app>.section,#app>.card,#adminRestaurantScopeBar{min-width:0!important;max-width:100%!important}
+ .grid,.dashboard-columns,.metric-grid,.quick-actions{min-width:0!important}
+ .card{min-width:0!important}
+}
+@media(max-width:800px){
+ #app.wrap{width:100%!important;max-width:100%!important;padding:12px!important;overflow-x:hidden!important}
+ .admin-side-menu{
+   position:fixed!important;left:0!important;top:0!important;bottom:0!important;
+   width:min(86vw,320px)!important;max-width:min(86vw,320px)!important;
+   height:100dvh!important;max-height:100dvh!important;border-radius:0 18px 18px 0!important;
+   overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain!important;
+   padding:14px 10px 22px!important;box-sizing:border-box!important;
+   scrollbar-width:thin!important;scrollbar-color:#090d13 transparent!important;
+ }
+ .admin-side-menu .tabs{padding-bottom:28px!important}
+ .admin-side-menu .tab{width:100%!important;max-width:100%!important}
+ .admin-side-menu-backdrop.open{left:0!important;background:#0008!important}
+ .top{display:grid!important;grid-template-columns:1fr!important;gap:10px!important}
+ .top>.row{display:flex!important;flex-wrap:wrap!important}
+ .section,.card{min-width:0!important;max-width:100%!important}
+ table{max-width:100%!important}
+}
 </style></head>
 <body class="auth-loading">
 <style>.auth-loading #login,.auth-loading #app{display:none!important}body:not(.admin-authenticated) #dashboard{display:none!important}</style>
@@ -270,7 +325,7 @@ button{transition:transform .16s ease,box-shadow .16s ease,border-color .16s eas
 <button id="adminSideMenuToggle" class="ghost admin-side-menu-toggle" type="button" onclick="toggleAdminSideMenu()">☰ Menú del panel</button>
 <div id="adminSideMenuBackdrop" class="admin-side-menu-backdrop" onclick="closeAdminSideMenu()"></div>
 <aside id="adminSideMenu" class="admin-side-menu"><div class="sidebar-brand"><span class="sidebar-brand-mark">Y</span><span class="sidebar-brand-name">YummyPro</span><button id="adminSidebarCollapseBtn" class="sidebar-collapse-btn" type="button" onclick="toggleAdminSideMenu(event)" aria-label="Contraer menú" title="Contraer menú">‹</button></div><div class="admin-side-menu-title">NAVEGACIÓN</div><div class="tabs">
-<div class="nav-group-label">PRINCIPAL</div><button class="tab active" data-tab="dashboard" title="Resumen"><span class="nav-icon">⌂</span><span class="nav-label">Resumen</span></button><button class="tab" data-tab="restaurants" title="Restaurantes"><span class="nav-icon">🏪</span><span class="nav-label">Restaurantes</span></button><button class="tab" data-tab="subscriptions" title="Suscripciones"><span class="nav-icon">💳</span><span class="nav-label">Suscripciones</span></button><button class="tab" data-tab="users" title="Personal"><span class="nav-icon">👥</span><span class="nav-label">Personal</span></button><div class="nav-group-label">OPERACIÓN</div><button class="tab" data-tab="orders" title="Pedidos"><span class="nav-icon">📦</span><span class="nav-label">Pedidos</span></button><button class="tab admin-only" data-tab="customers" title="Clientes"><span class="nav-icon">👤</span><span class="nav-label">Clientes</span></button><button class="tab admin-only" data-tab="kitchenAdmin" title="Cocina global"><span class="nav-icon">👨‍🍳</span><span class="nav-label">Cocina global</span></button><button class="tab admin-only" data-tab="financeAdmin" title="Caja y pagos"><span class="nav-icon">💵</span><span class="nav-label">Caja y pagos</span></button><button class="tab admin-only" data-tab="inventoryAdmin" title="Inventario global"><span class="nav-icon">📋</span><span class="nav-label">Inventario global</span></button><div class="nav-group-label admin-only">GESTIÓN</div><button class="tab admin-only" data-tab="promotionsAdmin" title="Promociones"><span class="nav-icon">🎟️</span><span class="nav-label">Promociones</span></button><button class="tab admin-only" data-tab="reviewsAdmin" title="Reseñas"><span class="nav-icon">⭐</span><span class="nav-label">Reseñas</span></button><button class="tab" data-tab="products" title="Productos"><span class="nav-icon">🍔</span><span class="nav-label">Productos</span></button><button class="tab" data-tab="categories" title="Categorías"><span class="nav-icon">📚</span><span class="nav-label">Categorías</span></button><button class="tab" data-tab="qr" title="Código QR"><span class="nav-icon">▦</span><span class="nav-label">Código QR</span></button><div class="nav-group-label">SISTEMA</div><button class="tab" data-tab="plans" title="Planes"><span class="nav-icon">◇</span><span class="nav-label">Planes</span></button><button class="tab" data-tab="settings" title="Configuración"><span class="nav-icon">⚙️</span><span class="nav-label">Configuración</span></button>
+<div class="nav-group-label">PRINCIPAL</div><button class="tab active" data-tab="dashboard" title="Resumen"><span class="nav-icon">⌂</span><span class="nav-label">Resumen</span></button><button class="tab" data-tab="restaurants" title="Restaurantes"><span class="nav-icon">🏪</span><span class="nav-label">Restaurantes</span></button><button class="tab" data-tab="subscriptions" title="Suscripciones"><span class="nav-icon">💳</span><span class="nav-label">Suscripciones</span></button><button class="tab" data-tab="users" title="Personal"><span class="nav-icon">👥</span><span class="nav-label">Personal</span></button><div class="nav-group-label">OPERACIÓN</div><button class="tab" data-tab="orders" title="Pedidos"><span class="nav-icon">📦</span><span class="nav-label">Pedidos</span></button><button class="tab admin-only" data-tab="customers" title="Clientes"><span class="nav-icon">👤</span><span class="nav-label">Clientes</span></button><button class="tab admin-only" data-tab="kitchenAdmin" title="Cocina global"><span class="nav-icon">👨‍🍳</span><span class="nav-label">Cocina global</span></button><button class="tab admin-only" data-tab="financeAdmin" title="Caja y pagos"><span class="nav-icon">💵</span><span class="nav-label">Caja y pagos</span></button><button class="tab admin-only" data-tab="inventoryAdmin" title="Inventario global"><span class="nav-icon">📋</span><span class="nav-label">Inventario global</span></button><div class="nav-group-label admin-only">GESTIÓN</div><button class="tab admin-only" data-tab="promotionsAdmin" title="Promociones"><span class="nav-icon">🎟️</span><span class="nav-label">Promociones</span></button><button class="tab admin-only" data-tab="reviewsAdmin" title="Reseñas"><span class="nav-icon">⭐</span><span class="nav-label">Reseñas</span></button><div class="nav-group-label">SISTEMA</div><button class="tab" data-tab="settings" title="Configuración"><span class="nav-icon">⚙️</span><span class="nav-label">Configuración</span></button>
 </div></aside>
 
 <div id="adminRestaurantScopeBar" class="card admin-only" style="margin:0 0 16px;display:none"><div class="row" style="flex-wrap:wrap"><div style="min-width:260px;flex:1"><label style="margin-top:0">Ver información del restaurante</label><select id="adminRestaurantScope" onchange="changeAdminRestaurantScope(this.value)"><option value="all">Todos los restaurantes</option></select></div><button class="ghost" type="button" onclick="refreshCurrentScopedTab()">Actualizar vista</button></div></div>
@@ -938,7 +993,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.0</footer><script>
+</script><footer class="admin-version">Versión v2.3.1</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -980,7 +1035,7 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.0</div><script id="admin-drawer-js-v202">
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.1</div><script id="admin-drawer-js-v202">
 const ADMIN_SIDEBAR_STATE_KEY="yummy_admin_sidebar_collapsed";
 function applyAdminSidebarState(collapsed){
  const m=document.getElementById("adminSideMenu"),app=document.getElementById("app"),btn=document.getElementById("adminSidebarCollapseBtn");
