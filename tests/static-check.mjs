@@ -5,7 +5,7 @@ for(const file of ['index.html','panel.html','panel/index.html']){
   if(file==='index.html'){
     if(!html.includes('data-theme'))throw new Error(`${file}: falta data-theme`);
     if(!html.includes('SB_URL'))throw new Error(`${file}: falta SB_URL`);
-    for(const marker of ['data-tab="customers"','loadAdminOverview','openRestaurantProfile','restaurant_order_status_events','metricRestaurants','metricActiveSubscriptions','metricOrders','metricTotalSales','value="promotions"','value="reviews"']){
+    for(const marker of ['adminSubscriptionPaymentHistory','loadAdminSubscriptionPaymentHistory','subscription_payments','data-tab="customers"','loadAdminOverview','openRestaurantProfile','restaurant_order_status_events','metricRestaurants','metricActiveSubscriptions','metricOrders','metricTotalSales','value="promotions"','value="reviews"']){
       if(!html.includes(marker))throw new Error(`${file}: falta módulo o indicador ${marker}`);
     }
     for(const removed of ['data-tab="kitchenAdmin"','data-tab="financeAdmin"','data-tab="inventoryAdmin"','data-tab="promotionsAdmin"','data-tab="reviewsAdmin"']){
