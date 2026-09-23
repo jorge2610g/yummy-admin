@@ -11,20 +11,26 @@ test('permite configurar precio y meses de regalo del plan anual',async({page})=
 
 async function diagnosePwaInstallability(page,context,url,label){
   await page.goto(url,{waitUntil:'domcontentloaded'});
-  const sw=await page.evaluate(async()=>{
-    if(!('serviceWorker' in navigator))return {supported:false};
+  await page.waitForTimeout(2200);
+  let sw={supported:false};
+  for(let attempt=0;attempt<4;attempt++){
     try{
-      const reg=await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise((_,reject)=>setTimeout(()=>reject(new Error('service worker ready timeout')),7000))
-      ]);
-      return {supported:true,scope:reg.scope,controller:!!navigator.serviceWorker.controller};
-    }catch(e){return {supported:true,error:String(e),controller:!!navigator.serviceWorker.controller}}
-  });
-  if(sw.supported&&!sw.controller&&!sw.error){
-    await page.reload({waitUntil:'domcontentloaded'});
-    await page.waitForTimeout(500);
+      sw=await page.evaluate(async()=>{
+        if(!('serviceWorker' in navigator))return {supported:false};
+        const regs=await navigator.serviceWorker.getRegistrations();
+        return {
+          supported:true,
+          controller:!!navigator.serviceWorker.controller,
+          registrations:regs.map(r=>({scope:r.scope,active:!!r.active,waiting:!!r.waiting,installing:!!r.installing}))
+        };
+      });
+      break;
+    }catch(e){
+      await page.waitForLoadState('domcontentloaded').catch(()=>{});
+      await page.waitForTimeout(700);
+    }
   }
+  await page.waitForTimeout(500);
   const cdp=await context.newCDPSession(page);
   const manifest=await cdp.send('Page.getAppManifest');
   const installability=await cdp.send('Page.getInstallabilityErrors');
