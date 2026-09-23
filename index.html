@@ -3299,7 +3299,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.35</footer><script>
+</script><footer class="admin-version">Versión v2.3.36</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -3405,12 +3405,18 @@ function currentAdminPushFilters(){
 }
 function refreshAdminPushFilters(){
  const audience=document.getElementById("pushAudience")?.value||"all";
- const business=document.getElementById("pushBusinessType"),restaurant=document.getElementById("pushRestaurant");
+ const country=document.getElementById("pushCountry"),city=document.getElementById("pushCity"),business=document.getElementById("pushBusinessType"),restaurant=document.getElementById("pushRestaurant");
  const geoDisabled=audience==="admin";
- if(document.getElementById("pushCountry"))document.getElementById("pushCountry").disabled=geoDisabled;
- if(document.getElementById("pushCity"))document.getElementById("pushCity").disabled=geoDisabled;
- if(business)business.disabled=audience==="admin";
- if(restaurant)restaurant.disabled=audience==="admin";
+ if(geoDisabled){
+  if(country)country.value="";
+  if(city)city.value="";
+  if(business)business.value="";
+  if(restaurant)restaurant.value=""
+ }
+ if(country)country.disabled=geoDisabled;
+ if(city)city.disabled=geoDisabled;
+ if(business)business.disabled=geoDisabled;
+ if(restaurant)restaurant.disabled=geoDisabled;
  refreshAdminPushCountryOptions();refreshAdminPushCityOptions();refreshAdminPushRestaurantOptions()
 }
 function refreshAdminPushCountryOptions(){
@@ -3478,7 +3484,9 @@ async function loadAdminPushHistory(){
 async function loadAdminPushCenter(){
  if(!isSuperAdmin)return;
  refreshAdminPushFilters();
- if("Notification" in window&&Notification.permission==="granted")await registerAdminPush(false);else adminPushDeviceStatus(Notification.permission==="denied"?"Permiso bloqueado en este navegador.":"Pulsa Activar para permitir notificaciones.");
+ if(!("Notification" in window))adminPushDeviceStatus("Este navegador no admite notificaciones Push.");
+ else if(Notification.permission==="granted")await registerAdminPush(false);
+ else adminPushDeviceStatus(Notification.permission==="denied"?"Permiso bloqueado en este navegador.":"Pulsa Activar para permitir notificaciones.");
  await Promise.allSettled([previewAdminPushAudience(),loadAdminPushHistory()])
 }
 </script>
