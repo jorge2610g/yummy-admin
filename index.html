@@ -2583,23 +2583,54 @@ async function openRestaurantProfile(id){
 function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;const url=new URL("/", "https://menu.yummypro.online");url.searchParams.set("r",r.slug);window.open(url.toString(),"_blank")}async function openRestaurantPanel(id,section="dashboard"){
   if(!isSuperAdmin)return toast("Acceso exclusivo del administrador general");
   const r=restaurants.find(x=>Number(x.id)===Number(id));if(!r)return toast("Negocio no encontrado");
-  const {data:{session}}=await sb.auth.getSession();if(!session)return toast("Tu sesión de administrador venció");
-  const baseTarget="https://web.yummypro.online/panel/?admin_preview="+encodeURIComponent(id)+"&tab="+encodeURIComponent(section);
-  // Respaldo seguro del puente cross-domain: los tokens viajan en el fragmento (#),
-  // que no se envía al servidor, y el panel los elimina de la URL apenas los recibe.
+
+  // Abrir la pestaña de inmediato para conservar el gesto del usuario en móvil.
+  const w=window.open("about:blank","_blank");
+  if(!w)return toast("Permite ventanas emergentes para abrir el panel");
+
+  let session=null;
+  try{
+    const current=await sb.auth.getSession();
+    session=current.data?.session||null;
+    // Entregar tokens frescos reduce fallos de sesión al cruzar de admin.yummypro.online a web.yummypro.online.
+    const refreshed=await sb.auth.refreshSession();
+    if(refreshed.data?.session)session=refreshed.data.session;
+  }catch(e){console.error("No se pudo refrescar la sesión administrativa",e)}
+  if(!session?.access_token||!session?.refresh_token){
+    try{w.close()}catch(_){}
+    return toast("Tu sesión de administrador venció. Vuelve a iniciar sesión.")
+  }
+
+  // Usar la ruta canónica /panel, sin slash final, evita una redirección que en algunos móviles
+  // puede perder el fragmento (#) donde viaja el handoff seguro.
+  const baseTarget="https://web.yummypro.online/panel?admin_preview="+encodeURIComponent(id)+"&tab="+encodeURIComponent(section);
   const handoff="#admin_access="+encodeURIComponent(session.access_token)+"&admin_refresh="+encodeURIComponent(session.refresh_token);
   const target=baseTarget+handoff;
-  const w=window.open(target,"_blank");if(!w)return toast("Permite ventanas emergentes para abrir el panel");
-  const panelOrigin="https://web.yummypro.online",payload={type:"YUMMY_ADMIN_PREVIEW",restaurant_id:Number(id),tab:section,access_token:session.access_token,refresh_token:session.refresh_token};
+
+  try{w.location.replace(target)}catch(_){w.location.href=target}
+
+  const panelOrigin="https://web.yummypro.online";
+  const payload={type:"YUMMY_ADMIN_PREVIEW",restaurant_id:Number(id),tab:section,access_token:session.access_token,refresh_token:session.refresh_token};
   let acknowledged=false,attempts=0;
-  // Mantener el puente vivo varios segundos: el panel puede tardar en cargar recursos,
-  // pero solo inicializa la vista una vez.
-  const send=()=>{if(w.closed)return;attempts++;try{w.postMessage(payload,panelOrigin)}catch(_){}if(attempts<30)setTimeout(send,500)};
-  const onReady=e=>{if(e.origin!==panelOrigin||e.source!==w||e.data?.type!=="YUMMY_ADMIN_PREVIEW_READY")return;acknowledged=true;try{w.postMessage(payload,panelOrigin)}catch(_){}};
+  const send=()=>{
+    if(w.closed)return;
+    attempts++;
+    try{w.postMessage(payload,panelOrigin)}catch(_){}
+    if(attempts<40)setTimeout(send,400)
+  };
+  const onReady=e=>{
+    if(e.origin!==panelOrigin||e.source!==w||e.data?.type!=="YUMMY_ADMIN_PREVIEW_READY")return;
+    acknowledged=true;
+    try{w.postMessage(payload,panelOrigin)}catch(_){}
+  };
   window.addEventListener("message",onReady);
-  setTimeout(send,150);
-  setTimeout(()=>{window.removeEventListener("message",onReady);if(!acknowledged&&!w.closed)toast("El panel está tardando en responder. Puedes cerrar esa pestaña y volver a Abrir panel.")},18000);
+  setTimeout(send,250);
+  setTimeout(()=>{
+    window.removeEventListener("message",onReady);
+    if(!acknowledged&&!w.closed)console.warn("El panel no confirmó el handoff por postMessage; se mantiene el respaldo por fragmento.")
+  },18000);
 }
+
 async function returnToAdminPanel(){
   if(!isSuperAdmin||!adminRestaurantMode)return;
   adminRestaurantMode=false;currentRole="";
@@ -3197,7 +3228,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.33</footer><script>
+</script><footer class="admin-version">Versión v2.3.34</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
