@@ -2240,6 +2240,28 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   <article class="card"><div class="module-head"><div><span class="eyebrow">ÚLTIMOS 7 DÍAS</span><h2 id="adminSalesChartTitle">Ventas de la plataforma</h2></div></div><div id="adminSalesChart" class="mini-bars"></div></article>
   <article class="card"><div class="module-head"><div><span class="eyebrow">ACTIVIDAD RECIENTE</span><h2 id="adminActivityTitle">Movimientos recientes</h2></div></div><div id="adminRecentOrders" class="list"></div></article>
 </div>
+
+<div class="card" id="adminObservabilityPanel" style="margin-top:16px">
+  <div class="module-head" style="align-items:flex-end;gap:14px;flex-wrap:wrap">
+    <div><span class="eyebrow">OBSERVABILIDAD</span><h2 style="margin-bottom:5px">Uso, errores y oportunidades</h2><p class="mut" style="margin:0">Distingue fallos reales del sistema de errores de uso, descubre qué módulos se utilizan y qué plan encaja mejor con cada restaurante.</p></div>
+    <label style="min-width:180px;margin:0">Período<select id="observabilityDays" onchange="loadAdminObservability()"><option value="1">Hoy / 24 horas</option><option value="7">Últimos 7 días</option><option value="30">Últimos 30 días</option></select></label>
+  </div>
+  <div id="observabilityHealth" class="item" style="margin:14px 0"></div>
+  <div class="restaurant-metrics dashboard-ref-metrics" style="margin-top:12px">
+    <article class="restaurant-metric"><span class="dashboard-metric-icon metric-blue">◎</span><div><span>Interacciones</span><strong id="obsEvents">0</strong><small>Eventos medidos</small></div></article>
+    <article class="restaurant-metric"><span class="dashboard-metric-icon metric-pink">!</span><div><span>Fallos del sistema</span><strong id="obsSystemErrors">0</strong><small>Errores técnicos</small></div></article>
+    <article class="restaurant-metric"><span class="dashboard-metric-icon metric-orange">?</span><div><span>Errores de uso</span><strong id="obsUserErrors">0</strong><small>Credenciales, validaciones, etc.</small></div></article>
+    <article class="restaurant-metric"><span class="dashboard-metric-icon metric-violet">⚑</span><div><span>Reportes abiertos</span><strong id="obsOpenReports">0</strong><small>Enviados por usuarios</small></div></article>
+  </div>
+  <div class="overview-grid" style="margin-top:14px">
+    <article class="card"><div class="module-head"><div><span class="eyebrow">RESTAURANTES</span><h3>Módulos más usados</h3></div></div><div id="obsRestaurantModules" class="list"></div></article>
+    <article class="card"><div class="module-head"><div><span class="eyebrow">CLIENTES</span><h3>Secciones más usadas</h3></div></div><div id="obsClientModules" class="list"></div></article>
+    <article class="card"><div class="module-head"><div><span class="eyebrow">DIAGNÓSTICO</span><h3>Errores frecuentes</h3></div></div><div id="obsErrors" class="list"></div></article>
+    <article class="card"><div class="module-head"><div><span class="eyebrow">INTERÉS</span><h3>Planes elegidos al registrarse</h3></div></div><div id="obsPlanInterest" class="list"></div></article>
+    <article class="card"><div class="module-head"><div><span class="eyebrow">RECOMENDACIÓN</span><h3>Plan según uso real</h3></div></div><div id="obsRecommendations" class="list"></div></article>
+    <article class="card"><div class="module-head"><div><span class="eyebrow">SOPORTE</span><h3>Reportes recientes</h3></div></div><div id="obsRecentReports" class="list"></div></article>
+  </div>
+</div>
 </section>
 <section id="customers" class="section"><div class="card"><div class="row between"><div><h2>Clientes</h2><p class="mut">Historial y actividad de clientes en toda la plataforma.</p></div><button class="ghost" onclick="loadAdminCustomers()">Actualizar</button></div><div class="admin-toolbar"><label>Buscar<input id="customerSearch" placeholder="Nombre, teléfono o correo" oninput="renderAdminCustomers()"></label></div><div id="adminCustomerList" class="list"></div></div></section>
 <div id="subscriptionEditModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('subscriptionEditModal')"></div><div class="card admin-form-card wide-modal-card"><div class="row between"><div><span class="eyebrow">SUSCRIPCIÓN</span><h2 id="subEditRestaurantName">Editar restaurante</h2></div><button class="ghost" onclick="closeAdminFormModal('subscriptionEditModal')">✕</button></div><input id="subEditRestaurantId" type="hidden"><label>Plan</label><select id="subEditPlan"></select><div class="grid"><div class="span4"><label>Precio pagado (CLP)</label><input id="subEditPrice" type="number" min="0"></div><div class="span4"><label>Días restantes</label><input id="subEditDays" type="number" min="0"></div><div class="span4"><label>Fecha de vencimiento</label><input id="subEditExpiry" type="date"></div></div><label>Accesos especiales para este restaurante</label><div id="subEditModules" class="item" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px"></div><p class="mut" style="font-size:12px">Puedes dar o quitar accesos solo a este restaurante, sin modificar el plan general.</p><label>Notas administrativas</label><textarea id="subEditNotes"></textarea><div class="row" style="margin-top:15px;flex-wrap:wrap"><button class="primary" onclick="saveRestaurantSubscriptionEdit()">Guardar configuración</button><button class="ghost" onclick="closeAdminFormModal('subscriptionEditModal')">Cancelar</button></div></div></div>
@@ -2379,7 +2401,7 @@ async function enter(user){
   }catch(e){msg.textContent=e.message||"No se pudo abrir el panel."}
 }
 async function restoreSession(){try{const {data,error}=await sb.auth.getSession();if(error)throw error;if(data.session){await enter(data.session.user)}else{document.getElementById("login").classList.remove("hidden")}}catch(e){document.getElementById("login").classList.remove("hidden");document.getElementById("loginMsg").textContent=e.message||"No se pudo validar la sesión."}finally{document.body.classList.remove("auth-loading")}}restoreSession();
-document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{const tabName=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));const activity=document.getElementById("adminAuthenticatedActivity");if(activity)activity.classList.toggle("hidden",tabName!=="dashboard");b.classList.add("active");document.getElementById(tabName)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview()]);if(currentRestaurant){await Promise.allSettled([loadCategories(),loadProducts()]);renderBusinessStatus(restaurants.find(r=>Number(r.id)===Number(currentRestaurant)))}}else if(b.dataset.tab==="orders"){await loadOrders()}else if(b.dataset.tab==="customers"){await loadAdminCustomers()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{const tabName=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));const activity=document.getElementById("adminAuthenticatedActivity");if(activity)activity.classList.toggle("hidden",tabName!=="dashboard");b.classList.add("active");document.getElementById(tabName)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview(),loadAdminObservability()]);if(currentRestaurant){await Promise.allSettled([loadCategories(),loadProducts()]);renderBusinessStatus(restaurants.find(r=>Number(r.id)===Number(currentRestaurant)))}}else if(b.dataset.tab==="orders"){await loadOrders()}else if(b.dataset.tab==="customers"){await loadAdminCustomers()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
 let dashboardRefreshSequence=0;
 function setDashboardLoading(loading){
  const btn=document.getElementById("refreshDashboardBtn");
@@ -2396,7 +2418,7 @@ async function refreshAll(){
    base.forEach((r,i)=>{if(r.status==="rejected")console.error("Carga base",i,r.reason)});
    if(refreshId!==dashboardRefreshSequence)return;
    if(restaurants.length&&!currentRestaurant)currentRestaurant=restaurants[0].id;
-   const detail=await Promise.allSettled([loadCategories(),loadProducts(),loadOrders(),loadAdminOverview()]);
+   const detail=await Promise.allSettled([loadCategories(),loadProducts(),loadOrders(),loadAdminOverview(),loadAdminObservability()]);
    detail.forEach((r,i)=>{if(r.status==="rejected")console.error("Detalle métrica",i,r.reason)});
    if(refreshId!==dashboardRefreshSequence)return;
    await loadAdminDashboardMetrics(refreshId);
@@ -2703,7 +2725,7 @@ async function changeDashboardRestaurant(id){
  const sel=document.getElementById("dashboardRestaurantSelect");if(sel)sel.value=dashboardRestaurantScope;
  const n=dashboardRestaurantScope==="all"?null:Number(dashboardRestaurantScope);
  if(n){currentRestaurant=n;try{await loadSettings()}catch(e){console.error("Configuración restaurante",e)}}
- await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview()]);
+ await Promise.allSettled([loadAdminDashboardMetrics(),loadAdminOverview(),loadAdminObservability()]);
  if(sel)sel.value=dashboardRestaurantScope;
 }
 
@@ -2769,6 +2791,51 @@ function goEditCategory(id){showTab("categories");editCategory(id)}
 function goEditProduct(id){showTab("products");editProduct(id)}
 async function manageRestaurantContent(id){currentRestaurant=id;await loadRestaurants();await Promise.all([loadCategories(),loadProducts()]);const r=restaurants.find(x=>x.id===id);productTitle.textContent=r?"Productos de "+r.name:"Productos del restaurante";const listTitle=document.querySelector("#products .card.span7 h2");if(listTitle)listTitle.textContent=r?"Productos · "+r.name:"Productos";showTab("products");window.scrollTo({top:0,behavior:"smooth"})}
 function openSelectedContent(){manageRestaurantContent(currentRestaurant)}
+function renderObservabilityList(id,rows,render){
+ const el=document.getElementById(id);if(!el)return;
+ el.innerHTML=(rows||[]).length?(rows||[]).map(render).join(""):'<p class="mut">Todavía no hay datos suficientes en este período.</p>';
+}
+async function loadAdminObservability(){
+ if(!isSuperAdmin)return;
+ const days=Math.max(1,Number(document.getElementById("observabilityDays")?.value||1));
+ const rid=dashboardRestaurantScope==="all"?null:Number(dashboardRestaurantScope);
+ const health=document.getElementById("observabilityHealth");
+ if(health)health.innerHTML='<b>Actualizando diagnóstico…</b><div class="mut">Consultando actividad y errores registrados.</div>';
+ try{
+  const [summaryResult,recommendationsResult]=await Promise.all([
+   sb.rpc("admin_observability_summary",{p_days:days,p_restaurant_id:rid}),
+   sb.rpc("admin_plan_recommendations",{p_days:Math.max(days,30)})
+  ]);
+  if(summaryResult.error)throw summaryResult.error;
+  const d=summaryResult.data||{};
+  const recs=(recommendationsResult.error?[]:(recommendationsResult.data||[])).filter(x=>!rid||Number(x.restaurant_id)===rid);
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=String(v??0)};
+  set("obsEvents",d.total_events||0);set("obsSystemErrors",d.system_errors||0);set("obsUserErrors",d.user_errors||0);set("obsOpenReports",d.open_reports||0);
+  const systemErrors=Number(d.system_errors||0),userErrors=Number(d.user_errors||0),threshold=Math.max(5,days*3);
+  if(health){
+   const level=systemErrors>=threshold?"🔴 Atención requerida":systemErrors>0?"🟡 Revisar":"🟢 Sistema sin fallos técnicos registrados";
+   const detail=systemErrors>=threshold
+    ? "Hay "+systemErrors+" fallos técnicos en el período. Conviene revisar primero los errores repetidos que aparecen abajo."
+    : systemErrors>0
+      ? "Se detectaron "+systemErrors+" fallos técnicos. Los "+userErrors+" errores de uso se muestran separados para no confundir contraseñas incorrectas o validaciones con fallos del sistema."
+      : "No se registraron fallos técnicos. Los errores de uso, como credenciales incorrectas, se contabilizan aparte.";
+   health.innerHTML='<b>'+level+'</b><div class="mut" style="margin-top:4px">'+esc(detail)+'</div>';
+  }
+  const moduleRow=x=>'<div class="item row between"><div><b>'+esc(x.module||"Sin módulo")+'</b></div><strong>'+Number(x.events||0)+'</strong></div>';
+  renderObservabilityList("obsRestaurantModules",d.top_restaurant_modules,moduleRow);
+  renderObservabilityList("obsClientModules",d.top_client_modules,moduleRow);
+  renderObservabilityList("obsErrors",d.error_codes,x=>'<div class="item"><div class="row between"><div><b>'+esc(x.error_code||"sin_codigo")+'</b><div class="mut">'+esc(x.app_context||"")+" · "+esc(x.category||"")+(x.is_user_error?" · error de uso":" · fallo técnico")+'</div></div><strong>'+Number(x.errors||0)+'</strong></div></div>');
+  renderObservabilityList("obsPlanInterest",d.plan_interest,x=>'<div class="item row between"><div><b>'+esc(x.plan_name||"Plan")+'</b><div class="mut">Interés al registrarse</div></div><strong>'+Number(x.interest_count||0)+'</strong></div>');
+  renderObservabilityList("obsRecommendations",recs,x=>{
+    const used=Array.isArray(x.modules_used)?x.modules_used:[];
+    return '<div class="item"><b>'+esc(x.restaurant_name||("Restaurante #"+x.restaurant_id))+'</b><div class="mut" style="margin-top:4px">Interés inicial: '+esc(x.intended_plan_name||"Sin selección")+' · Sugerencia: '+esc(x.recommended_plan_name||"Sin datos suficientes")+'</div><div class="mut" style="margin-top:4px">'+esc(x.recommendation_reason||"")+'</div>'+(used.length?'<small class="mut">Uso: '+used.map(esc).join(", ")+'</small>':'')+'</div>';
+  });
+  renderObservabilityList("obsRecentReports",d.recent_reports,x=>'<div class="item"><div class="row between"><div><b>'+esc(x.title||"Reporte")+'</b><div class="mut">'+esc(x.restaurant_name||x.app_context||"")+" · "+new Date(x.created_at).toLocaleString("es-CL")+'</div></div><span class="pill">'+esc(x.status||"open")+'</span></div></div>');
+ }catch(e){
+  console.error("Observabilidad admin",e);
+  if(health)health.innerHTML='<b>❌ No se pudo cargar el diagnóstico</b><div class="mut">'+esc(e.message||"Error desconocido")+'</div>';
+ }
+}
 async function loadAdminOverview(){
  if(!isSuperAdmin)return;
  const rid=dashboardRestaurantScope==="all"?null:Number(dashboardRestaurantScope),pageSize=1000;let from=0,allOrders=[];
@@ -2993,7 +3060,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.20</footer><script>
+</script><footer class="admin-version">Versión v2.3.21</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -3035,7 +3102,7 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.20</div><script id="admin-drawer-js-v202">
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.21</div><script id="admin-drawer-js-v202">
 const ADMIN_SIDEBAR_STATE_KEY="yummy_admin_sidebar_collapsed";
 function applyAdminSidebarState(collapsed){
  const m=document.getElementById("adminSideMenu"),app=document.getElementById("app"),btn=document.getElementById("adminSidebarCollapseBtn");
