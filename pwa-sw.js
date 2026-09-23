@@ -1,4 +1,4 @@
-const ADMIN_CACHE="yummypro-admin-v2332-settings-double-filter";
+const ADMIN_CACHE="yummypro-admin-v2333-business-labels";
 const ADMIN_OFFLINE="/offline.html";
 const ADMIN_CORE=[ADMIN_OFFLINE,"/manifest.webmanifest","/pwa-icon.svg","/icon-192.png","/icon-512.png","/apple-touch-icon.png"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(ADMIN_CACHE).then(c=>c.addAll(ADMIN_CORE)))});
