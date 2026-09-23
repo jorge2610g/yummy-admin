@@ -2185,6 +2185,7 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   <button class="tab" data-tab="users" title="Personal"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9" r="2"/><path d="M15.5 14.5A4.5 4.5 0 0 1 21 19"/></svg></span><span class="nav-label">Personal</span></button>
   <button class="tab admin-only" data-tab="customers" title="Clientes"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span class="nav-label">Clientes</span></button>
   <div class="nav-group-label">SISTEMA</div>
+  <button class="tab admin-only" data-tab="push_center" title="Notificaciones Push"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span><span class="nav-label">Notificaciones Push</span></button>
   <button class="tab" data-tab="settings" title="Configuración"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.2 2.3 2.6.4.8 2.5 2.3 1.2-.7 2.6.7 2.6-2.3 1.2-.8 2.5-2.6.4L12 21l-1.2-2.3-2.6-.4-.8-2.5-2.3-1.2.7-2.6-.7-2.6 2.3-1.2.8-2.5 2.6-.4z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="nav-label">Configuración</span></button>
 </div>
 </aside>
@@ -2207,7 +2208,7 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
 <label>Módulos incluidos</label><div id="planModules" class="item" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px"><label><input type="checkbox" value="dashboard"> Dashboard</label><label><input type="checkbox" value="products"> Productos</label><label><input type="checkbox" value="categories"> Categorías</label><label><input type="checkbox" value="qr"> Código QR</label><label><input type="checkbox" value="table_qr"> QR de Mesa</label><label><input type="checkbox" value="settings"> Abrir/cerrar y configuración</label><label><input type="checkbox" value="orders"> Pedidos</label><label><input type="checkbox" value="pos"> Meseros / POS</label><label><input type="checkbox" value="cash"> Caja</label><label><input type="checkbox" value="kitchen"> Cocina</label><label><input type="checkbox" value="inventory"> Inventario</label><label><input type="checkbox" value="staff"> Personal</label><label><input type="checkbox" value="promotions"> Promociones</label><label><input type="checkbox" value="reviews"> Reseñas</label><label><input type="checkbox" value="whatsapp"> WhatsApp Bot</label></div><p class="mut" style="font-size:12px">Selecciona exactamente qué módulos se habilitarán al restaurante cuando compre este plan.</p><div class="row" style="margin-top:15px"><button class="primary" onclick="saveSubscriptionPlan()">Guardar plan</button><button class="ghost" onclick="closeAdminFormModal('adminPlanModal')">Cancelar</button></div></div></div><div class="card span12" id="subscriptionListCard"><div class="row between"><div><h2>Suscripciones</h2><p class="mut">Gestiona cada suscripción por tipo de negocio, negocio y estado.</p></div><button class="ghost" onclick="loadRestaurants()">Actualizar</button></div><div class="admin-filter-grid"><label>Tipo de negocio<select id="subscriptionBusinessTypeFilter" onchange="syncSubscriptionBusinessFilter();renderSubscriptions()"><option value="restaurant" selected>Restaurantes</option><option value="supermarket">Supermercados</option><option value="minimarket">Minimarkets / Tiendas</option><option value="professional">Profesionales / Servicios</option><option value="all">Todos</option></select></label><label>Negocio<select id="subscriptionRestaurantFilter" onchange="renderSubscriptions()"><option value="all">Todos los negocios</option></select></label><label>Estado<select id="subscriptionStatusFilter" onchange="renderSubscriptions()"><option value="all">Todos</option><option value="trial">Prueba</option><option value="active">Activa</option><option value="expired">Vencida</option><option value="suspended">Suspendida</option></select></label><label>Buscar<input id="subscriptionSearch" placeholder="Nombre del negocio" oninput="renderSubscriptions()"></label></div><div id="subscriptionList" class="list"></div></div><div class="card span12" id="subscriptionPaymentHistoryCard"><div class="row between"><div><h2>Historial de pagos de suscripción</h2><p class="mut">Revisa los pagos por estado. Cada sección muestra solo los registros de esa categoría.</p></div><button class="ghost" onclick="loadAdminSubscriptionPaymentHistory()">Actualizar historial</button></div><div id="subscriptionPaymentStatusTabs" class="payment-status-tabs" role="tablist" aria-label="Estados del historial de pagos"><button class="ghost payment-status-tab active" type="button" data-payment-status="approved" onclick="setAdminPaymentStatusSection('approved',this)">✓ Aprobados <span class="status-count" data-payment-count="approved">0</span></button><button class="ghost payment-status-tab" type="button" data-payment-status="pending" onclick="setAdminPaymentStatusSection('pending',this)">⌛ Pendientes <span class="status-count" data-payment-count="pending">0</span></button><button class="ghost payment-status-tab" type="button" data-payment-status="rejected" onclick="setAdminPaymentStatusSection('rejected',this)">✕ Rechazados <span class="status-count" data-payment-count="rejected">0</span></button><button class="ghost payment-status-tab" type="button" data-payment-status="cancelled" onclick="setAdminPaymentStatusSection('cancelled',this)">⊘ Cancelados <span class="status-count" data-payment-count="cancelled">0</span></button><button class="ghost payment-status-tab" type="button" data-payment-status="paused" onclick="setAdminPaymentStatusSection('paused',this)">Ⅱ Pausados <span class="status-count" data-payment-count="paused">0</span></button><button class="ghost payment-status-tab" type="button" data-payment-status="refunded" onclick="setAdminPaymentStatusSection('refunded',this)">↩ Reembolsados <span class="status-count" data-payment-count="refunded">0</span></button></div><input id="subscriptionPaymentStatusFilter" type="hidden" value="approved"><div class="admin-filter-grid" style="margin-top:14px"><label>Tipo de negocio<select id="subscriptionPaymentBusinessTypeFilter" onchange="syncSubscriptionPaymentBusinessFilter();renderAdminSubscriptionPaymentHistory()"><option value="restaurant" selected>Restaurantes</option><option value="supermarket">Supermercados</option><option value="minimarket">Minimarkets / Tiendas</option><option value="professional">Profesionales / Servicios</option><option value="all">Todos</option></select></label><label>Negocio<select id="subscriptionPaymentRestaurantFilter" onchange="renderAdminSubscriptionPaymentHistory()"><option value="all">Todos los negocios</option></select></label><label>Proveedor<select id="subscriptionPaymentProviderFilter" onchange="renderAdminSubscriptionPaymentHistory()"><option value="all">Todos</option><option value="mercadopago">Mercado Pago</option><option value="flow">Flow</option><option value="veripagos">QR Bolivia / VeriPagos</option></select></label></div><div id="adminSubscriptionPaymentHistorySectionTitle" class="mut" style="margin:4px 0 10px;font-weight:800">Mostrando pagos aprobados</div><div id="adminSubscriptionPaymentHistory" class="list" style="margin-top:14px"><div class="mut">Cargando historial…</div></div></div><div class="card span12" id="mpCredentialsCard"><div class="row between"><div><h2>Mercado Pago · Suscripciones</h2><p class="mut">Verifica la conexión de Mercado Pago Express usada únicamente para cobrar los planes de suscripción.</p></div><button class="ghost" onclick="verifySubscriptionMercadoPago()">Verificar conexión</button></div><div class="two" style="margin-top:14px"><div><label>Public Key de Express</label><input id="subscriptionMpPublicKey" placeholder="APP_USR-..."></div><div><label>Access Token de Express</label><input id="subscriptionMpAccessToken" type="password" placeholder="APP_USR-..."><div class="mut" id="subscriptionMpTokenHint" style="font-size:12px;margin-top:5px"></div></div></div><div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="primary" onclick="saveSubscriptionMercadoPago()">Guardar credenciales</button><button class="ghost" onclick="loadSubscriptionMercadoPagoSettings()">Cargar estado</button></div><div id="subscriptionMpStatus" class="item" style="margin-top:14px"><b>Estado:</b> <span class="mut">Pulsa “Verificar conexión”.</span></div></div><div class="card span12" id="flowCredentialsCard"><div class="row between"><div><h2>Flow Chile · Pagos de planes</h2><p class="mut">Configura Flow para ofrecer pago único de planes en CLP. La Secret Key se guarda solo en el backend.</p></div><span class="pill" id="flowConfigBadge">Sin configurar</span></div><div class="two" style="margin-top:14px"><div><label>API Key de Flow</label><input id="subscriptionFlowApiKey" placeholder="API Key"></div><div><label>Secret Key de Flow</label><input id="subscriptionFlowSecretKey" type="password" placeholder="Secret Key"><div class="mut" id="subscriptionFlowSecretHint" style="font-size:12px;margin-top:5px"></div></div></div><div class="two"><div><label>Ambiente</label><select id="subscriptionFlowEnvironment"><option value="sandbox">Sandbox / pruebas</option><option value="production">Producción</option></select></div><div><label>Estado</label><label class="item" style="display:flex;align-items:center;gap:10px;margin-top:6px"><input id="subscriptionFlowEnabled" type="checkbox" style="width:auto" checked> Habilitar Flow para restaurantes de Chile</label></div></div><div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="primary" onclick="saveSubscriptionFlowSettings()">Guardar Flow</button><button class="ghost" onclick="loadSubscriptionFlowSettings()">Cargar estado</button></div><div id="subscriptionFlowStatus" class="item" style="margin-top:14px"><b>Estado:</b> <span class="mut">Ingresa tus credenciales y selecciona Sandbox o Producción.</span></div></div><div class="card span12" id="veripagosSubscriptionCredentialsCard"><div class="row between"><div><h2>QR Bolivia · VeriPagos · Suscripciones</h2><p class="mut">Configura VeriPagos para cobrar planes en bolivianos mediante QR de pago único. No se usa para renovación automática.</p></div><span class="pill" id="veripagosSubscriptionBadge">Sin configurar</span></div><div class="two" style="margin-top:14px"><div><label>Usuario Basic Auth</label><input id="subscriptionVeripagosUser" autocomplete="off" placeholder="Usuario proporcionado por VeriPagos"></div><div><label>Contraseña Basic Auth</label><input id="subscriptionVeripagosPassword" type="password" autocomplete="new-password" placeholder="Déjala vacía para conservarla"><div class="mut" id="subscriptionVeripagosPasswordHint" style="font-size:12px;margin-top:5px"></div></div></div><div class="two"><div><label>Secret Key</label><input id="subscriptionVeripagosSecret" type="password" autocomplete="new-password" placeholder="Secret Key"><div class="mut" id="subscriptionVeripagosSecretHint" style="font-size:12px;margin-top:5px"></div></div><div><label>Vigencia del QR</label><input id="subscriptionVeripagosVigencia" placeholder="0/00:15" value="0/00:15"><div class="mut" style="font-size:12px;margin-top:5px">Formato día/hora:minuto. Ej.: 0/00:15.</div></div></div><label class="item" style="display:flex;align-items:center;gap:10px;margin-top:10px"><input id="subscriptionVeripagosEnabled" type="checkbox" style="width:auto" checked> Habilitar QR Bolivia para pagos únicos de suscripción</label><div class="row" style="margin-top:12px;flex-wrap:wrap"><button class="primary" onclick="saveSubscriptionVeripagosSettings()">Guardar VeriPagos</button><button class="ghost" onclick="verifySubscriptionVeripagosCredentials()">✓ Verificar credenciales</button><button class="ghost" onclick="loadSubscriptionVeripagosSettings()">Cargar estado</button></div><div id="subscriptionVeripagosStatus" class="item" style="margin-top:14px"><b>Estado:</b> <span class="mut">Configura las credenciales entregadas por VeriPagos.</span></div></div></div></section>
 <section id="plans" class="section"><div class="grid"><div class="card span12"><h2>Planes disponibles</h2><p class="mut">Elige un plan para mantener activo tu restaurante.</p><div id="restaurantPlanList" class="list"></div></div></div></section><section id="qr" class="section"><div class="grid"><div class="card span12"><h2>Código QR del restaurante</h2><p class="mut">Enlace directo para compartir el menú. Puedes copiarlo o abrirlo para generar/imprimir su QR desde el teléfono.</p><div id="qrPanel" class="list"></div></div></div></section>
 <section id="users" class="section"><div class="card"><div class="row between"><div><h2>Personal</h2><p class="mut">Filtra el personal por tipo de negocio y local.</p></div><div class="actions"><button class="primary" onclick="openUserAdminModal()">＋ Crear usuario</button><button class="ghost" onclick="loadStaff()">Actualizar</button></div></div><div class="admin-filter-grid"><label>Tipo de negocio<select id="staffBusinessTypeFilter" onchange="syncStaffBusinessFilter();renderStaffDirectory()"><option value="restaurant" selected>Restaurantes</option><option value="supermarket">Supermercados</option><option value="minimarket">Minimarkets / Tiendas</option><option value="professional">Profesionales / Servicios</option><option value="all">Todos</option></select></label><label>Negocio<select id="staffRestaurantFilter" onchange="renderStaffDirectory()"><option value="all">Todos los negocios</option></select></label><label>Buscar<input id="staffSearch" placeholder="Correo o rol" oninput="renderStaffDirectory()"></label></div><div id="staffList" class="list"></div></div></section><div id="adminUserModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('adminUserModal')"></div><div class="card admin-form-card"><div class="row between"><h2>Usuario de restaurante</h2><button class="ghost" type="button" onclick="closeAdminFormModal('adminUserModal')">✕</button></div><h2>Usuario de restaurante</h2><p class="mut">Crea una cuenta en Supabase y asígnala directamente a un restaurante.</p><label>Correo</label><input id="staffEmail" type="email" placeholder="usuario@restaurante.com"><label>Contraseña inicial</label><div class="row"><input id="staffPassword" type="password" minlength="8" placeholder="Mínimo 8 caracteres"><button type="button" class="ghost" aria-label="Mostrar contraseña" onclick="return togglePassword('staffPassword',this)">Ver</button></div><label>Restaurante</label><select id="staffRestaurant"></select><label>Rol</label><select id="staffRole"><option value="restaurant">Solo restaurante</option><option value="editor">Editor</option><option value="manager">Administrador</option></select><label>Permisos</label><div class="item"><label><input id="permProducts" type="checkbox" checked> Productos</label><label><input id="permCategories" type="checkbox" checked> Categorías</label><label><input id="permBusiness" type="checkbox"> Datos del negocio</label></div><button class="primary" style="margin-top:15px" onclick="createStaffUser()">Crear usuario y asignar</button></div></div>
-<section id="restaurants" class="section"><div class="card"><div class="row between"><div><h2>Negocios</h2><p class="mut">Restaurantes, supermercados, minimarkets y profesionales de servicios administrados desde la misma plataforma.</p></div><div class="actions"><button class="primary" onclick="openRestaurantAdminModal()">＋ Crear negocio</button><button class="ghost" onclick="loadRestaurants()">Actualizar</button></div></div><div id="adminRetailSummary" class="restaurant-metrics" style="margin:16px 0"></div><div id="restaurantDirectoryArea"><div class="admin-filter-grid"><label>Tipo de negocio<select id="restaurantBusinessTypeFilter" onchange="adminBusinessPage=1;renderRestaurantDirectory()"><option value="restaurant" selected>Restaurantes</option><option value="supermarket">Supermercados</option><option value="minimarket">Minimarkets / Tiendas</option><option value="professional">Profesionales / Servicios</option><option value="all">Todos</option></select></label><label>Estado<select id="restaurantStatusFilter" onchange="adminBusinessPage=1;renderRestaurantDirectory()"><option value="all">Todos</option><option value="trial">Prueba</option><option value="active">Activa</option><option value="expired">Vencida</option><option value="suspended">Suspendida</option></select></label><label>Buscar<input id="restaurantSearch" placeholder="Nombre, dirección o dominio" oninput="adminBusinessPage=1;renderRestaurantDirectory()"></label></div><div id="restaurantList" class="list"></div><div id="restaurantPagination" class="admin-pagination"></div></div></div></section><div id="adminRestaurantModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('adminRestaurantModal')"></div><div class="card admin-form-card"><div class="row between"><h2>Negocio</h2><button class="ghost" type="button" onclick="closeAdminFormModal('adminRestaurantModal')">✕</button></div><h2>Crear negocio</h2><input id="rid" type="hidden"><label>Tipo de negocio</label><select id="rbusinessType"><option value="restaurant">Restaurante</option><option value="supermarket">Supermercado</option><option value="minimarket">Minimarket / Tienda</option><option value="professional">Profesional / Servicios</option></select><label>Nombre</label><input id="rname" placeholder="Ej: Mi negocio"><label>Link / slug</label><input id="rslug" placeholder="burger-house"><label>Dominio propio</label><input id="rdomain" placeholder="menu.negocio.com"><label>WhatsApp</label><input id="rwa" placeholder="569..."><label>Dirección</label><input id="raddr"><label>Colores de la web</label><div class="three" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div><label>Principal</label><input id="rcolorPrimary" type="color" value="#ffc21a" style="height:46px;padding:4px"></div><div><label>Secundario</label><input id="rcolorSecondary" type="color" value="#1e1f24" style="height:46px;padding:4px"></div><div><label>Texto</label><input id="rcolorText" type="color" value="#1e1f24" style="height:46px;padding:4px"></div></div><button type="button" class="ghost" style="margin-top:10px" onclick="resetRestaurantColors()">Restablecer colores</button><label>Logo del negocio</label><div class="uploadBox"><input id="rlogo" type="hidden"><input id="rlogoFile" type="file" accept="image/*" onchange="uploadRestaurantLogo(this)"><button type="button" class="ghost" onclick="rlogoFile.click()">📷 Elegir logo de la galería</button><img id="rlogoPreview" class="uploadPreview" hidden></div><div class="row" style="margin-top:15px"><button class="primary" onclick="saveRestaurant()">Guardar restaurante</button><button class="ghost" onclick="clearRestaurant()">Limpiar</button></div></div></div>
+<section id="restaurants" class="section"><div class="card"><div class="row between"><div><h2>Negocios</h2><p class="mut">Restaurantes, supermercados, minimarkets y profesionales de servicios administrados desde la misma plataforma.</p></div><div class="actions"><button class="primary" onclick="openRestaurantAdminModal()">＋ Crear negocio</button><button class="ghost" onclick="loadRestaurants()">Actualizar</button></div></div><div id="adminRetailSummary" class="restaurant-metrics" style="margin:16px 0"></div><div id="restaurantDirectoryArea"><div class="admin-filter-grid"><label>Tipo de negocio<select id="restaurantBusinessTypeFilter" onchange="adminBusinessPage=1;renderRestaurantDirectory()"><option value="restaurant" selected>Restaurantes</option><option value="supermarket">Supermercados</option><option value="minimarket">Minimarkets / Tiendas</option><option value="professional">Profesionales / Servicios</option><option value="all">Todos</option></select></label><label>Estado<select id="restaurantStatusFilter" onchange="adminBusinessPage=1;renderRestaurantDirectory()"><option value="all">Todos</option><option value="trial">Prueba</option><option value="active">Activa</option><option value="expired">Vencida</option><option value="suspended">Suspendida</option></select></label><label>Buscar<input id="restaurantSearch" placeholder="Nombre, dirección o dominio" oninput="adminBusinessPage=1;renderRestaurantDirectory()"></label></div><div id="restaurantList" class="list"></div><div id="restaurantPagination" class="admin-pagination"></div></div></div></section><div id="adminRestaurantModal" class="admin-form-modal" aria-hidden="true"><div class="admin-form-backdrop" onclick="closeAdminFormModal('adminRestaurantModal')"></div><div class="card admin-form-card"><div class="row between"><h2>Negocio</h2><button class="ghost" type="button" onclick="closeAdminFormModal('adminRestaurantModal')">✕</button></div><h2>Crear negocio</h2><input id="rid" type="hidden"><label>Tipo de negocio</label><select id="rbusinessType"><option value="restaurant">Restaurante</option><option value="supermarket">Supermercado</option><option value="minimarket">Minimarket / Tienda</option><option value="professional">Profesional / Servicios</option></select><label>Nombre</label><input id="rname" placeholder="Ej: Mi negocio"><label>Link / slug</label><input id="rslug" placeholder="burger-house"><label>Dominio propio</label><input id="rdomain" placeholder="menu.negocio.com"><label>WhatsApp</label><input id="rwa" placeholder="569..."><label>Ciudad</label><input id="rcity" placeholder="Ej: Iquique, Trinidad"><label>Dirección</label><input id="raddr"><label>Colores de la web</label><div class="three" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"><div><label>Principal</label><input id="rcolorPrimary" type="color" value="#ffc21a" style="height:46px;padding:4px"></div><div><label>Secundario</label><input id="rcolorSecondary" type="color" value="#1e1f24" style="height:46px;padding:4px"></div><div><label>Texto</label><input id="rcolorText" type="color" value="#1e1f24" style="height:46px;padding:4px"></div></div><button type="button" class="ghost" style="margin-top:10px" onclick="resetRestaurantColors()">Restablecer colores</button><label>Logo del negocio</label><div class="uploadBox"><input id="rlogo" type="hidden"><input id="rlogoFile" type="file" accept="image/*" onchange="uploadRestaurantLogo(this)"><button type="button" class="ghost" onclick="rlogoFile.click()">📷 Elegir logo de la galería</button><img id="rlogoPreview" class="uploadPreview" hidden></div><div class="row" style="margin-top:15px"><button class="primary" onclick="saveRestaurant()">Guardar restaurante</button><button class="ghost" onclick="clearRestaurant()">Limpiar</button></div></div></div>
 <section id="dashboard" class="section active">
 <div class="restaurant-dashboard-hero admin-dashboard-hero">
   <div><span class="eyebrow">CENTRO DE CONTROL</span><h2>Estado de la plataforma</h2><p class="mut">Resumen acumulado de la operación. Puedes ver toda la plataforma o analizar un restaurante específico.</p></div>
@@ -2278,6 +2279,76 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
 
 
 
+<section id="push_center" class="section">
+<div class="grid">
+  <div class="card span12">
+    <div class="module-head">
+      <div><span class="eyebrow">COMUNICACIÓN</span><h2>Notificaciones Push</h2><p class="mut">Envía mensajes en segundo plano a clientes, negocios o administradores y segmenta por país, ciudad, tipo de negocio o negocio específico.</p></div>
+      <button class="ghost" type="button" onclick="loadAdminPushCenter()">↻ Actualizar</button>
+    </div>
+    <div class="item" style="margin-top:14px">
+      <div class="row between" style="gap:12px;flex-wrap:wrap">
+        <div><b>Notificaciones en este administrador</b><div id="adminPushDeviceStatus" class="mut">Comprobando estado…</div></div>
+        <button id="adminPushEnableBtn" class="primary" type="button" onclick="registerAdminPush(true)">🔔 Activar en este dispositivo</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card span12">
+    <div class="module-head"><div><span class="eyebrow">SEGMENTACIÓN</span><h2>Crear campaña</h2><p class="mut">Puedes enviar una campaña diferente para Chile, Bolivia o una ciudad concreta.</p></div></div>
+    <div class="admin-filter-grid" style="margin-top:14px">
+      <label>Módulo / audiencia
+        <select id="pushAudience" onchange="refreshAdminPushFilters();previewAdminPushAudience()">
+          <option value="all">Toda la plataforma</option>
+          <option value="restaurant">Restaurantes / negocios</option>
+          <option value="customer">Clientes</option>
+          <option value="admin">Administradores</option>
+        </select>
+      </label>
+      <label>País
+        <select id="pushCountry" onchange="refreshAdminPushCityOptions();previewAdminPushAudience()"><option value="">Todos los países</option></select>
+      </label>
+      <label>Ciudad
+        <select id="pushCity" onchange="previewAdminPushAudience()"><option value="">Todas las ciudades</option></select>
+      </label>
+      <label>Tipo de negocio
+        <select id="pushBusinessType" onchange="refreshAdminPushRestaurantOptions();previewAdminPushAudience()">
+          <option value="">Todos</option>
+          <option value="restaurant">Restaurante</option>
+          <option value="supermarket">Supermercado</option>
+          <option value="minimarket">Minimarket / Tienda</option>
+          <option value="professional">Profesional / Servicios</option>
+        </select>
+      </label>
+      <label>Negocio
+        <select id="pushRestaurant" onchange="previewAdminPushAudience()"><option value="">Todos los negocios</option></select>
+      </label>
+    </div>
+
+    <div class="two" style="margin-top:14px">
+      <label>Título<input id="pushTitle" maxlength="120" placeholder="Ej: Nueva función disponible"></label>
+      <label>Destino al tocar la notificación<input id="pushTargetUrl" value="/" placeholder="/ o /panel?tab=..."></label>
+    </div>
+    <label>Mensaje<textarea id="pushBody" maxlength="600" rows="4" placeholder="Escribe el mensaje que recibirán los usuarios."></textarea></label>
+
+    <div class="item" style="margin-top:14px">
+      <div class="row between" style="gap:12px;flex-wrap:wrap">
+        <div><span class="mut">Dispositivos que coinciden con el filtro</span><div style="font-size:28px;font-weight:900" id="pushPreviewCount">—</div><small class="mut" id="pushPreviewHint">Pulsa “Calcular alcance” antes de enviar.</small></div>
+        <div class="actions">
+          <button class="ghost" type="button" onclick="previewAdminPushAudience()">Calcular alcance</button>
+          <button class="primary" id="pushSendBtn" type="button" onclick="sendAdminPushCampaign()">Enviar notificación Push</button>
+        </div>
+      </div>
+    </div>
+    <div id="pushSendStatus" class="mut" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card span12">
+    <div class="module-head"><div><span class="eyebrow">HISTORIAL</span><h2>Campañas recientes</h2><p class="mut">Registro de envíos, alcance y errores.</p></div><button class="ghost" type="button" onclick="loadAdminPushHistory()">Actualizar historial</button></div>
+    <div id="pushCampaignHistory" class="list" style="margin-top:14px"><p class="mut">Sin campañas cargadas.</p></div>
+  </div>
+</div>
+</section>
 <section id="settings" class="section"><div class="card"><div id="settingsBusinessSelectorWrap" class="admin-only" style="margin-bottom:18px"><div class="admin-filter-grid"><label>Grupo de locales<select id="settingsBusinessGroupFilter" onchange="changeSettingsBusinessGroup(this.value)"><option value="real">🏪 Locales reales</option><option value="demo">🧪 Locales demo</option></select></label><label>Negocio a configurar<select id="settingsRestaurantSelect" onchange="changeSettingsRestaurant(this.value)"></select></label><div class="item" style="align-self:end"><b id="settingsBusinessBadge">Selecciona un negocio</b><div class="mut" id="settingsBusinessTypeHint">Primero elige el grupo y luego el negocio.</div></div></div></div><h2>Datos del negocio</h2><div class="grid">
 <div class="span4"><label>Nombre</label><input id="sname"></div><div class="span4"><label>WhatsApp</label><input id="swhatsapp"></div><div class="span4"><label>Instagram</label><input id="sinstagram"></div>
 <div class="span12"><label>Dirección</label><input id="saddress"></div><div class="span4"><label>Apertura</label><input id="sopen" type="time"></div><div class="span4"><label>Cierre</label><input id="sclose" type="time"></div><div class="span4"><label>Tiempo retiro</label><input id="spickup"></div><div class="span8"><label>Tiempo delivery</label><input id="sdelivery"></div><div class="span12"><label>Nota delivery</label><input id="sdeliverynote"></div>
@@ -2880,10 +2951,10 @@ function updateRoleHelp(){const v=editStaffRole.value;roleHelp.textContent=v==="
 document.addEventListener("DOMContentLoaded",()=>document.getElementById("editStaffRole")?.addEventListener("change",updateRoleHelp));
 async function saveAccessModal(){const id=Number(editStaffId.value),restaurant_id=Number(document.getElementById("editStaffRestaurant")?.value),role=editStaffRole.value,permissions={products:editPermProducts.checked,categories:editPermCategories.checked,orders:editPermOrders.checked,business:editPermBusiness.checked};if(!id||!restaurant_id)return toast("Selecciona un negocio");const {error}=await sb.from("restaurant_staff").update({restaurant_id,role,permissions}).eq("id",id);if(error)return toast(error.message);closeAccessModal();await loadStaff();toast("Acceso y negocio asignado actualizados")}
 async function removeStaff(id){if(!confirm("¿Quitar acceso a este usuario?"))return;const {error}=await sb.from("restaurant_staff").delete().eq("id",id);if(error)return toast(error.message);await loadStaff();toast("Acceso eliminado")}
-async function saveRestaurant(){const row={name:rname.value.trim(),slug:slugify(rslug.value.trim()||rname.value.trim()),business_type:document.getElementById("rbusinessType")?.value||"restaurant",custom_domain:rdomain.value.trim().toLowerCase()||null,whatsapp:rwa.value.trim(),address:raddr.value.trim(),theme_primary_color:rcolorPrimary.value||"#ffc21a",theme_secondary_color:rcolorSecondary.value||"#1e1f24",theme_text_color:rcolorText.value||"#1e1f24",logo_url:rlogo.value||null,updated_at:new Date().toISOString()};if(!row.name||!row.slug)return toast("Completa nombre y link");let q=rid.value?sb.from("restaurants").update(row).eq("id",rid.value):sb.from("restaurants").insert(row);const {error}=await q;if(error)return toast(error.message);clearRestaurant();await loadRestaurants();toast("Negocio guardado")}
-function editRestaurant(id){const r=restaurants.find(x=>x.id===id);rid.value=r.id;const bt=document.getElementById("rbusinessType");if(bt)bt.value=r.business_type||"restaurant";rname.value=r.name;rslug.value=r.slug;rdomain.value=r.custom_domain||"";rwa.value=r.whatsapp||"";raddr.value=r.address||"";rcolorPrimary.value=r.theme_primary_color||"#ffc21a";rcolorSecondary.value=r.theme_secondary_color||"#1e1f24";rcolorText.value=r.theme_text_color||"#1e1f24";rlogo.value=r.logo_url||"";if(r.logo_url){rlogoPreview.src=r.logo_url;rlogoPreview.hidden=false}else rlogoPreview.hidden=true;openAdminFormModal("adminRestaurantModal")}
+async function saveRestaurant(){const row={name:rname.value.trim(),slug:slugify(rslug.value.trim()||rname.value.trim()),business_type:document.getElementById("rbusinessType")?.value||"restaurant",custom_domain:rdomain.value.trim().toLowerCase()||null,whatsapp:rwa.value.trim(),city:document.getElementById("rcity")?.value.trim()||"",address:raddr.value.trim(),theme_primary_color:rcolorPrimary.value||"#ffc21a",theme_secondary_color:rcolorSecondary.value||"#1e1f24",theme_text_color:rcolorText.value||"#1e1f24",logo_url:rlogo.value||null,updated_at:new Date().toISOString()};if(!row.name||!row.slug)return toast("Completa nombre y link");let q=rid.value?sb.from("restaurants").update(row).eq("id",rid.value):sb.from("restaurants").insert(row);const {error}=await q;if(error)return toast(error.message);clearRestaurant();await loadRestaurants();toast("Negocio guardado")}
+function editRestaurant(id){const r=restaurants.find(x=>x.id===id);rid.value=r.id;const bt=document.getElementById("rbusinessType");if(bt)bt.value=r.business_type||"restaurant";rname.value=r.name;rslug.value=r.slug;rdomain.value=r.custom_domain||"";rwa.value=r.whatsapp||"";const rc=document.getElementById("rcity");if(rc)rc.value=r.city||"";raddr.value=r.address||"";rcolorPrimary.value=r.theme_primary_color||"#ffc21a";rcolorSecondary.value=r.theme_secondary_color||"#1e1f24";rcolorText.value=r.theme_text_color||"#1e1f24";rlogo.value=r.logo_url||"";if(r.logo_url){rlogoPreview.src=r.logo_url;rlogoPreview.hidden=false}else rlogoPreview.hidden=true;openAdminFormModal("adminRestaurantModal")}
 function resetRestaurantColors(){rcolorPrimary.value="#ffc21a";rcolorSecondary.value="#1e1f24";rcolorText.value="#1e1f24"}
-function clearRestaurant(){rid.value="";const bt=document.getElementById("rbusinessType");if(bt)bt.value="restaurant";rname.value="";rslug.value="";rdomain.value="";rwa.value="";raddr.value="";resetRestaurantColors();rlogo.value="";rlogoPreview.hidden=true;rlogoFile.value=""}
+function clearRestaurant(){rid.value="";const bt=document.getElementById("rbusinessType");if(bt)bt.value="restaurant";rname.value="";rslug.value="";rdomain.value="";rwa.value="";const rc=document.getElementById("rcity");if(rc)rc.value="";raddr.value="";resetRestaurantColors();rlogo.value="";rlogoPreview.hidden=true;rlogoFile.value=""}
 async function selectRestaurant(id){currentRestaurant=id;await loadRestaurants();await Promise.all([loadCategories(),loadProducts()]);renderRestaurantContent();toast("Restaurante seleccionado")}
 async function deleteRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;if(!confirm("¿Eliminar "+r.name+"? También se eliminarán sus categorías y productos."))return;const {error}=await sb.from("restaurants").delete().eq("id",id);if(error)return toast(error.message);if(currentRestaurant===id)currentRestaurant=null;await loadRestaurants();await Promise.all([loadCategories(),loadProducts()]);renderRestaurantContent();toast("Restaurante eliminado")}
 function renderRestaurantContent(){const r=restaurants.find(x=>Number(x.id)===Number(currentRestaurant));renderSubscriptionBanner(r);renderBusinessStatus(r);if(!isSuperAdmin)renderAdminMetrics();if(document.getElementById("selectedRestaurantTitle"))selectedRestaurantTitle.textContent=r?"Contenido de "+r.name:"Contenido del restaurante";if(document.getElementById("restaurantCategoryPreview"))restaurantCategoryPreview.innerHTML=categories.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="mut">${esc(x.slug)}</div></div><div class="actions"><button class="ghost" onclick="goEditCategory(${x.id})">Editar</button><button class="danger" onclick="deleteCategory(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin categorías.</p>";if(document.getElementById("restaurantProductPreview"))restaurantProductPreview.innerHTML=products.map(x=>`<div class="item row between"><div><b>${esc(x.name)}</b><div class="price">${money(x.price)}</div></div><div class="actions"><button class="ghost" onclick="goEditProduct(${x.id})">Editar</button><button class="danger" onclick="deleteProduct(${x.id})">Eliminar</button></div></div>`).join("")||"<p class='mut'>Sin productos.</p>"}
@@ -3228,7 +3299,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.34</footer><script>
+</script><footer class="admin-version">Versión v2.3.35</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -3294,7 +3365,124 @@ function closeAdminSideMenu(){if(window.matchMedia("(min-width:801px)").matches)
 document.addEventListener("click",function(e){const tab=e.target.closest("#adminSideMenu .tab");if(tab&&window.matchMedia("(max-width:800px)").matches)setTimeout(closeAdminSideMenu,0)});
 window.addEventListener("resize",restoreAdminSidebarState);
 requestAnimationFrame(restoreAdminSidebarState);
-</script><script id="admin-forms-modal-js-v206">
+</script><script id="admin-push-center-v2335">
+const ADMIN_WEB_PUSH_PUBLIC_KEY="BEhtHznJex6P3ANNL3SZzgiyXTrilvU-On1qpSwdx0MqmPhrpikxI1sCAbXUFFfkVczLAHdyDFQQS9_Wm5mahpw";
+function adminPushKeyBytes(value){const padding="=".repeat((4-value.length%4)%4),base64=(value+padding).replace(/-/g,"+").replace(/_/g,"/"),raw=atob(base64);return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
+function adminPushDeviceStatus(text,ok=false){
+ const box=document.getElementById("adminPushDeviceStatus"),btn=document.getElementById("adminPushEnableBtn");
+ if(box)box.textContent=text;
+ if(btn){btn.textContent=ok?"✅ Notificaciones activadas":"🔔 Activar en este dispositivo";btn.disabled=ok}
+}
+async function registerAdminPush(requestPermission=false){
+ if(!isSuperAdmin)return toast("Solo el administrador general puede activar esta suscripción.");
+ if(!("Notification" in window)||!("serviceWorker" in navigator)||!("PushManager" in window)){adminPushDeviceStatus("Este navegador no admite Web Push.");return false}
+ if(requestPermission&&Notification.permission==="default")await Notification.requestPermission();
+ if(Notification.permission!=="granted"){adminPushDeviceStatus(Notification.permission==="denied"?"Permiso bloqueado en el navegador.":"Permiso todavía no concedido.");return false}
+ try{
+  const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error("Sesión vencida");
+  const registration=await navigator.serviceWorker.register("/pwa-sw.js");
+  let subscription=await registration.pushManager.getSubscription();
+  if(!subscription)subscription=await registration.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:adminPushKeyBytes(ADMIN_WEB_PUSH_PUBLIC_KEY)});
+  const json=subscription.toJSON();
+  const {error}=await sb.from("push_subscriptions").upsert({
+   user_id:user.id,restaurant_id:null,context_restaurant_id:null,audience:"admin",
+   endpoint:subscription.endpoint,p256dh:json.keys?.p256dh,auth:json.keys?.auth,
+   country_code:null,city:null,business_type:null,enabled:true,updated_at:new Date().toISOString()
+  },{onConflict:"endpoint"});
+  if(error)throw error;
+  adminPushDeviceStatus("Este dispositivo puede recibir notificaciones aunque el panel esté en segundo plano.",true);
+  return true
+ }catch(e){console.error("Push Admin",e);adminPushDeviceStatus("No se pudo registrar este dispositivo.");return false}
+}
+function currentAdminPushFilters(){
+ return {
+  audience:document.getElementById("pushAudience")?.value||"all",
+  country_code:document.getElementById("pushCountry")?.value||"",
+  city:document.getElementById("pushCity")?.value||"",
+  business_type:document.getElementById("pushBusinessType")?.value||"",
+  restaurant_id:Number(document.getElementById("pushRestaurant")?.value||0)||null
+ }
+}
+function refreshAdminPushFilters(){
+ const audience=document.getElementById("pushAudience")?.value||"all";
+ const business=document.getElementById("pushBusinessType"),restaurant=document.getElementById("pushRestaurant");
+ const geoDisabled=audience==="admin";
+ if(document.getElementById("pushCountry"))document.getElementById("pushCountry").disabled=geoDisabled;
+ if(document.getElementById("pushCity"))document.getElementById("pushCity").disabled=geoDisabled;
+ if(business)business.disabled=audience==="admin";
+ if(restaurant)restaurant.disabled=audience==="admin";
+ refreshAdminPushCountryOptions();refreshAdminPushCityOptions();refreshAdminPushRestaurantOptions()
+}
+function refreshAdminPushCountryOptions(){
+ const sel=document.getElementById("pushCountry");if(!sel)return;
+ const current=sel.value;
+ const codes=[...new Set((restaurants||[]).map(r=>String(r.country_code||"").trim()).filter(Boolean))].sort();
+ const names={CL:"Chile",BO:"Bolivia",PA:"Panamá",AR:"Argentina",PE:"Perú",BR:"Brasil",MX:"México",CO:"Colombia",UY:"Uruguay"};
+ sel.innerHTML='<option value="">Todos los países</option>'+codes.map(c=>'<option value="'+esc(c)+'">'+esc(names[c]||c)+'</option>').join("");
+ if(codes.includes(current))sel.value=current
+}
+function refreshAdminPushCityOptions(){
+ const sel=document.getElementById("pushCity");if(!sel)return;
+ const current=sel.value,country=document.getElementById("pushCountry")?.value||"";
+ const cities=[...new Set((restaurants||[]).filter(r=>!country||r.country_code===country).map(r=>String(r.city||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"es"));
+ sel.innerHTML='<option value="">Todas las ciudades</option>'+cities.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
+ if(cities.includes(current))sel.value=current
+}
+function refreshAdminPushRestaurantOptions(){
+ const sel=document.getElementById("pushRestaurant");if(!sel)return;
+ const current=sel.value,country=document.getElementById("pushCountry")?.value||"",city=document.getElementById("pushCity")?.value||"",type=document.getElementById("pushBusinessType")?.value||"";
+ const rows=(restaurants||[]).filter(r=>(!country||r.country_code===country)&&(!city||String(r.city||"").toLowerCase()===city.toLowerCase())&&(!type||r.business_type===type));
+ sel.innerHTML='<option value="">Todos los negocios</option>'+rows.map(r=>'<option value="'+r.id+'">'+esc(r.name)+' · '+esc(r.city||r.country_code||"")+'</option>').join("");
+ if(rows.some(r=>String(r.id)===current))sel.value=current
+}
+async function previewAdminPushAudience(){
+ if(!isSuperAdmin)return;
+ const count=document.getElementById("pushPreviewCount"),hint=document.getElementById("pushPreviewHint");
+ if(count)count.textContent="…";if(hint)hint.textContent="Calculando dispositivos con suscripción activa…";
+ try{
+  const {data,error}=await sb.functions.invoke("admin-send-push",{body:{action:"preview",filters:currentAdminPushFilters()}});
+  if(error||data?.error)throw new Error(data?.error||error?.message||"No se pudo calcular");
+  if(count)count.textContent=String(data.count||0);
+  if(hint)hint.textContent=(data.count||0)?"Listo para enviar a este segmento.":"No hay dispositivos activos con estos filtros.";
+  return Number(data.count||0)
+ }catch(e){if(count)count.textContent="—";if(hint)hint.textContent=e.message||"No se pudo calcular el alcance.";return 0}
+}
+async function sendAdminPushCampaign(){
+ if(!isSuperAdmin)return;
+ const title=document.getElementById("pushTitle")?.value.trim()||"",body=document.getElementById("pushBody")?.value.trim()||"",url=document.getElementById("pushTargetUrl")?.value.trim()||"/",status=document.getElementById("pushSendStatus"),btn=document.getElementById("pushSendBtn");
+ if(!title||!body)return toast("Completa título y mensaje.");
+ const count=await previewAdminPushAudience();
+ if(!count)return toast("No hay dispositivos activos para este filtro.");
+ if(!confirm("¿Enviar esta notificación Push a "+count+" dispositivo(s)?"))return;
+ if(btn){btn.disabled=true;btn.textContent="Enviando…"}if(status)status.textContent="Enviando campaña Push…";
+ try{
+  const {data,error}=await sb.functions.invoke("admin-send-push",{body:{action:"send",filters:currentAdminPushFilters(),title,body,url}});
+  if(error||data?.error)throw new Error(data?.error||error?.message||"No se pudo enviar");
+  if(status)status.textContent="✅ Enviadas: "+Number(data.sent||0)+" · Fallidas: "+Number(data.failed||0)+" · Objetivo: "+Number(data.target_count||0);
+  toast("Campaña Push enviada.");
+  await loadAdminPushHistory()
+ }catch(e){if(status)status.textContent="❌ "+(e.message||"No se pudo enviar la campaña.");toast(e.message||"No se pudo enviar la campaña.")}
+ finally{if(btn){btn.disabled=false;btn.textContent="Enviar notificación Push"}}
+}
+async function loadAdminPushHistory(){
+ const box=document.getElementById("pushCampaignHistory");if(!box||!isSuperAdmin)return;
+ box.innerHTML='<p class="mut">Cargando campañas…</p>';
+ const {data,error}=await sb.from("push_campaigns").select("*").order("created_at",{ascending:false}).limit(40);
+ if(error){box.innerHTML='<p class="mut">No se pudo cargar el historial.</p>';return}
+ const labels={all:"Toda la plataforma",customer:"Clientes",restaurant:"Negocios",admin:"Administradores"};
+ box.innerHTML=(data||[]).map(c=>{
+  const filters=[c.country_code,c.city,c.business_type,c.restaurant_id?"Negocio #"+c.restaurant_id:null].filter(Boolean).join(" · ")||"Sin filtro geográfico";
+  return '<div class="item"><div class="row between" style="gap:12px;align-items:flex-start"><div><b>'+esc(c.title)+'</b><div class="mut">'+esc(labels[c.audience]||c.audience)+' · '+esc(filters)+'</div><div class="mut">'+new Date(c.created_at).toLocaleString("es-CL")+'</div><div style="margin-top:5px">'+esc(c.body)+'</div></div><div style="text-align:right;white-space:nowrap"><span class="pill">'+esc(c.status)+'</span><div class="mut" style="margin-top:6px">✓ '+Number(c.sent_count||0)+' · ✕ '+Number(c.failed_count||0)+'</div></div></div></div>'
+ }).join("")||'<p class="mut">Aún no hay campañas Push.</p>'
+}
+async function loadAdminPushCenter(){
+ if(!isSuperAdmin)return;
+ refreshAdminPushFilters();
+ if("Notification" in window&&Notification.permission==="granted")await registerAdminPush(false);else adminPushDeviceStatus(Notification.permission==="denied"?"Permiso bloqueado en este navegador.":"Pulsa Activar para permitir notificaciones.");
+ await Promise.allSettled([previewAdminPushAudience(),loadAdminPushHistory()])
+}
+</script>
+<script id="admin-forms-modal-js-v206">
 function openAdminFormModal(id){const m=document.getElementById(id);if(m){m.classList.add("open");m.setAttribute("aria-hidden","false")}}
 function closeAdminFormModal(id){const m=document.getElementById(id);if(m){m.classList.remove("open");m.setAttribute("aria-hidden","true")}}
 function openProductAdminModal(){clearProduct();openAdminFormModal("adminProductModal")}
@@ -3327,6 +3515,7 @@ async function activateAdminTab(tab){
   else if(name==="products")await loadProducts();
   else if(name==="categories")await loadCategories();
   else if(name==="qr")renderQrPanel();
+  else if(name==="push_center")await loadAdminPushCenter();
   else if(name==="settings")await loadSettings();
  }catch(e){console.error("Error cargando sección",name,e);toast("No se pudo actualizar esta sección")}
 }
