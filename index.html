@@ -3276,6 +3276,10 @@ async function verifySubscriptionVeripagosCredentials(){
 .mobile-section-switcher{display:none}
 .business-type-badge{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:850;color:var(--mut)}
 @media(max-width:800px){
+ #dashboard .admin-primary-metrics,#restaurants #adminRetailSummary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ #dashboard .admin-primary-metrics .restaurant-metric,#restaurants #adminRetailSummary .restaurant-metric{min-width:0!important;padding:11px!important;min-height:92px!important}
+ #dashboard #adminAuthenticatedActivity[data-admin-mobile-hidden="0"]{display:grid!important;grid-template-columns:1fr!important}
+ #dashboard #adminAuthenticatedActivity[data-admin-mobile-hidden="1"]{display:none!important}
  .mobile-section-switcher{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;position:sticky;top:0;z-index:35;background:linear-gradient(var(--bg),var(--bg));scrollbar-width:none}
  .mobile-section-switcher::-webkit-scrollbar{display:none}
  .mobile-section-switcher button{flex:0 0 auto;min-height:42px;border-radius:12px;padding:9px 13px}
