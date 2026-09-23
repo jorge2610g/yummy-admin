@@ -20,6 +20,8 @@ const flowMarkers=['flowCredentialsCard','subscriptionFlowApiKey','subscriptionF
 
 for(const marker of ['planAnnualEnabled','planAnnualAmount','planAnnualBonusMonths','planAnnualDays','updateAnnualPlanPreview','annual_enabled','annual_bonus_months'])if(!admin.includes(marker))throw new Error('index.html: falta configuración anual '+marker);
 
-for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.20'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
+for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.21'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
 
 if(!admin.includes('/manifest.webmanifest?v=2320'))throw new Error('index.html: falta manifest PWA admin versionado');
+
+for(const marker of ['adminObservabilityPanel','loadAdminObservability','admin_observability_summary','admin_plan_recommendations','obsSystemErrors','obsUserErrors','obsRecommendations','obsRecentReports'])if(!admin.includes(marker))throw new Error('index.html: falta observabilidad admin '+marker);
