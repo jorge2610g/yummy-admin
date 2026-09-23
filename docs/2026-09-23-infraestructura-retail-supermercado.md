@@ -142,3 +142,77 @@ Incluye:
 - una caja abierta.
 
 No está asociado a una cuenta de restaurante; se administra desde la vista de superadministrador.
+
+
+## Respaldo original adicional
+
+Rama:
+`backup-original-pre-retail-2026-09-23`
+
+Commit previo a retail:
+`2d45b8f590290f81549c5e0f2fcb22b8bf7a552e`
+
+## Fase 3 — administración de tienda online
+
+Versión:
+`v2.3.24`
+
+El Perfil 360 retail integra ahora:
+- pedidos online activos;
+- ventas online;
+- ventas POS;
+- venta neta total;
+- devoluciones POS;
+- productos;
+- stock bajo;
+- proveedores;
+- compras;
+- caja.
+
+Acciones:
+- Pedidos Online;
+- POS Retail;
+- Productos Retail;
+- Ver tienda online;
+- Abrir panel.
+
+La lista principal de negocios muestra el enlace público de tienda para supermercado/minimarket igual que el menú público de un restaurante.
+
+## Backend de tienda online
+
+Nuevas migraciones de esta fase:
+- `retail_online_store_orders_v1`
+- `retail_customer_order_history_v1`
+- `retail_veripagos_transactions_v1`
+- `retail_online_cash_and_manual_payments_v1`
+- `retail_realtime_publication_v1`
+- `retail_public_catalog_minimum_stock_v1`
+
+Tablas:
+- `retail_online_orders`
+- `retail_online_order_items`
+
+Integraciones:
+- Mercado Pago por restaurante;
+- VeriPagos / QR Bolivia;
+- caja;
+- inventario;
+- Web Push;
+- Supabase Realtime.
+
+## Seguridad
+
+Se verificaron permisos:
+- catálogo público: anon permitido;
+- crear pedido público: anon permitido;
+- seguimiento con token: anon permitido;
+- cancelación temprana con token: anon permitido;
+- cambio de estado de negocio: anon bloqueado;
+- historial de cuenta: anon bloqueado;
+- liberación interna de stock: authenticated/anon bloqueado, service role únicamente.
+
+Las operaciones públicas sensibles exigen tracking token o recalculan los datos completamente en backend.
+
+## Entorno de prueba
+
+**Minimarket Demo YummyPro** permanece disponible desde el administrador y desde la tienda pública para comprobar la integración completa.
