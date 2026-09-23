@@ -3267,7 +3267,287 @@ async function verifySubscriptionVeripagosCredentials(){
  }catch(e){if(status)status.innerHTML="<b>Estado:</b> ❌ No se pudo verificar la conexión con VeriPagos.";}
 }
 
-</script><style id="admin-pwa-v2319">
+</script>
+<style id="admin-mobile-information-v2325">
+.admin-filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.admin-filter-grid label{margin:0}
+.admin-pagination{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin-top:14px}
+.admin-pagination button{min-width:42px}
+.mobile-section-switcher{display:none}
+.business-type-badge{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:850;color:var(--mut)}
+@media(max-width:800px){
+ .mobile-section-switcher{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;position:sticky;top:0;z-index:35;background:linear-gradient(var(--bg),var(--bg));scrollbar-width:none}
+ .mobile-section-switcher::-webkit-scrollbar{display:none}
+ .mobile-section-switcher button{flex:0 0 auto;min-height:42px;border-radius:12px;padding:9px 13px}
+ .mobile-section-switcher button.active{background:var(--a);color:#101010;border-color:var(--a);font-weight:900}
+ [data-admin-mobile-hidden="1"]{display:none!important}
+ .admin-filter-grid{grid-template-columns:1fr}
+ #restaurants .row.between,#subscriptions .row.between,#users .row.between,#customers .row.between{align-items:stretch}
+ #restaurants .actions,#subscriptions .actions,#users .actions,#customers .actions{width:100%;display:flex;flex-wrap:wrap}
+ #restaurants .actions button,#subscriptions .actions button,#users .actions button,#customers .actions button{flex:1}
+ .admin-pagination{position:sticky;bottom:6px;background:var(--card);padding:8px;border-radius:14px;border:1px solid var(--line)}
+}
+</style>
+<script id="admin-mobile-information-v2325">
+var adminBusinessPage=1,adminSubscriptionPage=1,adminPaymentPage=1,adminStaffPage=1,adminCustomerPage=1;
+const ADMIN_PAGE_SIZE=20;
+
+function adminBusinessLabel(type){return type==="supermarket"?"Supermercado":type==="minimarket"?"Minimarket / Tienda":"Restaurante"}
+function adminBusinessIcon(type){return type==="supermarket"?"🏬":type==="minimarket"?"🏪":"🍽️"}
+function adminPager(containerId,page,total,pageSize,handler){
+ const host=document.getElementById(containerId);if(!host)return;
+ const pages=Math.max(1,Math.ceil(total/pageSize));page=Math.min(Math.max(1,page),pages);
+ if(total<=pageSize){host.innerHTML="";return}
+ host.innerHTML='<button class="ghost" type="button" '+(page<=1?'disabled':'')+' onclick="'+handler+'('+(page-1)+')">‹</button><span class="pill">Página '+page+' / '+pages+' · '+total+' registros</span><button class="ghost" type="button" '+(page>=pages?'disabled':'')+' onclick="'+handler+'('+(page+1)+')">›</button>';
+}
+function ensurePager(listId,pagerId){
+ const list=document.getElementById(listId);if(!list)return null;
+ let p=document.getElementById(pagerId);if(!p){p=document.createElement("div");p.id=pagerId;p.className="admin-pagination";list.after(p)}return p
+}
+function businessRows(type="all"){return restaurants.filter(r=>type==="all"||String(r.business_type||"restaurant")===type)}
+function fillBusinessSelect(id,type="all",keep=true){
+ const el=document.getElementById(id);if(!el)return;
+ const old=keep?el.value:"all",rows=businessRows(type);
+ el.innerHTML='<option value="all">Todos los negocios</option>'+rows.map(r=>'<option value="'+r.id+'">'+esc(r.name)+' · '+esc(adminBusinessLabel(r.business_type||"restaurant"))+'</option>').join("");
+ el.value=[...el.options].some(o=>o.value===old)?old:"all";
+}
+function statusGroup(status){
+ const s=String(status||"pending").toLowerCase();
+ if(["approved","paid","authorized"].includes(s))return"approved";
+ if(["pending","in_process","inprocess"].includes(s))return"pending";
+ if(["cancelled","canceled"].includes(s))return"cancelled";
+ if(s==="refunded")return"refunded";
+ if(s==="rejected")return"rejected";
+ return s
+}
+function providerGroup(provider){
+ const p=String(provider||"").toLowerCase();
+ if(p.includes("flow"))return"flow";
+ if(p.includes("veri")||p.includes("qr"))return"veripagos";
+ if(p.includes("mercado")||p.includes("mp"))return"mercadopago";
+ return p||"other"
+}
+
+/* NEGOCIOS */
+function setAdminBusinessPage(page){adminBusinessPage=page;renderRestaurantDirectory();window.scrollTo({top:document.getElementById("restaurantDirectoryArea")?.offsetTop-90||0,behavior:"smooth"})}
+function renderRestaurantDirectory(){
+ const list=document.getElementById("restaurantList");if(!list)return;
+ ensurePager("restaurantList","restaurantPagination");
+ const term=(document.getElementById("restaurantSearch")?.value||"").trim().toLowerCase(),status=document.getElementById("restaurantStatusFilter")?.value||"all",type=document.getElementById("restaurantBusinessTypeFilter")?.value||"all";
+ const visible=restaurants.filter(r=>{
+  const si=subscriptionInfo(r),hay=(r.name+" "+(r.address||"")+" "+(r.custom_domain||"")+" "+adminBusinessLabel(r.business_type||"restaurant")).toLowerCase();
+  return(!term||hay.includes(term))&&(status==="all"||si.status===status)&&(type==="all"||String(r.business_type||"restaurant")===type)
+ });
+ const pages=Math.max(1,Math.ceil(visible.length/ADMIN_PAGE_SIZE));adminBusinessPage=Math.min(adminBusinessPage,pages);
+ const pageRows=visible.slice((adminBusinessPage-1)*ADMIN_PAGE_SIZE,adminBusinessPage*ADMIN_PAGE_SIZE);
+ list.innerHTML=pageRows.map(r=>{const si=subscriptionInfo(r),typeLabel=adminBusinessLabel(r.business_type||"restaurant");return '<div class="item"><div class="row between"><div><div class="row" style="gap:7px;flex-wrap:wrap"><h3 style="margin:0">'+esc(r.name)+'</h3><span class="business-type-badge">'+adminBusinessIcon(r.business_type)+' '+esc(typeLabel)+'</span></div><div class="mut">'+esc(r.address||"Sin dirección")+'</div><div class="mut">'+(r.custom_domain?esc(r.custom_domain):"menu.yummypro.online/?r="+esc(r.slug))+'</div><span class="pill subscription-'+si.status+'">'+si.label+'</span></div><div class="actions"><button class="primary" onclick="openRestaurantProfile('+r.id+')">Perfil 360°</button><button class="danger" onclick="setSubscription('+r.id+',\'suspended\')">Suspender</button></div></div></div>'}).join("")||"<p class='mut'>No se encontraron negocios con estos filtros.</p>";
+ adminPager("restaurantPagination",adminBusinessPage,visible.length,ADMIN_PAGE_SIZE,"setAdminBusinessPage")
+}
+
+/* PLANES POR TIPO */
+const ADMIN_PLAN_MODULES={
+ restaurant:[["dashboard","Dashboard"],["products","Productos"],["categories","Categorías"],["qr","Código QR"],["table_qr","QR de Mesa"],["settings","Configuración"],["orders","Pedidos"],["pos","Meseros / POS"],["cash","Caja"],["kitchen","Cocina"],["inventory","Inventario"],["staff","Personal"],["promotions","Promociones"],["reviews","Reseñas"],["whatsapp","WhatsApp Bot"]],
+ supermarket:[["dashboard","Dashboard"],["retail_orders","Pedidos Online"],["retail_pos","POS Retail"],["retail_products","Productos Retail"],["retail_suppliers","Proveedores"],["retail_purchases","Compras"],["cash","Caja"],["staff","Personal"],["settings","Configuración"]],
+ minimarket:[["dashboard","Dashboard"],["retail_orders","Pedidos Online"],["retail_pos","POS Retail"],["retail_products","Productos Retail"],["retail_suppliers","Proveedores"],["retail_purchases","Compras"],["cash","Caja"],["staff","Personal"],["settings","Configuración"]]
+};
+const ADMIN_PLAN_DEFAULTS={
+ restaurant:["dashboard","products","categories","qr","settings"],
+ supermarket:["dashboard","retail_orders","retail_pos","retail_products","cash","settings"],
+ minimarket:["dashboard","retail_orders","retail_pos","retail_products","cash","settings"]
+};
+function planModulesForBusiness(type){return ADMIN_PLAN_MODULES[type]||ADMIN_PLAN_MODULES.restaurant}
+function planModuleLabels(modules){const labels={};Object.values(ADMIN_PLAN_MODULES).flat().forEach(([k,v])=>labels[k]=v);return(Array.isArray(modules)?modules:[]).map(x=>labels[x]||x).join(" · ")}
+function syncPlanBusinessTypeModules(reset=false){
+ const type=document.getElementById("planBusinessType")?.value||"restaurant",box=document.getElementById("planModules");if(!box)return;
+ const selected=reset?new Set(ADMIN_PLAN_DEFAULTS[type]||[]):new Set(selectedPlanModules());
+ box.innerHTML=planModulesForBusiness(type).map(([key,label])=>'<label><input type="checkbox" value="'+key+'" '+(selected.has(key)?'checked':'')+'> '+esc(label)+'</label>').join("");
+}
+function openPlanAdminModal(){
+ editingSubscriptionPlanId=null;
+ const type=document.getElementById("planBusinessFilter")?.value||"restaurant",bt=document.getElementById("planBusinessType");if(bt){bt.disabled=false;bt.value=type==="all"?"restaurant":type}
+ planName.value="";planAmount.value="";planAmount.disabled=false;planDays.value="30";
+ syncPlanBusinessTypeModules(true);
+ const annualToggle=document.getElementById("planAnnualEnabled");if(annualToggle){annualToggle.checked=false;annualToggle.disabled=false}
+ const annualAmount=document.getElementById("planAnnualAmount");if(annualAmount)annualAmount.value="";
+ const annualBonus=document.getElementById("planAnnualBonusMonths");if(annualBonus)annualBonus.value="0";
+ const annualDays=document.getElementById("planAnnualDays");if(annualDays)annualDays.value="365";
+ updateAnnualPlanPreview();const hint=document.getElementById("planTrialHint");if(hint)hint.hidden=true;openAdminFormModal("adminPlanModal")
+}
+async function editSubscriptionPlan(id){
+ if(!isSuperAdmin)return toast("Solo el administrador puede editar planes");
+ const p=subscriptionPlans.find(x=>Number(x.id)===Number(id));if(!p)return toast("No se encontró el plan");
+ editingSubscriptionPlanId=id;
+ const bt=document.getElementById("planBusinessType");if(bt){bt.value=p.business_type||"restaurant";bt.disabled=p.is_default_trial===true}
+ syncPlanBusinessTypeModules(false);setSelectedPlanModules(p.modules);
+ planName.value=p.name||"";planAmount.value=p.is_default_trial?0:Number(p.amount||0);planAmount.disabled=p.is_default_trial===true;planDays.value=Number(p.days||30);
+ const annualToggle=document.getElementById("planAnnualEnabled");if(annualToggle){annualToggle.checked=!p.is_default_trial&&!!p.annual_enabled;annualToggle.disabled=p.is_default_trial===true}
+ const annualAmountEl=document.getElementById("planAnnualAmount");if(annualAmountEl)annualAmountEl.value=p.annual_amount==null?"":Number(p.annual_amount||0);
+ const annualBonusEl=document.getElementById("planAnnualBonusMonths");if(annualBonusEl)annualBonusEl.value=Number(p.annual_bonus_months||0);
+ const annualDaysEl=document.getElementById("planAnnualDays");if(annualDaysEl)annualDaysEl.value=Number(p.annual_days||365);
+ updateAnnualPlanPreview();const hint=document.getElementById("planTrialHint");if(hint)hint.hidden=p.is_default_trial!==true;openAdminFormModal("adminPlanModal")
+}
+async function saveSubscriptionPlan(){
+ if(!isSuperAdmin)return toast("Solo el administrador puede crear planes");
+ const current=editingSubscriptionPlanId?subscriptionPlans.find(x=>Number(x.id)===Number(editingSubscriptionPlanId)):null,isTrial=current?.is_default_trial===true;
+ const businessType=document.getElementById("planBusinessType")?.value||current?.business_type||"restaurant";
+ if(current&&current.business_type!==businessType&&restaurants.some(r=>Number(r.subscription_plan_id)===Number(current.id)))return toast("Este plan ya está asignado a negocios. Cambia primero esas suscripciones antes de moverlo de categoría.");
+ const name=planName.value.trim(),amount=isTrial?0:Number(planAmount.value),days=Number(planDays.value),modules=selectedPlanModules();
+ const annualEnabled=!isTrial&&!!document.getElementById("planAnnualEnabled")?.checked,annualBonus=Math.max(0,Math.min(11,Number(document.getElementById("planAnnualBonusMonths")?.value||0))),annualDays=Math.max(1,Number(document.getElementById("planAnnualDays")?.value||365)),annualRaw=String(document.getElementById("planAnnualAmount")?.value||"").trim(),annualAmount=annualRaw===""?null:Number(annualRaw);
+ if(!name||!Number.isFinite(amount)||amount<0||!Number.isInteger(days)||days<1)return toast("Completa nombre, monto y días correctamente");
+ if(!modules.length)return toast("Selecciona al menos un módulo");
+ const row={name,amount,days,modules,business_type:businessType,annual_enabled:annualEnabled,annual_amount:annualEnabled?annualAmount:null,annual_bonus_months:annualEnabled?annualBonus:0,annual_days:annualEnabled?annualDays:365,updated_at:new Date().toISOString()};
+ const q=editingSubscriptionPlanId?sb.from("subscription_plans").update(row).eq("id",editingSubscriptionPlanId):sb.from("subscription_plans").insert(row),{error}=await q;if(error)return toast(error.message);
+ editingSubscriptionPlanId=null;closeAdminFormModal("adminPlanModal");toast(isTrial?"Prueba gratuita actualizada":"Plan guardado");await loadSubscriptionPlans();await loadRestaurants()
+}
+function renderSubscriptionPlans(){
+ if(!window.planList)return;
+ const type=document.getElementById("planBusinessFilter")?.value||"restaurant",term=(document.getElementById("planSearch")?.value||"").trim().toLowerCase();
+ const rows=subscriptionPlans.filter(p=>(type==="all"||String(p.business_type||"restaurant")===type)&&(!term||String(p.name||"").toLowerCase().includes(term)));
+ planList.innerHTML=rows.map(p=>{
+  const trial=p.is_default_trial===true,annual=!!p.annual_enabled,bonus=Number(p.annual_bonus_months||0),charged=12-bonus,annualAmount=planAnnualComputedAmount(p),annualLine=!trial&&annual?'<div class="mut" style="font-size:12px;margin-top:5px">📅 Anual: <b>'+esc(money(annualAmount))+'</b> · '+charged+' meses cobrados · '+bonus+' '+(bonus===1?'mes gratis':'meses gratis')+'</div>':'';
+  return '<div class="item row between"><div><div class="row" style="gap:8px;flex-wrap:wrap"><b>'+esc(p.name)+'</b><span class="business-type-badge">'+adminBusinessIcon(p.business_type)+' '+esc(adminBusinessLabel(p.business_type))+'</span>'+(trial?'<span class="pill">🎁 Prueba predeterminada</span>':'')+'</div><div class="mut">'+(trial?"Gratis":money(p.amount))+' · '+p.days+' días · '+(p.active?"Activo":"Inactivo")+'</div>'+annualLine+'<div class="mut" style="font-size:12px;margin-top:5px">Módulos: '+esc(planModuleLabels(p.modules)||"Ninguno seleccionado")+'</div></div><div class="actions"><button class="ghost" onclick="editSubscriptionPlan('+p.id+')">Editar plan</button>'+(trial?'':'<button class="ghost" onclick="toggleSubscriptionPlan('+p.id+','+(!p.active)+')">'+(p.active?"Desactivar":"Activar")+'</button><button class="danger" onclick="deleteSubscriptionPlan('+p.id+')">Eliminar</button>')+'</div></div>'
+ }).join("")||"<p class='mut'>No hay planes para esta categoría.</p>"
+}
+async function loadSubscriptionPlans(){
+ let q=sb.from("subscription_plans").select("*").order("business_type").order("amount",{ascending:true});
+ if(!isSuperAdmin||adminRestaurantMode){const r=restaurants.find(x=>Number(x.id)===Number(currentRestaurant)),type=r?.business_type||"restaurant";q=q.eq("active",true).eq("business_type",type)}
+ const {data,error}=await q;if(error)return toast(error.message);subscriptionPlans=data||[];
+ if(isSuperAdmin&&!adminRestaurantMode){renderSubscriptionPlans();await Promise.allSettled([loadAdminSubscriptionPaymentHistory(),loadSubscriptionFlowSettings(),loadSubscriptionMercadoPagoSettings(),loadSubscriptionVeripagosSettings()])}else renderRestaurantPlans();
+ renderAdminMetrics()
+}
+
+/* SUSCRIPCIONES */
+function syncSubscriptionBusinessFilter(){adminSubscriptionPage=1;fillBusinessSelect("subscriptionRestaurantFilter",document.getElementById("subscriptionBusinessTypeFilter")?.value||"all",false)}
+function setAdminSubscriptionPage(page){adminSubscriptionPage=page;renderSubscriptions()}
+function renderSubscriptions(){
+ if(!window.subscriptionList)return;ensurePager("subscriptionList","subscriptionPagination");
+ const type=document.getElementById("subscriptionBusinessTypeFilter")?.value||"all",rid=document.getElementById("subscriptionRestaurantFilter")?.value||"all",status=document.getElementById("subscriptionStatusFilter")?.value||"all",term=(document.getElementById("subscriptionSearch")?.value||"").trim().toLowerCase();
+ let rows=restaurants.filter(r=>{const sub=subscriptionInfo(r);return(type==="all"||String(r.business_type||"restaurant")===type)&&(rid==="all"||String(r.id)===rid)&&(status==="all"||sub.status===status)&&(!term||String(r.name||"").toLowerCase().includes(term))});
+ const pages=Math.max(1,Math.ceil(rows.length/ADMIN_PAGE_SIZE));adminSubscriptionPage=Math.min(adminSubscriptionPage,pages);const view=rows.slice((adminSubscriptionPage-1)*ADMIN_PAGE_SIZE,adminSubscriptionPage*ADMIN_PAGE_SIZE);
+ subscriptionList.innerHTML=view.map(r=>{const sub=subscriptionInfo(r),pct=Math.max(0,Math.min(100,(sub.days/30)*100));return '<div class="item"><div class="row between"><div><div class="row" style="gap:7px;flex-wrap:wrap"><h3 style="margin:0">'+esc(r.name)+'</h3><span class="business-type-badge">'+adminBusinessIcon(r.business_type)+' '+esc(adminBusinessLabel(r.business_type))+'</span></div><div class="pill subscription-'+sub.status+'">'+sub.label+'</div><div class="mut">Plan: '+esc(r.subscription_plan||"Prueba 30 días")+' · Precio: '+money(r.subscription_price,r.currency_code,r.locale)+'</div><div class="mut">Vence: '+subscriptionExpiryDateLabel(r)+'</div><div class="sub-progress"><i style="width:'+pct+'%"></i></div></div><div class="actions"><button class="primary" onclick="editSubscription('+r.id+')">Editar configuración</button><button class="ghost" onclick="setSubscription('+r.id+',\'active\')">Activar</button><button class="danger" onclick="setSubscription('+r.id+',\'suspended\')">Suspender</button></div></div></div>'}).join("")||"<p class='mut'>No hay suscripciones con estos filtros.</p>";
+ adminPager("subscriptionPagination",adminSubscriptionPage,rows.length,ADMIN_PAGE_SIZE,"setAdminSubscriptionPage")
+}
+function modulesForBusiness(type){return planModulesForBusiness(type)}
+function trialModulesForBusiness(type){const p=subscriptionPlans.find(x=>x.is_default_trial===true&&String(x.business_type||"restaurant")===String(type||"restaurant"));return Array.isArray(p?.modules)?p.modules:(ADMIN_PLAN_DEFAULTS[type]||ADMIN_PLAN_DEFAULTS.restaurant)}
+async function editSubscription(id){
+ const r=restaurants.find(x=>Number(x.id)===Number(id));if(!r)return;const type=r.business_type||"restaurant",tz=restaurantTimeZone(r);
+ subEditRestaurantId.value=r.id;subEditRestaurantName.textContent=r.name+" · "+adminBusinessLabel(type);subEditPrice.value=Number(r.subscription_price||0);subEditExpiry.value=r.subscription_expires_at?zonedDateInputValue(r.subscription_expires_at,tz):"";subEditDays.value=subEditExpiry.value?calendarDaysFromToday(subEditExpiry.value,tz):0;subEditNotes.value=r.subscription_notes||"";
+ subEditDays.onchange=()=>{const days=Math.max(0,Number(subEditDays.value)||0);subEditDays.value=days;subEditExpiry.value=dateFromTodayPlusDays(days,tz)};subEditExpiry.onchange=()=>{subEditDays.value=calendarDaysFromToday(subEditExpiry.value,tz)};
+ const validPlans=subscriptionPlans.filter(p=>String(p.business_type||"restaurant")===type),defaultTrial=validPlans.find(x=>x.is_default_trial===true);
+ subEditPlan.innerHTML=validPlans.map(p=>'<option value="'+p.id+'">'+esc(p.name)+(p.is_default_trial?' · 🎁 predeterminada':'')+' · '+Number(p.days||0)+' días · '+(p.is_default_trial?'Gratis':money(p.amount||0))+'</option>').join("");
+ subEditPlan.value=validPlans.some(p=>Number(p.id)===Number(r.subscription_plan_id))?String(r.subscription_plan_id):String(defaultTrial?.id||validPlans[0]?.id||"");subEditPlan.onchange=()=>applySelectedPlanAccesses();
+ let baseModules=[],effectiveModules=[];
+ try{const {data,error}=await sb.rpc("get_restaurant_subscription_access",{p_restaurant_id:r.id});if(error)throw error;const access=Array.isArray(data)?data[0]:data;baseModules=Array.isArray(access?.base_modules)?access.base_modules:[];effectiveModules=Array.isArray(access?.effective_modules)?access.effective_modules:[]}
+ catch(e){const plan=validPlans.find(x=>Number(x.id)===Number(r.subscription_plan_id));baseModules=r.subscription_plan_id?(Array.isArray(plan?.modules)?plan.modules:[]):trialModulesForBusiness(type);effectiveModules=r.subscription_modules_customized===true?(Array.isArray(r.subscription_module_overrides)?r.subscription_module_overrides:[]):baseModules}
+ subEditModules.innerHTML=modulesForBusiness(type).map(([key,label])=>'<label><input type="checkbox" value="'+key+'" '+(effectiveModules.includes(key)?'checked':'')+'> '+esc(label)+(baseModules.includes(key)?' <small class="mut plan-included">(incluido)</small>':'')+'</label>').join("");
+ openAdminFormModal("subscriptionEditModal")
+}
+
+/* HISTORIAL DE PAGOS */
+function syncSubscriptionPaymentBusinessFilter(){adminPaymentPage=1;fillBusinessSelect("subscriptionPaymentRestaurantFilter",document.getElementById("subscriptionPaymentBusinessTypeFilter")?.value||"all",false)}
+function setAdminPaymentPage(page){adminPaymentPage=page;renderAdminSubscriptionPaymentHistory()}
+function renderAdminSubscriptionPaymentHistory(){
+ const box=document.getElementById("adminSubscriptionPaymentHistory");if(!box)return;ensurePager("adminSubscriptionPaymentHistory","subscriptionPaymentPagination");
+ const type=document.getElementById("subscriptionPaymentBusinessTypeFilter")?.value||"all",rid=document.getElementById("subscriptionPaymentRestaurantFilter")?.value||"all",status=document.getElementById("subscriptionPaymentStatusFilter")?.value||"all",provider=document.getElementById("subscriptionPaymentProviderFilter")?.value||"all";
+ let rows=(subscriptionPayments||[]).filter(p=>{const r=restaurants.find(x=>Number(x.id)===Number(p.restaurant_id));return(type==="all"||String(r?.business_type||"restaurant")===type)&&(rid==="all"||String(p.restaurant_id)===rid)&&(status==="all"||statusGroup(p.status)===status)&&(provider==="all"||providerGroup(p.provider)===provider)});
+ const pages=Math.max(1,Math.ceil(rows.length/25));adminPaymentPage=Math.min(adminPaymentPage,pages);const view=rows.slice((adminPaymentPage-1)*25,adminPaymentPage*25),plans=new Map(subscriptionPlans.map(p=>[Number(p.id),p.name]));
+ box.innerHTML=view.map(p=>{const st=String(p.status||"pending").toLowerCase(),cls=["approved","paid","authorized"].includes(st)?"subscription-active":["rejected","cancelled","canceled"].includes(st)?"subscription-expired":"subscription-trial",r=restaurants.find(x=>Number(x.id)===Number(p.restaurant_id)),when=new Date(p.paid_at||p.created_at).toLocaleString("es-CL",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"}),kind=p.payment_type==="recurring"?"Automática":"Pago único";return '<div class="item"><div class="row between"><div><div class="row" style="gap:7px;flex-wrap:wrap"><b>'+esc(r?.name||("Negocio #"+p.restaurant_id))+'</b><span class="business-type-badge">'+adminBusinessIcon(r?.business_type)+' '+esc(adminBusinessLabel(r?.business_type))+'</span></div><div class="mut">'+esc(plans.get(Number(p.plan_id))||("Plan #"+p.plan_id))+' · '+esc(kind)+' · '+esc(p.provider||"Pago")+'</div><div class="mut" style="font-size:12px">'+esc(when)+'</div></div><div style="text-align:right"><b>'+esc(money(p.amount,p.currency_code||"CLP",r?.locale||"es-CL"))+'</b><div class="'+cls+'" style="font-size:12px;font-weight:900;margin-top:5px">'+esc(adminSubscriptionStatus(p.status))+'</div></div></div></div>'}).join("")||"<p class='mut'>No hay pagos con estos filtros.</p>";
+ adminPager("subscriptionPaymentPagination",adminPaymentPage,rows.length,25,"setAdminPaymentPage")
+}
+
+/* PERSONAL */
+function syncStaffBusinessFilter(){adminStaffPage=1;fillBusinessSelect("staffRestaurantFilter",document.getElementById("staffBusinessTypeFilter")?.value||"all",false)}
+function setAdminStaffPage(page){adminStaffPage=page;renderStaffDirectory()}
+function renderStaffDirectory(){
+ const list=document.getElementById("staffList");if(!list)return;ensurePager("staffList","staffPagination");
+ const type=document.getElementById("staffBusinessTypeFilter")?.value||"all",rid=document.getElementById("staffRestaurantFilter")?.value||"all",term=(document.getElementById("staffSearch")?.value||"").trim().toLowerCase();
+ let rows=(staff||[]).filter(x=>{const r=restaurants.find(v=>Number(v.id)===Number(x.restaurant_id));return(type==="all"||String(r?.business_type||"restaurant")===type)&&(rid==="all"||String(x.restaurant_id)===rid)&&(!term||(String(x.email||"")+" "+String(x.role||"")).toLowerCase().includes(term))});
+ const pages=Math.max(1,Math.ceil(rows.length/ADMIN_PAGE_SIZE));adminStaffPage=Math.min(adminStaffPage,pages);const view=rows.slice((adminStaffPage-1)*ADMIN_PAGE_SIZE,adminStaffPage*ADMIN_PAGE_SIZE);
+ list.innerHTML=view.map(x=>{const r=restaurants.find(v=>Number(v.id)===Number(x.restaurant_id));return '<div class="item row between"><div><div class="row" style="gap:7px;flex-wrap:wrap"><b>'+esc(x.email)+'</b><span class="business-type-badge">'+adminBusinessIcon(r?.business_type)+' '+esc(adminBusinessLabel(r?.business_type))+'</span></div><div class="mut">'+esc(r?.name||"Negocio")+' · '+esc(x.role)+'</div><div class="mut">'+(Object.entries(x.permissions||{}).filter(([k,v])=>v).map(([k])=>({products:"Productos",categories:"Categorías",orders:"Pedidos",business:"Negocio"}[k]||k)).join(" · ")||"Sin permisos")+'</div></div><div class="actions"><button type="button" class="ghost" onclick="editStaff('+x.id+')">Editar acceso</button><button type="button" class="danger" onclick="removeStaff('+x.id+')">Quitar acceso</button></div></div>'}).join("")||"<p class='mut'>No hay personal con estos filtros.</p>";
+ adminPager("staffPagination",adminStaffPage,rows.length,ADMIN_PAGE_SIZE,"setAdminStaffPage")
+}
+async function loadStaff(){
+ if(!isSuperAdmin&&currentRole!=="manager")return;
+ const list=document.getElementById("staffList"),restaurantSelect=document.getElementById("staffRestaurant");if(list)list.innerHTML="<p class='mut'>Actualizando usuarios…</p>";
+ const {data,error}=await sb.from("restaurant_staff").select("*").order("created_at");if(error)return toast(error.message);
+ staff=data||[];const scoped=selectedAdminRestaurant();if(isSuperAdmin&&scoped)staff=staff.filter(x=>Number(x.restaurant_id)===Number(scoped));
+ if(restaurantSelect)restaurantSelect.innerHTML=restaurants.map(r=>'<option value="'+r.id+'">'+esc(r.name)+' · '+esc(adminBusinessLabel(r.business_type))+'</option>').join("");
+ syncStaffBusinessFilter();renderStaffDirectory()
+}
+
+/* CLIENTES */
+function syncCustomerBusinessFilter(){adminCustomerPage=1;fillBusinessSelect("customerRestaurantFilter",document.getElementById("customerBusinessTypeFilter")?.value||"all",false)}
+function setAdminCustomerPage(page){adminCustomerPage=page;renderAdminCustomers()}
+async function loadAdminCustomers(){
+ if(!isSuperAdmin)return;
+ let ro=sb.from("restaurant_orders").select("customer_id,customer_email,total,status,restaurant_id"),qo=sb.from("retail_online_orders").select("customer_id,customer_email,total,status,restaurant_id");
+ const scoped=selectedAdminRestaurant();if(scoped){ro=ro.eq("restaurant_id",scoped);qo=qo.eq("restaurant_id",scoped)}
+ const [cq,rq,retq]=await Promise.all([sb.from("customer_profiles").select("*").order("created_at",{ascending:false}),ro,qo]);if(cq.error)return toast(cq.error.message);
+ const allOrders=[...(rq.data||[]).map(x=>({...x,source:"restaurant"})),...(retq.data||[]).map(x=>({...x,source:"retail"}))];
+ adminCustomers=(cq.data||[]).map(c=>{
+   const os=allOrders.filter(o=>o.customer_id===c.user_id),restaurantIds=[...new Set(os.map(o=>Number(o.restaurant_id)).filter(Boolean))],types=[...new Set(restaurantIds.map(id=>restaurants.find(r=>Number(r.id)===id)?.business_type||"restaurant"))],spentByCurrency={};
+   os.filter(o=>!["cancelado","cancelled"].includes(String(o.status))).forEach(o=>{const r=restaurants.find(x=>Number(x.id)===Number(o.restaurant_id)),cur=r?.currency_code||"CLP";spentByCurrency[cur]=(spentByCurrency[cur]||0)+Number(o.total||0)});
+   return {...c,orders:os.length,restaurantIds,businessTypes:types,spentByCurrency,email:os.find(o=>o.customer_email)?.customer_email||""}
+ });
+ syncCustomerBusinessFilter();renderAdminCustomers()
+}
+function renderAdminCustomers(){
+ const el=document.getElementById("adminCustomerList");if(!el)return;ensurePager("adminCustomerList","customerPagination");
+ const type=document.getElementById("customerBusinessTypeFilter")?.value||"all",rid=document.getElementById("customerRestaurantFilter")?.value||"all",term=(document.getElementById("customerSearch")?.value||"").trim().toLowerCase();
+ let rows=(adminCustomers||[]).filter(c=>(type==="all"||c.businessTypes?.includes(type))&&(rid==="all"||c.restaurantIds?.includes(Number(rid)))&&((String(c.full_name||"")+" "+String(c.phone||"")+" "+String(c.email||"")).toLowerCase().includes(term)));
+ const pages=Math.max(1,Math.ceil(rows.length/ADMIN_PAGE_SIZE));adminCustomerPage=Math.min(adminCustomerPage,pages);const view=rows.slice((adminCustomerPage-1)*ADMIN_PAGE_SIZE,adminCustomerPage*ADMIN_PAGE_SIZE);
+ el.innerHTML=view.map(c=>{const types=(c.businessTypes||[]).map(t=>adminBusinessLabel(t)).join(" · "),spent=Object.entries(c.spentByCurrency||{}).map(([cur,v])=>money(v,cur)).join(" · ")||money(0);return '<div class="item"><div class="row between"><div><h3>'+esc(c.full_name||"Cliente")+'</h3><div class="mut">'+esc(c.email||"Sin correo visible")+' · '+esc(c.phone||"Sin teléfono")+'</div><div class="mut">'+esc(types||"Sin actividad de negocio")+'</div></div><div><b>'+c.orders+' pedidos</b><div class="price">'+esc(spent)+'</div></div></div></div>'}).join("")||"<p class='mut'>No se encontraron clientes con estos filtros.</p>";
+ adminPager("customerPagination",adminCustomerPage,rows.length,ADMIN_PAGE_SIZE,"setAdminCustomerPage")
+}
+
+/* NAVEGACIÓN MÓVIL POR INFORMACIÓN */
+function createMobileSwitcher(sectionId,items,initial){
+ const section=document.getElementById(sectionId);if(!section||section.querySelector(':scope > .mobile-section-switcher'))return;
+ const bar=document.createElement("div");bar.className="mobile-section-switcher";bar.dataset.section=sectionId;
+ bar.innerHTML=items.map(x=>'<button type="button" class="ghost '+(x.key===initial?'active':'')+'" data-mobile-pane="'+x.key+'">'+x.label+'</button>').join("");
+ section.prepend(bar);
+ bar.addEventListener("click",e=>{const b=e.target.closest("[data-mobile-pane]");if(!b)return;activateMobilePane(sectionId,b.dataset.mobilePane)});
+ activateMobilePane(sectionId,initial)
+}
+const MOBILE_SECTION_MAP={
+ dashboard:{
+  summary:["#dashboard > .admin-dashboard-hero","#dashboard > .admin-dashboard-scope","#dashboard > .admin-primary-metrics"],
+  controls:["#dashboard > .admin-control-grid"],
+  activity:["#adminAuthenticatedActivity"],
+  observability:["#adminObservabilityPanel"]
+ },
+ restaurants:{summary:["#adminRetailSummary"],businesses:["#restaurantDirectoryArea"]},
+ subscriptions:{plans:["#planCreatorCard"],subscriptions:["#subscriptionListCard"],history:["#subscriptionPaymentHistoryCard"],payments:["#mpCredentialsCard","#flowCredentialsCard","#veripagosSubscriptionCredentialsCard"]}
+};
+function activateMobilePane(sectionId,key){
+ const map=MOBILE_SECTION_MAP[sectionId];if(!map)return;
+ Object.entries(map).forEach(([pane,selectors])=>selectors.forEach(sel=>document.querySelectorAll(sel).forEach(el=>el.dataset.adminMobileHidden=pane===key?"0":"1")));
+ document.querySelectorAll('#'+sectionId+' > .mobile-section-switcher [data-mobile-pane]').forEach(b=>b.classList.toggle("active",b.dataset.mobilePane===key))
+}
+function setupSettingsMobile(){
+ const section=document.getElementById("settings"),grid=section?.querySelector(".card > .grid");if(!section||!grid||section.dataset.mobileGrouped)return;section.dataset.mobileGrouped="1";
+ let group="general";
+ [...grid.children].forEach(el=>{
+  const text=(el.textContent||"").trim();
+  if(el.id==="restaurantBrandSettings")group="brand";
+  else if(/^Costo de Delivery/i.test(text))group="delivery";
+  else if(el.id==="restaurantMpSettings")group="payments";
+  el.dataset.settingsMobileGroup=group
+ });
+ const bar=document.createElement("div");bar.className="mobile-section-switcher";bar.innerHTML='<button class="ghost active" type="button" data-settings-pane="general">Datos</button><button class="ghost" type="button" data-settings-pane="brand">Marca</button><button class="ghost" type="button" data-settings-pane="delivery">Delivery / Estado</button><button class="ghost" type="button" data-settings-pane="payments">Pagos</button>';section.prepend(bar);
+ const activate=key=>{[...grid.children].forEach(el=>el.dataset.adminMobileHidden=el.dataset.settingsMobileGroup===key?"0":"1");bar.querySelectorAll("[data-settings-pane]").forEach(b=>b.classList.toggle("active",b.dataset.settingsPane===key))};
+ bar.addEventListener("click",e=>{const b=e.target.closest("[data-settings-pane]");if(b)activate(b.dataset.settingsPane)});activate("general")
+}
+function setupAdminMobileInformation(){
+ createMobileSwitcher("dashboard",[{key:"summary",label:"Resumen"},{key:"controls",label:"Accesos"},{key:"activity",label:"Actividad"},{key:"observability",label:"Diagnóstico"}],"summary");
+ createMobileSwitcher("restaurants",[{key:"summary",label:"Resumen"},{key:"businesses",label:"Negocios"}],"businesses");
+ createMobileSwitcher("subscriptions",[{key:"plans",label:"Planes"},{key:"subscriptions",label:"Suscripciones"},{key:"history",label:"Historial"},{key:"payments",label:"Métodos de cobro"}],"plans");
+ setupSettingsMobile();
+ syncSubscriptionBusinessFilter();syncSubscriptionPaymentBusinessFilter();syncStaffBusinessFilter();syncCustomerBusinessFilter();
+}
+window.addEventListener("DOMContentLoaded",()=>setTimeout(setupAdminMobileInformation,250));
+</script>
+<style id="admin-pwa-v2319">
 #adminPwaInstall{position:fixed;left:14px;bottom:14px;z-index:2800;display:none;align-items:center;gap:8px;padding:10px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--txt);box-shadow:0 16px 45px #0007;font-weight:850}
 #adminPwaInstall.show{display:flex}
 #adminPwaNetwork{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:2850;display:none;padding:9px 13px;border-radius:999px;background:#3b1720;color:#fecdd3;border:1px solid #7f1d1d;font-size:12px;font-weight:850}
