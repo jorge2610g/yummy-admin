@@ -1,7 +1,15 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="YummyPro Admin">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" sizes="192x192" href="/icon-192.png" type="image/png">
 <title>Panel Administrativo</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -2985,7 +2993,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.18</footer><script>
+</script><footer class="admin-version">Versión v2.3.19</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -3027,7 +3035,7 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.18</div><script id="admin-drawer-js-v202">
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.19</div><script id="admin-drawer-js-v202">
 const ADMIN_SIDEBAR_STATE_KEY="yummy_admin_sidebar_collapsed";
 function applyAdminSidebarState(collapsed){
  const m=document.getElementById("adminSideMenu"),app=document.getElementById("app"),btn=document.getElementById("adminSidebarCollapseBtn");
@@ -3168,4 +3176,55 @@ async function verifySubscriptionVeripagosCredentials(){
  }catch(e){if(status)status.innerHTML="<b>Estado:</b> ❌ No se pudo verificar la conexión con VeriPagos.";}
 }
 
-</script></body></html>
+</script><style id="admin-pwa-v2319">
+#adminPwaInstall{position:fixed;left:14px;bottom:14px;z-index:2800;display:none;align-items:center;gap:8px;padding:10px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--txt);box-shadow:0 16px 45px #0007;font-weight:850}
+#adminPwaInstall.show{display:flex}
+#adminPwaNetwork{position:fixed;left:50%;top:10px;transform:translateX(-50%);z-index:2850;display:none;padding:9px 13px;border-radius:999px;background:#3b1720;color:#fecdd3;border:1px solid #7f1d1d;font-size:12px;font-weight:850}
+#adminPwaNetwork.show{display:block}
+#adminPwaUpdate{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:2900;display:none;align-items:center;gap:12px;width:min(560px,calc(100vw - 24px));padding:12px 14px;border-radius:16px;background:var(--card);border:1px solid var(--line);box-shadow:0 18px 55px #0008}
+#adminPwaUpdate.show{display:flex}#adminPwaUpdate .copy{flex:1;min-width:0}#adminPwaUpdate .copy b{display:block}#adminPwaUpdate .copy span{font-size:12px;color:var(--mut)}#adminPwaUpdate .actions{display:flex;gap:8px}
+@media(max-width:600px){#adminPwaUpdate{bottom:10px;flex-direction:column;align-items:stretch}#adminPwaUpdate .actions button{flex:1}}
+@media(display-mode:standalone){#adminPwaInstall{display:none!important}}
+</style>
+<button id="adminPwaInstall" type="button" onclick="installAdminPwa()" aria-label="Instalar YummyPro Admin">📲 <span>Instalar Admin</span></button>
+<div id="adminPwaNetwork" role="status" aria-live="polite">Sin conexión · los cambios no se enviarán.</div>
+<div id="adminPwaUpdate" role="status" aria-live="polite"><div class="copy"><b>Nueva versión disponible</b><span>Actualiza YummyPro Admin para continuar con la versión más reciente.</span></div><div class="actions"><button class="ghost" type="button" onclick="dismissAdminPwaUpdate()">Después</button><button class="primary" type="button" onclick="applyAdminPwaUpdate()">Actualizar ahora</button></div></div>
+<script id="admin-pwa-script-v2319">
+let adminPwaPrompt=null,adminPwaRegistration=null,adminPwaReloading=false;
+function adminPwaStandalone(){return window.matchMedia?.("(display-mode: standalone)")?.matches===true||window.navigator.standalone===true}
+function adminPwaIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(/macintosh/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1)}
+function refreshAdminPwaInstall(){
+ const btn=document.getElementById("adminPwaInstall");if(!btn)return;
+ btn.classList.toggle("show",!adminPwaStandalone()&&(!!adminPwaPrompt||adminPwaIOS()));
+}
+async function installAdminPwa(){
+ if(adminPwaStandalone())return;
+ if(adminPwaIOS()&&!adminPwaPrompt){alert("En iPhone/iPad abre esta página en Safari, toca Compartir y luego Añadir a pantalla de inicio.");return}
+ if(!adminPwaPrompt){alert("Abre el menú del navegador y elige Instalar aplicación o Añadir a pantalla principal.");return}
+ const prompt=adminPwaPrompt;adminPwaPrompt=null;try{await prompt.prompt();await prompt.userChoice}catch(_){}
+ refreshAdminPwaInstall();
+}
+function updateAdminPwaNetwork(){
+ const box=document.getElementById("adminPwaNetwork");if(box)box.classList.toggle("show",!navigator.onLine);
+}
+function showAdminPwaUpdate(){document.getElementById("adminPwaUpdate")?.classList.add("show")}
+function dismissAdminPwaUpdate(){document.getElementById("adminPwaUpdate")?.classList.remove("show")}
+function applyAdminPwaUpdate(){const worker=adminPwaRegistration?.waiting;if(!worker)return location.reload();worker.postMessage({type:"SKIP_WAITING"})}
+function watchAdminPwa(registration){
+ adminPwaRegistration=registration;
+ if(registration.waiting&&navigator.serviceWorker.controller)showAdminPwaUpdate();
+ registration.addEventListener("updatefound",()=>{const worker=registration.installing;if(!worker)return;worker.addEventListener("statechange",()=>{if(worker.state==="installed"&&navigator.serviceWorker.controller)showAdminPwaUpdate()})});
+ navigator.serviceWorker.addEventListener("controllerchange",()=>{if(adminPwaReloading)return;adminPwaReloading=true;location.reload()});
+ const check=()=>{if(navigator.onLine)registration.update().catch(()=>{})};
+ setInterval(check,5*60*1000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")check()});
+}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();adminPwaPrompt=e;refreshAdminPwaInstall()});
+window.addEventListener("appinstalled",()=>{adminPwaPrompt=null;refreshAdminPwaInstall()});
+window.addEventListener("offline",updateAdminPwaNetwork);window.addEventListener("online",updateAdminPwaNetwork);
+window.addEventListener("DOMContentLoaded",async()=>{
+ updateAdminPwaNetwork();
+ try{if("serviceWorker" in navigator){const reg=await navigator.serviceWorker.register("/pwa-sw.js");watchAdminPwa(reg)}}catch(e){console.error("PWA Admin",e)}
+ refreshAdminPwaInstall();
+});
+</script>
+</body></html>
