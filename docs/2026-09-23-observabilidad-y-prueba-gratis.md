@@ -11,7 +11,11 @@ Esta rama conserva el estado anterior de `main` y sirve como punto de retorno.
 Centralizar en el administrador información de uso real, fallos técnicos, errores de uso y reportes enviados por restaurantes. Además, conservar el plan que interesó al restaurante al registrarse y sugerir posteriormente el plan mínimo que cubre los módulos que realmente utiliza.
 
 ## Cambios en base de datos
-Migración aplicada: `observability_trial_intent_analytics`.
+Migraciones aplicadas:
+- `observability_trial_intent_analytics`
+- `observability_admin_alert_log`
+- `lock_down_observability_admin_rpcs`
+- `normalize_plan_recommendation_modules`
 
 Se agregaron a `restaurants`:
 - `trial_intended_plan_id`
@@ -79,12 +83,12 @@ Comportamiento:
 - Un reporte manual enviado por un restaurante genera un aviso por correo al administrador.
 - El correo utiliza la configuración de Resend ya existente del proyecto.
 
-No se incluyen contraseñas, tokens, datos de tarjetas ni secretos dentro de la telemetría.
+No se incluyen contraseñas, tokens, datos de tarjetas ni secretos dentro de la telemetría. Las RPC administrativas y la creación de prueba quedaron restringidas explícitamente a usuarios autenticados; las tablas de observabilidad no exponen acceso directo al navegador.
 
 ## Recomendación de plan
 `admin_plan_recommendations` analiza los módulos utilizados durante el período y busca el plan activo de menor precio que cubra todos esos módulos.
 
-La recomendación se muestra como ayuda informativa y no modifica automáticamente la suscripción.
+La recomendación se muestra como ayuda informativa y no modifica automáticamente la suscripción. Para evitar falsas incompatibilidades, el módulo interno `plans` no entra en el cálculo y `table_qr` se normaliza como uso de `pos`.
 
 También se conserva:
 - plan que interesó al usuario al registrarse;
