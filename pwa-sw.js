@@ -1,4 +1,4 @@
-const ADMIN_CACHE="yummypro-admin-v2333-business-labels";
+const ADMIN_CACHE="yummypro-admin-v2335-push";
 const ADMIN_OFFLINE="/offline.html";
 const ADMIN_CORE=[ADMIN_OFFLINE,"/manifest.webmanifest","/pwa-icon.svg","/icon-192.png","/icon-512.png","/apple-touch-icon.png"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(ADMIN_CACHE).then(c=>c.addAll(ADMIN_CORE)))});
@@ -17,4 +17,35 @@ self.addEventListener("fetch",event=>{
   return;
  }
  if(req.mode==="navigate"){event.respondWith(fetch(req).catch(()=>caches.match(ADMIN_OFFLINE)))}
+});
+
+self.addEventListener("push",event=>{
+ let data={};try{data=event.data?.json()||{}}catch{data={body:event.data?.text()||"Tienes una actualización."}}
+ event.waitUntil((async()=>{
+  const windows=await clients.matchAll({type:"window",includeUncontrolled:true});
+  const visible=windows.find(c=>c.visibilityState==="visible");
+  if(data.onlyBackground&&visible){visible.postMessage({type:"yummypro-push",data});return}
+  const options={
+   body:data.body||"Tienes una actualización.",
+   icon:"/icon-192.png",
+   badge:"/icon-192.png",
+   tag:data.tag||"yummypro-admin-notification",
+   renotify:true,
+   silent:!!data.silent,
+   requireInteraction:!!data.requireInteraction,
+   data:{url:data.url||"/"}
+  };
+  if(!data.silent)options.vibrate=[220,100,220,100,350];
+  await self.registration.showNotification(data.title||"YummyPro Admin",options);
+ })());
+});
+self.addEventListener("notificationclick",event=>{
+ event.notification.close();
+ const target=new URL(event.notification.data?.url||"/",self.location.origin).href;
+ event.waitUntil(clients.matchAll({type:"window",includeUncontrolled:true}).then(list=>{
+  for(const client of list){
+   if(client.url.startsWith(self.location.origin)){client.navigate(target);return client.focus()}
+  }
+  return clients.openWindow(target)
+ }));
 });
