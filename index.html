@@ -2827,8 +2827,8 @@ async function loadAdminObservability(){
   renderObservabilityList("obsErrors",d.error_codes,x=>'<div class="item"><div class="row between"><div><b>'+esc(x.error_code||"sin_codigo")+'</b><div class="mut">'+esc(x.app_context||"")+" · "+esc(x.category||"")+(x.is_user_error?" · error de uso":" · fallo técnico")+'</div></div><strong>'+Number(x.errors||0)+'</strong></div></div>');
   renderObservabilityList("obsPlanInterest",d.plan_interest,x=>'<div class="item row between"><div><b>'+esc(x.plan_name||"Plan")+'</b><div class="mut">Interés al registrarse</div></div><strong>'+Number(x.interest_count||0)+'</strong></div>');
   renderObservabilityList("obsRecommendations",recs,x=>{
-    const used=Array.isArray(x.modules_used)?x.modules_used:[];
-    return '<div class="item"><b>'+esc(x.restaurant_name||("Restaurante #"+x.restaurant_id))+'</b><div class="mut" style="margin-top:4px">Interés inicial: '+esc(x.intended_plan_name||"Sin selección")+' · Sugerencia: '+esc(x.recommended_plan_name||"Sin datos suficientes")+'</div><div class="mut" style="margin-top:4px">'+esc(x.recommendation_reason||"")+'</div>'+(used.length?'<small class="mut">Uso: '+used.map(esc).join(", ")+'</small>':'')+'</div>';
+    const used=Array.isArray(x.modules_used)?x.modules_used:[],suggestion=x.recommended_plan_name||(Number(x.module_count||0)===0?x.intended_plan_name:null)||"Sin datos suficientes";
+    return '<div class="item"><b>'+esc(x.restaurant_name||("Restaurante #"+x.restaurant_id))+'</b><div class="mut" style="margin-top:4px">Interés inicial: '+esc(x.intended_plan_name||"Sin selección")+' · Sugerencia: '+esc(suggestion)+'</div><div class="mut" style="margin-top:4px">'+esc(x.recommendation_reason||"")+'</div>'+(used.length?'<small class="mut">Uso: '+used.map(esc).join(", ")+'</small>':'')+'</div>';
   });
   renderObservabilityList("obsRecentReports",d.recent_reports,x=>'<div class="item"><div class="row between"><div><b>'+esc(x.title||"Reporte")+'</b><div class="mut">'+esc(x.restaurant_name||x.app_context||"")+" · "+new Date(x.created_at).toLocaleString("es-CL")+'</div></div><span class="pill">'+esc(x.status||"open")+'</span></div></div>');
  }catch(e){
