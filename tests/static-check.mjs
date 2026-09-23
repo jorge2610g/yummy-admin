@@ -20,8 +20,8 @@ const flowMarkers=['flowCredentialsCard','subscriptionFlowApiKey','subscriptionF
 
 for(const marker of ['planAnnualEnabled','planAnnualAmount','planAnnualBonusMonths','planAnnualDays','updateAnnualPlanPreview','annual_enabled','annual_bonus_months'])if(!admin.includes(marker))throw new Error('index.html: falta configuración anual '+marker);
 
-for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.31'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
-for(const marker of ['settingsRestaurantSelect','changeSettingsRestaurant','settingsBusinessBadge','demoApiInheritanceCard','demoApiInheritanceToggle','toggleDemoApiInheritance','set_demo_business_api_inheritance','use_demo_api_defaults','is_demo','API global de demos'])if(!admin.includes(marker))throw new Error('index.html: falta configuración de APIs para demos '+marker);
+for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.32'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
+for(const marker of ['settingsBusinessGroupFilter','changeSettingsBusinessGroup','settingsRestaurantSelect','changeSettingsRestaurant','settingsBusinessBadge','demoApiInheritanceCard','demoApiInheritanceToggle','toggleDemoApiInheritance','set_demo_business_api_inheritance','use_demo_api_defaults','is_demo','API global de demos','Locales reales','Locales demo'])if(!admin.includes(marker))throw new Error('index.html: falta configuración de APIs para demos '+marker);
 
 if(!admin.includes('/manifest.webmanifest?v=2320'))throw new Error('index.html: falta manifest PWA admin versionado');
 
@@ -31,6 +31,6 @@ for(const marker of ['rbusinessType','business_type','adminRetailSummary','loadA
 
 for(const marker of ['retail_returns','refunded_amount','refund_status','Venta neta','Devuelto'])if(!admin.includes(marker))throw new Error('index.html: falta devolución retail admin '+marker);
 
-for(const marker of ['retail_online_orders','Pedidos online activos','Venta online','Ver tienda online','retail_orders','Versión v2.3.31'])if(!admin.includes(marker))throw new Error('index.html: falta tienda online retail admin '+marker);
+for(const marker of ['retail_online_orders','Pedidos online activos','Venta online','Ver tienda online','retail_orders','Versión v2.3.32'])if(!admin.includes(marker))throw new Error('index.html: falta tienda online retail admin '+marker);
 
 for(const marker of ['admin-mobile-information-v2325','mobile-section-switcher','restaurantBusinessTypeFilter','subscriptionBusinessTypeFilter','subscriptionPaymentBusinessTypeFilter','staffBusinessTypeFilter','customerBusinessTypeFilter','planBusinessType','business_type','retail_orders','retail_pos','retail_products','retail_suppliers','retail_purchases','Métodos de cobro'])if(!admin.includes(marker))throw new Error('index.html: falta navegación/filtros móviles '+marker);
