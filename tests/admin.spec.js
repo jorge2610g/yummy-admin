@@ -8,3 +8,30 @@ test('incluye historial global de pagos de suscripción',async({page})=>{await p
 test('incluye configuración de Flow Chile',async({page})=>{await page.goto('/');await expect(page.locator('#flowCredentialsCard')).toBeAttached();await expect(page.locator('#subscriptionFlowApiKey')).toBeAttached();await expect(page.locator('#subscriptionFlowEnvironment')).toBeAttached()});
 
 test('permite configurar precio y meses de regalo del plan anual',async({page})=>{await page.goto('/');const html=await page.content();expect(html).toContain('planAnnualEnabled');expect(html).toContain('planAnnualBonusMonths');expect(html).toContain('planAnnualAmount');expect(html).toContain('updateAnnualPlanPreview')});
+
+async function diagnosePwaInstallability(page,context,url,label){
+  await page.goto(url,{waitUntil:'domcontentloaded'});
+  const sw=await page.evaluate(async()=>{
+    if(!('serviceWorker' in navigator))return {supported:false};
+    try{
+      const reg=await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error('service worker ready timeout')),7000))
+      ]);
+      return {supported:true,scope:reg.scope,controller:!!navigator.serviceWorker.controller};
+    }catch(e){return {supported:true,error:String(e),controller:!!navigator.serviceWorker.controller}}
+  });
+  if(sw.supported&&!sw.controller&&!sw.error){
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(500);
+  }
+  const cdp=await context.newCDPSession(page);
+  const manifest=await cdp.send('Page.getAppManifest');
+  const installability=await cdp.send('Page.getInstallabilityErrors');
+  const report={label,url,sw,manifestUrl:manifest.url,manifestErrors:manifest.errors||[],installabilityErrors:installability.installabilityErrors||[]};
+  console.log('PWA_DIAGNOSTIC '+JSON.stringify(report));
+  expect(report.manifestErrors,JSON.stringify(report)).toEqual([]);
+  expect(report.installabilityErrors,JSON.stringify(report)).toEqual([]);
+}
+
+test('diagnóstico PWA instalable: administrador',async({page,context})=>{await diagnosePwaInstallability(page,context,'/','administrador')});
