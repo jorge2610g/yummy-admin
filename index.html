@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="YummyPro Admin">
-<link rel="manifest" href="/manifest.webmanifest">
+<link rel="manifest" href="/manifest.webmanifest?v=2320">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="icon" sizes="192x192" href="/icon-192.png" type="image/png">
 <title>Panel Administrativo</title>
@@ -2993,7 +2993,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.19</footer><script>
+</script><footer class="admin-version">Versión v2.3.20</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -3035,7 +3035,7 @@ async function saveSubscriptionMercadoPago(){
  }catch(e){toast("No se pudieron guardar las credenciales.");}
 }
 </script>
-<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.19</div><script id="admin-drawer-js-v202">
+<div style="position:fixed;right:10px;bottom:7px;z-index:9999;font:600 11px Arial;color:#7f93ad;opacity:.75;pointer-events:none">v2.3.20</div><script id="admin-drawer-js-v202">
 const ADMIN_SIDEBAR_STATE_KEY="yummy_admin_sidebar_collapsed";
 function applyAdminSidebarState(collapsed){
  const m=document.getElementById("adminSideMenu"),app=document.getElementById("app"),btn=document.getElementById("adminSidebarCollapseBtn");
@@ -3189,7 +3189,7 @@ async function verifySubscriptionVeripagosCredentials(){
 <button id="adminPwaInstall" type="button" onclick="installAdminPwa()" aria-label="Instalar YummyPro Admin">📲 <span>Instalar Admin</span></button>
 <div id="adminPwaNetwork" role="status" aria-live="polite">Sin conexión · los cambios no se enviarán.</div>
 <div id="adminPwaUpdate" role="status" aria-live="polite"><div class="copy"><b>Nueva versión disponible</b><span>Actualiza YummyPro Admin para continuar con la versión más reciente.</span></div><div class="actions"><button class="ghost" type="button" onclick="dismissAdminPwaUpdate()">Después</button><button class="primary" type="button" onclick="applyAdminPwaUpdate()">Actualizar ahora</button></div></div>
-<script id="admin-pwa-script-v2319">
+<script id="admin-pwa-script-v2320">
 let adminPwaPrompt=null,adminPwaRegistration=null,adminPwaReloading=false;
 function adminPwaStandalone(){return window.matchMedia?.("(display-mode: standalone)")?.matches===true||window.navigator.standalone===true}
 function adminPwaIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(/macintosh/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1)}
@@ -3212,8 +3212,13 @@ function dismissAdminPwaUpdate(){document.getElementById("adminPwaUpdate")?.clas
 function applyAdminPwaUpdate(){const worker=adminPwaRegistration?.waiting;if(!worker)return location.reload();worker.postMessage({type:"SKIP_WAITING"})}
 function watchAdminPwa(registration){
  adminPwaRegistration=registration;
- if(registration.waiting&&navigator.serviceWorker.controller)showAdminPwaUpdate();
- registration.addEventListener("updatefound",()=>{const worker=registration.installing;if(!worker)return;worker.addEventListener("statechange",()=>{if(worker.state==="installed"&&navigator.serviceWorker.controller)showAdminPwaUpdate()})});
+ const activateWaiting=worker=>{
+  if(!worker||!navigator.serviceWorker.controller)return;
+  if(!adminPwaStandalone())worker.postMessage({type:"SKIP_WAITING"});
+  else showAdminPwaUpdate();
+ };
+ activateWaiting(registration.waiting);
+ registration.addEventListener("updatefound",()=>{const worker=registration.installing;if(!worker)return;worker.addEventListener("statechange",()=>{if(worker.state==="installed")activateWaiting(worker)})});
  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(adminPwaReloading)return;adminPwaReloading=true;location.reload()});
  const check=()=>{if(navigator.onLine)registration.update().catch(()=>{})};
  setInterval(check,5*60*1000);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")check()});
@@ -3223,7 +3228,7 @@ window.addEventListener("appinstalled",()=>{adminPwaPrompt=null;refreshAdminPwaI
 window.addEventListener("offline",updateAdminPwaNetwork);window.addEventListener("online",updateAdminPwaNetwork);
 window.addEventListener("DOMContentLoaded",async()=>{
  updateAdminPwaNetwork();
- try{if("serviceWorker" in navigator){const reg=await navigator.serviceWorker.register("/pwa-sw.js");watchAdminPwa(reg)}}catch(e){console.error("PWA Admin",e)}
+ try{if("serviceWorker" in navigator){const reg=await navigator.serviceWorker.register("/pwa-sw.js");await reg.update().catch(()=>{});watchAdminPwa(reg)}}catch(e){console.error("PWA Admin",e)}
  refreshAdminPwaInstall();
 });
 </script>
