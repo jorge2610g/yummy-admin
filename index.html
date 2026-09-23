@@ -2480,12 +2480,14 @@ function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;
   const target="https://web.yummypro.online/panel/?admin_preview="+encodeURIComponent(id)+"&tab="+encodeURIComponent(section);
   const w=window.open(target,"_blank");if(!w)return toast("Permite ventanas emergentes para abrir el panel");
   const panelOrigin="https://web.yummypro.online",payload={type:"YUMMY_ADMIN_PREVIEW",restaurant_id:Number(id),tab:section,access_token:session.access_token,refresh_token:session.refresh_token};
-  let finished=false,attempts=0;
-  const send=()=>{if(finished||w.closed)return;attempts++;try{w.postMessage(payload,panelOrigin)}catch(_){}if(attempts<20)setTimeout(send,600)};
-  const onReady=e=>{if(e.origin!==panelOrigin||e.source!==w||e.data?.type!=="YUMMY_ADMIN_PREVIEW_READY")return;finished=true;try{w.postMessage(payload,panelOrigin)}catch(_){}window.removeEventListener("message",onReady)};
+  let acknowledged=false,attempts=0;
+  // Mantener el puente vivo varios segundos: el panel puede tardar en cargar recursos,
+  // pero solo inicializa la vista una vez.
+  const send=()=>{if(w.closed)return;attempts++;try{w.postMessage(payload,panelOrigin)}catch(_){}if(attempts<30)setTimeout(send,500)};
+  const onReady=e=>{if(e.origin!==panelOrigin||e.source!==w||e.data?.type!=="YUMMY_ADMIN_PREVIEW_READY")return;acknowledged=true;try{w.postMessage(payload,panelOrigin)}catch(_){}};
   window.addEventListener("message",onReady);
-  setTimeout(send,250);
-  setTimeout(()=>{finished=true;window.removeEventListener("message",onReady)},15000);
+  setTimeout(send,150);
+  setTimeout(()=>{window.removeEventListener("message",onReady);if(!acknowledged&&!w.closed)toast("El panel está tardando en responder. Puedes cerrar esa pestaña y volver a Abrir panel.")},18000);
 }
 async function returnToAdminPanel(){
   if(!isSuperAdmin||!adminRestaurantMode)return;
@@ -3084,7 +3086,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.26</footer><script>
+</script><footer class="admin-version">Versión v2.3.27</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
