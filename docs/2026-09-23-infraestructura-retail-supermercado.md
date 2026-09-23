@@ -102,3 +102,43 @@ La infraestructura retail reutiliza los permisos existentes para evitar activar/
 5. lotes/vencimientos;
 6. tienda online retail;
 7. plan de suscripción específico para retail si corresponde.
+
+
+## Fase 2 — devoluciones y venta neta
+
+Versión de administrador: `v2.3.23`.
+
+El Perfil 360 retail ahora muestra:
+- ventas activas;
+- venta neta;
+- monto devuelto;
+- cantidad de devoluciones;
+- stock bajo;
+- compras;
+- proveedores;
+- caja.
+
+La venta neta descuenta `refunded_amount`.
+
+Nuevas estructuras:
+- `retail_returns`
+- `retail_return_items`
+- `retail_sales.refunded_amount`
+- `retail_sales.refund_status`
+- `restaurant_cash_movements.retail_return_id`
+
+RPC operativas:
+- `retail_return_sale_items`
+- `retail_void_sale`
+
+Las devoluciones completas marcan la venta como `voided`; las parciales permanecen como ventas completadas con saldo neto reducido.
+
+## Entorno demo
+Existe **Minimarket Demo YummyPro** para pruebas desde Perfil 360 → Abrir POS Retail.
+
+Incluye:
+- tres productos con código de barra;
+- proveedor de ejemplo;
+- una caja abierta.
+
+No está asociado a una cuenta de restaurante; se administra desde la vista de superadministrador.
