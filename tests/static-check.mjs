@@ -26,7 +26,7 @@ if(!admin.includes('/manifest.webmanifest?v=2320'))throw new Error('index.html: 
 
 for(const marker of ['adminObservabilityPanel','loadAdminObservability','admin_observability_summary','admin_plan_recommendations','obsSystemErrors','obsUserErrors','obsRecommendations','obsRecentReports'])if(!admin.includes(marker))throw new Error('index.html: falta observabilidad admin '+marker);
 
-for(const marker of ['rbusinessType','business_type','adminRetailSummary','loadAdminRetailSummary','admin_retail_summary','openRetailBusinessProfile','retail_products','retail_sales','retail_purchases'])if(!admin.includes(marker))throw new Error('index.html: falta infraestructura retail admin '+marker);
+for(const marker of ['rbusinessType','business_type','adminRetailSummary','loadAdminRetailSummary','openRetailBusinessProfile','retail_products','retail_sales','retail_purchases','Restaurantes activos','Negocios activos'])if(!admin.includes(marker))throw new Error('index.html: falta infraestructura retail admin '+marker);
 
 for(const marker of ['retail_returns','refunded_amount','refund_status','Venta neta','Devuelto'])if(!admin.includes(marker))throw new Error('index.html: falta devolución retail admin '+marker);
 
