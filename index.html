@@ -36,6 +36,7 @@ button{border:0;border-radius:11px;padding:11px 15px;cursor:pointer;font-weight:
  #productList .item button,#productList .item select{min-height:36px!important;padding:7px 9px!important;font-size:12px!important}
  #productList{gap:8px!important}
 }
+.obs-recommendation-controls{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;margin:14px 0}.obs-recommendation-controls input,.obs-recommendation-controls select{margin:0}.obs-recommendation-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}.obs-recommendation-pager .actions{display:flex;gap:8px;flex-wrap:wrap}.obs-recommendation-pager button:disabled{opacity:.45;cursor:not-allowed}@media(max-width:600px){.obs-recommendation-controls{grid-template-columns:1fr}.obs-recommendation-pager{align-items:stretch}.obs-recommendation-pager .actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.obs-recommendation-pager button{width:100%}}
 .admin-version{padding:24px 12px;text-align:center;color:var(--mut);font-size:12px;opacity:.75}
 
 /* Ajuste móvil v2.0.2: contenido centrado y tarjetas sin desbordes */
@@ -2259,7 +2260,7 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
     <article class="card"><div class="module-head"><div><span class="eyebrow">CLIENTES</span><h3>Secciones más usadas</h3></div></div><div id="obsClientModules" class="list"></div></article>
     <article class="card"><div class="module-head"><div><span class="eyebrow">DIAGNÓSTICO</span><h3>Errores frecuentes</h3></div></div><div id="obsErrors" class="list"></div></article>
     <article class="card"><div class="module-head"><div><span class="eyebrow">INTERÉS</span><h3>Planes elegidos al registrarse</h3></div></div><div id="obsPlanInterest" class="list"></div></article>
-    <article class="card"><div class="module-head"><div><span class="eyebrow">RECOMENDACIÓN</span><h3>Plan según uso real</h3></div></div><div id="obsRecommendations" class="list"></div></article>
+    <article class="card obs-recommendation-card"><div class="module-head"><div><span class="eyebrow">RECOMENDACIÓN</span><h3>Plan según uso real</h3><p class="mut" style="margin:5px 0 0">Vista paginada para mantener el panel rápido aunque existan miles de negocios.</p></div><span id="obsRecommendationCount" class="pill">0 negocios</span></div><div class="obs-recommendation-controls"><input id="obsRecommendationSearch" placeholder="Buscar negocio por nombre, enlace o ciudad" oninput="queueObsRecommendationSearch(this.value)"><select id="obsRecommendationPageSize" onchange="setObsRecommendationPageSize(this.value)" aria-label="Recomendaciones por página"><option value="10" selected>10 por página</option><option value="20">20 por página</option><option value="50">50 por página</option></select></div><div id="obsRecommendations" class="list"></div><div id="obsRecommendationPager" class="obs-recommendation-pager"><span id="obsRecommendationPageInfo" class="mut">Página 1 de 1</span><div class="actions"><button id="obsRecommendationPrev" class="ghost" type="button" onclick="changeObsRecommendationPage(-1)">← Anterior</button><button id="obsRecommendationNext" class="ghost" type="button" onclick="changeObsRecommendationPage(1)">Siguiente →</button></div></div></article>
     <article class="card"><div class="module-head"><div><span class="eyebrow">SOPORTE</span><h3>Reportes recientes</h3></div></div><div id="obsRecentReports" class="list"></div></article>
   </div>
 </div>
@@ -3038,6 +3039,54 @@ function renderObservabilityList(id,rows,render){
  const el=document.getElementById(id);if(!el)return;
  el.innerHTML=(rows||[]).length?(rows||[]).map(render).join(""):'<p class="mut">Todavía no hay datos suficientes en este período.</p>';
 }
+let obsRecommendationPage=1,obsRecommendationPageSize=10,obsRecommendationSearch="",obsRecommendationTotal=0,obsRecommendationSearchTimer=null;
+function renderObsRecommendationItem(x){
+ const used=Array.isArray(x.modules_used)?x.modules_used:[],suggestion=x.recommended_plan_name||(Number(x.module_count||0)===0?x.intended_plan_name:null)||"Sin datos suficientes";
+ return '<div class="item"><b>'+esc(x.restaurant_name||("Negocio #"+x.restaurant_id))+'</b><div class="mut" style="margin-top:4px">Interés inicial: '+esc(x.intended_plan_name||"Sin selección")+' · Sugerencia: '+esc(suggestion)+'</div><div class="mut" style="margin-top:4px">'+esc(x.recommendation_reason||"")+'</div>'+(used.length?'<small class="mut">Uso: '+used.map(esc).join(", ")+'</small>':'')+'</div>';
+}
+function renderObsRecommendationPager(){
+ const pages=Math.max(1,Math.ceil(obsRecommendationTotal/obsRecommendationPageSize)),from=obsRecommendationTotal?(obsRecommendationPage-1)*obsRecommendationPageSize+1:0,to=Math.min(obsRecommendationPage*obsRecommendationPageSize,obsRecommendationTotal);
+ const count=document.getElementById("obsRecommendationCount"),info=document.getElementById("obsRecommendationPageInfo"),prev=document.getElementById("obsRecommendationPrev"),next=document.getElementById("obsRecommendationNext"),size=document.getElementById("obsRecommendationPageSize");
+ if(count)count.textContent=obsRecommendationTotal.toLocaleString("es-CL")+" negocios";
+ if(info)info.textContent=obsRecommendationTotal?"Página "+obsRecommendationPage+" de "+pages+" · mostrando "+from+"–"+to:"Sin resultados";
+ if(prev)prev.disabled=obsRecommendationPage<=1;
+ if(next)next.disabled=obsRecommendationPage>=pages||obsRecommendationTotal===0;
+ if(size&&Number(size.value)!==obsRecommendationPageSize)size.value=String(obsRecommendationPageSize);
+}
+async function loadAdminRecommendations(resetPage=false){
+ if(!isSuperAdmin)return;
+ if(resetPage)obsRecommendationPage=1;
+ const box=document.getElementById("obsRecommendations");if(!box)return;
+ const days=Math.max(1,Number(document.getElementById("observabilityDays")?.value||1)),rid=dashboardRestaurantScope==="all"?null:Number(dashboardRestaurantScope),offset=(obsRecommendationPage-1)*obsRecommendationPageSize;
+ box.innerHTML='<div class="item"><b>Cargando recomendaciones…</b><div class="mut">Solo se consulta la página visible.</div></div>';
+ try{
+  const {data,error}=await sb.rpc("admin_plan_recommendations_page",{p_days:Math.max(days,30),p_limit:obsRecommendationPageSize,p_offset:offset,p_search:obsRecommendationSearch||null,p_restaurant_id:rid});
+  if(error)throw error;
+  const rows=data||[];
+  obsRecommendationTotal=Number(rows[0]?.total_count||0);
+  const pages=Math.max(1,Math.ceil(obsRecommendationTotal/obsRecommendationPageSize));
+  if(obsRecommendationTotal&&obsRecommendationPage>pages){obsRecommendationPage=pages;return loadAdminRecommendations(false)}
+  box.innerHTML=rows.length?rows.map(renderObsRecommendationItem).join(""):'<p class="mut">No se encontraron negocios con estos filtros.</p>';
+  renderObsRecommendationPager();
+ }catch(e){
+  console.error("Recomendaciones de planes",e);
+  obsRecommendationTotal=0;
+  box.innerHTML='<div class="item"><b>No se pudieron cargar las recomendaciones</b><div class="mut">'+esc(e.message||"Intenta nuevamente.")+'</div></div>';
+  renderObsRecommendationPager();
+ }
+}
+function queueObsRecommendationSearch(value){
+ obsRecommendationSearch=String(value||"").trim();
+ clearTimeout(obsRecommendationSearchTimer);
+ obsRecommendationSearchTimer=setTimeout(()=>{obsRecommendationPage=1;loadAdminRecommendations(false)},280);
+}
+function setObsRecommendationPageSize(value){
+ obsRecommendationPageSize=Math.min(50,Math.max(10,Number(value)||10));obsRecommendationPage=1;loadAdminRecommendations(false);
+}
+function changeObsRecommendationPage(delta){
+ const pages=Math.max(1,Math.ceil(obsRecommendationTotal/obsRecommendationPageSize)),next=Math.min(pages,Math.max(1,obsRecommendationPage+Number(delta||0)));
+ if(next===obsRecommendationPage)return;obsRecommendationPage=next;loadAdminRecommendations(false);
+}
 async function loadAdminObservability(){
  if(!isSuperAdmin)return;
  const days=Math.max(1,Number(document.getElementById("observabilityDays")?.value||1));
@@ -3045,13 +3094,9 @@ async function loadAdminObservability(){
  const health=document.getElementById("observabilityHealth");
  if(health)health.innerHTML='<b>Actualizando diagnóstico…</b><div class="mut">Consultando actividad y errores registrados.</div>';
  try{
-  const [summaryResult,recommendationsResult]=await Promise.all([
-   sb.rpc("admin_observability_summary",{p_days:days,p_restaurant_id:rid}),
-   sb.rpc("admin_plan_recommendations",{p_days:Math.max(days,30)})
-  ]);
+  const summaryResult=await sb.rpc("admin_observability_summary",{p_days:days,p_restaurant_id:rid});
   if(summaryResult.error)throw summaryResult.error;
   const d=summaryResult.data||{};
-  const recs=(recommendationsResult.error?[]:(recommendationsResult.data||[])).filter(x=>!rid||Number(x.restaurant_id)===rid);
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=String(v??0)};
   set("obsEvents",d.total_events||0);set("obsSystemErrors",d.system_errors||0);set("obsUserErrors",d.user_errors||0);set("obsOpenReports",d.open_reports||0);
   const systemErrors=Number(d.system_errors||0),userErrors=Number(d.user_errors||0),threshold=Math.max(5,days*3);
@@ -3069,10 +3114,7 @@ async function loadAdminObservability(){
   renderObservabilityList("obsClientModules",d.top_client_modules,moduleRow);
   renderObservabilityList("obsErrors",d.error_codes,x=>'<div class="item"><div class="row between"><div><b>'+esc(x.error_code||"sin_codigo")+'</b><div class="mut">'+esc(x.app_context||"")+" · "+esc(x.category||"")+(x.is_user_error?" · error de uso":" · fallo técnico")+'</div></div><strong>'+Number(x.errors||0)+'</strong></div></div>');
   renderObservabilityList("obsPlanInterest",d.plan_interest,x=>'<div class="item row between"><div><b>'+esc(x.plan_name||"Plan")+'</b><div class="mut">Interés al registrarse</div></div><strong>'+Number(x.interest_count||0)+'</strong></div>');
-  renderObservabilityList("obsRecommendations",recs,x=>{
-    const used=Array.isArray(x.modules_used)?x.modules_used:[],suggestion=x.recommended_plan_name||(Number(x.module_count||0)===0?x.intended_plan_name:null)||"Sin datos suficientes";
-    return '<div class="item"><b>'+esc(x.restaurant_name||("Restaurante #"+x.restaurant_id))+'</b><div class="mut" style="margin-top:4px">Interés inicial: '+esc(x.intended_plan_name||"Sin selección")+' · Sugerencia: '+esc(suggestion)+'</div><div class="mut" style="margin-top:4px">'+esc(x.recommendation_reason||"")+'</div>'+(used.length?'<small class="mut">Uso: '+used.map(esc).join(", ")+'</small>':'')+'</div>';
-  });
+  await loadAdminRecommendations(true);
   renderObservabilityList("obsRecentReports",d.recent_reports,x=>'<div class="item"><div class="row between"><div><b>'+esc(x.title||"Reporte")+'</b><div class="mut">'+esc(x.restaurant_name||x.app_context||"")+" · "+new Date(x.created_at).toLocaleString("es-CL")+'</div></div><span class="pill">'+esc(x.status||"open")+'</span></div></div>');
  }catch(e){
   console.error("Observabilidad admin",e);
@@ -3303,7 +3345,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.39</footer><script>
+</script><footer class="admin-version">Versión v2.3.40</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
