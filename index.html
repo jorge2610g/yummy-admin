@@ -2420,7 +2420,7 @@ function queueAdminBusinessSearch(){
 const countryByCode=code=>platformCountries.find(c=>c.code===code)||{code:"CL",currency_code:"CLP",locale:"es-CL",timezone:"America/Santiago",mercadopago_enabled:true};
 const currencyDigits=cur=>{try{return new Intl.NumberFormat("en",{style:"currency",currency:String(cur||"USD").toUpperCase()}).resolvedOptions().maximumFractionDigits}catch(_){return 2}};
 const money=(n,currency,locale)=>{const cfg=currentRestaurantConfig||countryByCode("CL"),cur=String(currency||cfg.currency_code||"CLP").toUpperCase(),loc=locale||cfg.locale||"es-CL",value=Number(n||0),digits=currencyDigits(cur),fractional=Math.abs(value-Math.trunc(value))>1e-9,shown=fractional?digits:0;return new Intl.NumberFormat(loc,{style:"currency",currency:cur,minimumFractionDigits:shown,maximumFractionDigits:shown}).format(value)};
-async function loadPlatformCountries(){const {data,error}=await sb.from("platform_countries").select("*").eq("active",true).order("sort_order");if(error)return;platformCountries=data||[];const el=document.getElementById("scountry");if(el)el.innerHTML=platformCountries.map(c=>`<option value="${c.code}">${esc(c.name)} · ${c.currency_code}</option>`).join("")}
+async function loadPlatformCountries(force=false){if(platformCountries.length&&!force)return;const {data,error}=await sb.from("platform_countries").select("*").eq("active",true).order("sort_order");if(error)return;platformCountries=data||[];const el=document.getElementById("scountry");if(el)el.innerHTML=platformCountries.map(c=>`<option value="${c.code}">${esc(c.name)} · ${c.currency_code}</option>`).join("")}
 function applyCountrySelection(code){const c=countryByCode(code);if(window.scurrency)scurrency.value=c.currency_code;if(window.stimezone)stimezone.value=c.timezone;const mp=document.getElementById("restaurantMpSettings");if(mp)mp.style.display=c.mercadopago_enabled?"":"none"}
 window.togglePassword=function(id,btn){const el=document.getElementById(id);if(!el)return false;const show=el.getAttribute("type")==="password";el.setAttribute("type",show?"text":"password");btn.textContent=show?"Ocultar":"Ver";btn.setAttribute("aria-pressed",show?"true":"false");return false}
 function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2500)}
@@ -2598,12 +2598,29 @@ async function enter(user){
   }catch(e){msg.textContent=e.message||"No se pudo abrir el panel."}
 }
 async function restoreSession(){try{const {data,error}=await sb.auth.getSession();if(error)throw error;if(data.session){await enter(data.session.user)}else{document.getElementById("login").classList.remove("hidden")}}catch(e){document.getElementById("login").classList.remove("hidden");document.getElementById("loginMsg").textContent=e.message||"No se pudo validar la sesión."}finally{document.body.classList.remove("auth-loading")}}restoreSession();
-document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{const tabName=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));const activity=document.getElementById("adminAuthenticatedActivity");if(activity)activity.classList.toggle("hidden",tabName!=="dashboard");b.classList.add("active");document.getElementById(tabName)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){await loadAdminDashboardMetrics();await Promise.allSettled([loadAdminOverview(),loadAdminObservability()]);renderBusinessStatus(dashboardRestaurantScope==="all"?null:(currentRestaurantConfig||restaurants.find(r=>Number(r.id)===Number(currentRestaurant))))}else if(b.dataset.tab==="orders"){await loadOrders()}else if(b.dataset.tab==="customers"){await loadAdminCustomers()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{const tabName=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));const activity=document.getElementById("adminAuthenticatedActivity");if(activity)activity.classList.toggle("hidden",tabName!=="dashboard");b.classList.add("active");document.getElementById(tabName)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){await loadAdminDashboardMetrics();scheduleAdminDeferredDashboard(++dashboardRefreshSequence);renderBusinessStatus(dashboardRestaurantScope==="all"?null:(currentRestaurantConfig||restaurants.find(r=>Number(r.id)===Number(currentRestaurant))))}else if(b.dataset.tab==="orders"){await loadOrders()}else if(b.dataset.tab==="customers"){await loadAdminCustomers()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
 let dashboardRefreshSequence=0;
 function setDashboardLoading(loading){
  const btn=document.getElementById("refreshDashboardBtn");
  if(btn){btn.disabled=loading;btn.setAttribute("aria-busy",String(loading));btn.textContent=loading?"↻ Actualizando…":"↻ Actualizar datos"}
  if(isSuperAdmin&&loading){["metricRestaurants","metricActiveSubscriptions","metricPlans","metricOrders","metricTotalSales","metricOrdersToday","metricSalesToday","metricCustomers"].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent="—"})}
+}
+let adminDeferredDashboardTimer=null;
+function scheduleAdminDeferredDashboard(refreshId){
+ if(adminDeferredDashboardTimer)clearTimeout(adminDeferredDashboardTimer);
+ adminDeferredDashboardTimer=setTimeout(async()=>{
+  if(!isSuperAdmin||refreshId!==dashboardRefreshSequence)return;
+  try{
+   // Primero carga solo la página visible de negocios. No bloquea el primer pintado.
+   await loadRestaurants();
+   if(refreshId!==dashboardRefreshSequence)return;
+   // El resumen de ventas y actividad llega después de que el panel ya es usable.
+   await loadAdminOverview();
+   if(refreshId!==dashboardRefreshSequence)return;
+   // Observabilidad y recomendaciones son secundarias: se cargan al final.
+   setTimeout(()=>{if(refreshId===dashboardRefreshSequence)loadAdminObservability().catch(e=>console.error("Observabilidad diferida",e))},250);
+  }catch(e){console.error("Carga diferida del administrador",e)}
+ },40);
 }
 async function refreshAll(){
  const refreshId=++dashboardRefreshSequence;
@@ -2611,13 +2628,11 @@ async function refreshAll(){
  bindRestaurantMpButtons();
  await loadPlatformCountries();
  try{if(isSuperAdmin){
-   const base=await Promise.allSettled([loadRestaurants(),loadSubscriptionPlans()]);
-   base.forEach((r,i)=>{if(r.status==="rejected")console.error("Carga base",i,r.reason)});
-   if(refreshId!==dashboardRefreshSequence)return;
+   // Arranque rápido: solo métricas esenciales bloquean el primer pintado.
+   // Negocios, ventas detalladas, planes y observabilidad se cargan bajo demanda/diferido.
    await loadAdminDashboardMetrics(refreshId);
    if(refreshId!==dashboardRefreshSequence)return;
-   const detail=await Promise.allSettled([loadAdminOverview(),loadAdminObservability()]);
-   detail.forEach((r,i)=>{if(r.status==="rejected")console.error("Dashboard",i,r.reason)});
+   scheduleAdminDeferredDashboard(refreshId);
    return;
  }
  try{await loadRestaurants()}catch(e){console.error("Restaurantes",e)}
@@ -3381,7 +3396,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.42</footer><script>
+</script><footer class="admin-version">Versión v2.3.43</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
