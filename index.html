@@ -2384,6 +2384,39 @@ function toggleMobileDashboardDetails(){
 }
 applyAdminTheme(localStorage.getItem("admin_theme")||"dark");setTimeout(bindRestaurantMpButtons,0);
 let categories=[],products=[],orders=[],restaurants=[],staff=[],subscriptionPlans=[],adminCustomers=[],adminCashSessions=[],adminPayments=[],adminInventory=[],adminPromotions=[],adminReviews=[],adminPlatformOrders=[],platformCountries=[],currentRestaurant=null,currentRestaurantConfig=null,isSuperAdmin=false,currentRole="",adminRestaurantMode=false;
+window.adminBusinessRows=window.adminBusinessRows||[];
+window.adminBusinessTotal=Number(window.adminBusinessTotal||0);
+window.adminBusinessCounts=window.adminBusinessCounts||{restaurants:0,supermarkets:0,minimarkets:0,professionals:0,total:0};
+window.adminBusinessSearchTimer=null;
+function renderAdminBusinessSummaryServer(){
+ const box=document.getElementById("adminRetailSummary"),m=window.adminBusinessCounts||{};if(!box)return;
+ box.innerHTML='<article class="restaurant-metric"><span>Supermercados activos</span><strong>'+(m.supermarkets||0)+'</strong><small>Supermercados operativos</small></article><article class="restaurant-metric"><span>Minimarkets activos</span><strong>'+(m.minimarkets||0)+'</strong><small>Minimarkets operativos</small></article><article class="restaurant-metric"><span>Restaurantes activos</span><strong>'+(m.restaurants||0)+'</strong><small>Restaurantes operativos</small></article><article class="restaurant-metric"><span>Profesionales activos</span><strong>'+(m.professionals||0)+'</strong><small>Negocios de servicios</small></article><article class="restaurant-metric"><span>Negocios activos</span><strong>'+(m.total||0)+'</strong><small>Total de negocios operativos</small></article>';
+}
+async function loadAdminBusinessDirectoryPage(resetPage=false){
+ if(!isSuperAdmin||adminRestaurantMode)return;
+ if(resetPage)window.adminBusinessPage=1;
+ const page=Math.max(1,Number(window.adminBusinessPage||1)),limit=20;
+ const search=(document.getElementById("restaurantSearch")?.value||"").trim();
+ const status=document.getElementById("restaurantStatusFilter")?.value||"all";
+ const type=document.getElementById("restaurantBusinessTypeFilter")?.value||"all";
+ const list=document.getElementById("restaurantList");
+ if(list)list.innerHTML='<div class="item"><b>Cargando negocios…</b><div class="mut">Consultando solo la página visible.</div></div>';
+ const {data,error}=await sb.rpc("admin_business_directory_page",{p_limit:limit,p_offset:(page-1)*limit,p_search:search||null,p_status:status,p_business_type:type});
+ if(error){if(list)list.innerHTML='<p class="mut">No se pudieron cargar los negocios.</p>';throw error}
+ const payload=data||{},rows=Array.isArray(payload.rows)?payload.rows:[];
+ window.adminBusinessRows=rows;window.adminBusinessTotal=Number(payload.total||0);window.adminBusinessCounts=payload.counts||window.adminBusinessCounts;
+ const pages=Math.max(1,Math.ceil(window.adminBusinessTotal/limit));
+ if(page>pages){window.adminBusinessPage=pages;return loadAdminBusinessDirectoryPage(false)}
+ const selected=currentRestaurantConfig&&currentRestaurantConfig.id?currentRestaurantConfig:null;
+ restaurants=selected?[selected,...rows.filter(r=>Number(r.id)!==Number(selected.id))]:rows.slice();
+ renderAdminBusinessSummaryServer();
+ if(typeof renderRestaurantDirectory==="function")renderRestaurantDirectory();
+}
+function reloadAdminBusinessDirectory(){window.adminBusinessPage=1;return loadAdminBusinessDirectoryPage(false)}
+function queueAdminBusinessSearch(){
+ clearTimeout(window.adminBusinessSearchTimer);
+ window.adminBusinessSearchTimer=setTimeout(()=>{window.adminBusinessPage=1;loadAdminBusinessDirectoryPage(false).catch(e=>console.error("Búsqueda de negocios",e))},250);
+}
 const countryByCode=code=>platformCountries.find(c=>c.code===code)||{code:"CL",currency_code:"CLP",locale:"es-CL",timezone:"America/Santiago",mercadopago_enabled:true};
 const currencyDigits=cur=>{try{return new Intl.NumberFormat("en",{style:"currency",currency:String(cur||"USD").toUpperCase()}).resolvedOptions().maximumFractionDigits}catch(_){return 2}};
 const money=(n,currency,locale)=>{const cfg=currentRestaurantConfig||countryByCode("CL"),cur=String(currency||cfg.currency_code||"CLP").toUpperCase(),loc=locale||cfg.locale||"es-CL",value=Number(n||0),digits=currencyDigits(cur),fractional=Math.abs(value-Math.trunc(value))>1e-9,shown=fractional?digits:0;return new Intl.NumberFormat(loc,{style:"currency",currency:cur,minimumFractionDigits:shown,maximumFractionDigits:shown}).format(value)};
@@ -3138,7 +3171,7 @@ async function loadAdminOverview(){
  const {data:d,error}=await sb.rpc("admin_dashboard_overview",{p_restaurant_id:rid});
  if(error)throw error;
  const salesGroups=Array.isArray(d?.sales)?d.sales:[],todayGroups=Array.isArray(d?.today_sales)?d.today_sales:[],selected=d?.selected_business||null;
- if(selected&&!restaurants.some(r=>Number(r.id)===Number(selected.id)))restaurants=[selected,...restaurants].slice(0,ADMIN_PAGE_SIZE+1);
+ if(selected&&!restaurants.some(r=>Number(r.id)===Number(selected.id)))restaurants=[selected,...restaurants].slice(0,21);
  if(selected)currentRestaurantConfig=selected;
  const formatGroups=groups=>{
   if(!groups?.length)return "$0";
@@ -3348,7 +3381,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.41</footer><script>
+</script><footer class="admin-version">Versión v2.3.42</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -3713,7 +3746,7 @@ async function verifySubscriptionVeripagosCredentials(){
 }
 </style>
 <script id="admin-mobile-information-v2325">
-var adminBusinessPage=1,adminSubscriptionPage=1,adminPaymentPage=1,adminStaffPage=1,adminCustomerPage=1;
+var adminBusinessPage=Number(window.adminBusinessPage||1),adminSubscriptionPage=1,adminPaymentPage=1,adminStaffPage=1,adminCustomerPage=1;
 const ADMIN_PAGE_SIZE=20;
 
 function adminBusinessLabel(type){return type==="supermarket"?"Supermercado":type==="minimarket"?"Minimarket / Tienda":type==="professional"?"Profesional / Servicios":"Restaurante"}
@@ -3753,19 +3786,14 @@ function providerGroup(provider){
 }
 
 /* NEGOCIOS */
-function setAdminBusinessPage(page){adminBusinessPage=page;renderRestaurantDirectory();window.scrollTo({top:document.getElementById("restaurantDirectoryArea")?.offsetTop-90||0,behavior:"smooth"})}
+async function setAdminBusinessPage(page){window.adminBusinessPage=Number(page)||1;adminBusinessPage=window.adminBusinessPage;await loadAdminBusinessDirectoryPage(false);window.scrollTo({top:document.getElementById("restaurantDirectoryArea")?.offsetTop-90||0,behavior:"smooth"})}
 function renderRestaurantDirectory(){
  const list=document.getElementById("restaurantList");if(!list)return;
  ensurePager("restaurantList","restaurantPagination");
- const term=(document.getElementById("restaurantSearch")?.value||"").trim().toLowerCase(),status=document.getElementById("restaurantStatusFilter")?.value||"all",type=document.getElementById("restaurantBusinessTypeFilter")?.value||"all";
- const visible=restaurants.filter(r=>{
-  const si=subscriptionInfo(r),hay=(r.name+" "+(r.address||"")+" "+(r.custom_domain||"")+" "+adminBusinessLabel(r.business_type||"restaurant")).toLowerCase();
-  return(!term||hay.includes(term))&&(status==="all"||si.status===status)&&(type==="all"||String(r.business_type||"restaurant")===type)
- });
- const pages=Math.max(1,Math.ceil(visible.length/ADMIN_PAGE_SIZE));adminBusinessPage=Math.min(adminBusinessPage,pages);
- const pageRows=visible.slice((adminBusinessPage-1)*ADMIN_PAGE_SIZE,adminBusinessPage*ADMIN_PAGE_SIZE);
- list.innerHTML=pageRows.map(r=>{const si=subscriptionInfo(r),typeLabel=adminBusinessLabel(r.business_type||"restaurant");return '<div class="item"><div class="row between"><div><div class="row" style="gap:7px;flex-wrap:wrap"><h3 style="margin:0">'+esc(r.name)+'</h3><span class="business-type-badge">'+adminBusinessIcon(r.business_type)+' '+esc(typeLabel)+'</span></div><div class="mut">'+esc(r.address||"Sin dirección")+'</div><div class="mut">'+(r.custom_domain?esc(r.custom_domain):"menu.yummypro.online/?r="+esc(r.slug))+'</div><span class="pill subscription-'+si.status+'">'+si.label+'</span></div><div class="actions"><button class="primary" onclick="openRestaurantProfile('+r.id+')">Perfil 360°</button><button class="danger" onclick="setSubscription('+r.id+',\'suspended\')">Suspender</button></div></div></div>'}).join("")||"<p class='mut'>No se encontraron negocios con estos filtros.</p>";
- adminPager("restaurantPagination",adminBusinessPage,visible.length,ADMIN_PAGE_SIZE,"setAdminBusinessPage")
+ const rows=Array.isArray(window.adminBusinessRows)?window.adminBusinessRows:[],total=Number(window.adminBusinessTotal||0);
+ adminBusinessPage=Math.max(1,Number(window.adminBusinessPage||adminBusinessPage||1));
+ list.innerHTML=rows.map(r=>{const si=subscriptionInfo(r),typeLabel=adminBusinessLabel(r.business_type||"restaurant");return '<div class="item"><div class="row between"><div><div class="row" style="gap:7px;flex-wrap:wrap"><h3 style="margin:0">'+esc(r.name)+'</h3><span class="business-type-badge">'+adminBusinessIcon(r.business_type)+' '+esc(typeLabel)+'</span></div><div class="mut">'+esc(r.address||"Sin dirección")+'</div><div class="mut">'+(r.custom_domain?esc(r.custom_domain):"menu.yummypro.online/?r="+esc(r.slug))+'</div><span class="pill subscription-'+si.status+'">'+si.label+'</span></div><div class="actions"><button class="primary" onclick="openRestaurantProfile('+r.id+')">Perfil 360°</button><button class="danger" onclick="setSubscription('+r.id+',\'suspended\')">Suspender</button></div></div></div>'}).join("")||"<p class='mut'>No se encontraron negocios con estos filtros.</p>";
+ adminPager("restaurantPagination",adminBusinessPage,total,ADMIN_PAGE_SIZE,"setAdminBusinessPage")
 }
 
 /* PLANES POR TIPO */
