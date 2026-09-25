@@ -1,7 +1,7 @@
 const {test,expect}=require('@playwright/test');
 test('carga el acceso administrativo sin errores críticos',async({page})=>{const errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/',{waitUntil:'domcontentloaded'});await expect(page).toHaveTitle(/Panel|Admin/i);await expect(page.locator('#login')).toBeAttached();expect(errors).toEqual([])});
 test('permite iniciar sesión con cuenta de prueba',async({page})=>{test.skip(!process.env.ADMIN_TEST_EMAIL||!process.env.ADMIN_TEST_PASSWORD,'Credenciales de prueba no configuradas');await page.goto('/');await page.locator('#email').fill(process.env.ADMIN_TEST_EMAIL);await page.locator('#password').fill(process.env.ADMIN_TEST_PASSWORD);await page.getByRole('button',{name:/Ingresar/i}).click();await expect(page.locator('#app')).toBeVisible({timeout:15000});await expect(page.locator('#metricRestaurants')).not.toHaveText('—')});
-test('muestra los módulos administrativos actuales y el resumen filtrable',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/');for(const id of ['#customers','#restaurantProfileModal','#adminSalesChart','#metricRestaurants','#metricActiveSubscriptions','#metricOrders','#metricTotalSales','#dashboardRestaurantSelect'])await expect(page.locator(id)).toBeAttached();const tabs=page.locator('#adminSideMenu .tab');await expect(tabs).toHaveCount(7);for(const tab of ['orders','kitchenAdmin','financeAdmin','inventoryAdmin','promotionsAdmin','reviewsAdmin'])await expect(page.locator('#adminSideMenu [data-tab="'+tab+'"]')).toHaveCount(0)});
+test('muestra los módulos administrativos actuales y el resumen filtrable',async({page})=>{await page.setViewportSize({width:390,height:844});await page.goto('/');for(const id of ['#customers','#restaurantProfileModal','#adminSalesChart','#metricRestaurants','#metricActiveSubscriptions','#metricOrders','#metricTotalSales','#dashboardRestaurantSelect'])await expect(page.locator(id)).toBeAttached();const tabs=page.locator('#adminSideMenu .tab');await expect(tabs).toHaveCount(8);for(const tab of ['orders','kitchenAdmin','financeAdmin','inventoryAdmin','promotionsAdmin','reviewsAdmin'])await expect(page.locator('#adminSideMenu [data-tab="'+tab+'"]')).toHaveCount(0)});
 
 test('incluye historial global de pagos de suscripción',async({page})=>{await page.goto('/');await expect(page.locator('#adminSubscriptionPaymentHistory')).toBeAttached();await expect(page.locator('#subscriptionPaymentHistoryCard')).toBeAttached()});
 
@@ -14,7 +14,7 @@ test('valida negocio antes de abrir cualquier vertical',async({request})=>{
   const response=await request.get('/');
   expect(response.ok()).toBeTruthy();
   const html=await response.text();
-  expect(html).toContain('Versión v2.3.56');
+  expect(html).toContain('Versión v2.3.60');
   expect(html).toContain('maybeSingle()');
   expect(html).toContain('Ese negocio ya no existe.');
   expect(html).toContain('create-admin-preview-login');
