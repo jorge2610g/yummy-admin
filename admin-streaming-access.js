@@ -108,6 +108,84 @@
   window.addEventListener('message',onReady);setTimeout(send,250);
  };
 
+
+
+ let streamingAdminBusinesses=[];
+ let streamingAdminBusinessesLoaded=false;
+ let streamingAdminBusinessesPromise=null;
+
+ async function loadStreamingAdminBusinesses(force=false){
+  if(streamingAdminBusinessesLoaded&&!force)return streamingAdminBusinesses;
+  if(streamingAdminBusinessesPromise&&!force)return streamingAdminBusinessesPromise;
+  streamingAdminBusinessesPromise=(async()=>{
+   const {data,error}=await sb.from('restaurants').select('*').eq('business_type','streaming').order('created_at',{ascending:false}).limit(5000);
+   if(error)throw error;
+   streamingAdminBusinesses=data||[];
+   streamingAdminBusinessesLoaded=true;
+   return streamingAdminBusinesses;
+  })();
+  try{return await streamingAdminBusinessesPromise}finally{streamingAdminBusinessesPromise=null}
+ }
+ function streamingAdminBusinessById(id){return streamingAdminBusinesses.find(x=>Number(x.id)===Number(id))||restaurants.find(x=>Number(x.id)===Number(id))}
+ function ensureStreamingBusinessInRuntime(id){
+  const r=streamingAdminBusinessById(id);if(!r)return null;
+  if(!restaurants.some(x=>Number(x.id)===Number(r.id)))restaurants.push(r);
+  return r;
+ }
+ function fillStreamingSubscriptionBusinessSelect(){
+  const el=document.getElementById('subscriptionRestaurantFilter');if(!el)return;
+  const selected=el.value||'all';
+  el.innerHTML='<option value="all">Todos los negocios</option>'+streamingAdminBusinesses.map(r=>'<option value="'+r.id+'">'+esc(r.name)+(r.is_demo?' · Demo':'')+'</option>').join('');
+  el.value=[...el.options].some(o=>o.value===selected)?selected:'all';
+ }
+ function renderStreamingAdminSubscriptions(){
+  const list=document.getElementById('subscriptionList');if(!list)return;
+  ensurePager('subscriptionList','subscriptionPagination');
+  const rid=document.getElementById('subscriptionRestaurantFilter')?.value||'all';
+  const status=document.getElementById('subscriptionStatusFilter')?.value||'all';
+  const term=(document.getElementById('subscriptionSearch')?.value||'').trim().toLowerCase();
+  let rows=streamingAdminBusinesses.filter(r=>{const sub=subscriptionInfo(r);return(rid==='all'||String(r.id)===rid)&&(status==='all'||sub.status===status)&&(!term||String(r.name||'').toLowerCase().includes(term))});
+  const pageSize=Number(window.ADMIN_PAGE_SIZE||20),pages=Math.max(1,Math.ceil(rows.length/pageSize));
+  adminSubscriptionPage=Math.min(Math.max(1,Number(adminSubscriptionPage||1)),pages);
+  const view=rows.slice((adminSubscriptionPage-1)*pageSize,adminSubscriptionPage*pageSize);
+  list.innerHTML=view.map(r=>{const sub=subscriptionInfo(r),pct=Math.max(0,Math.min(100,(sub.days/30)*100));return '<div class="item"><div class="row between"><div><div class="row" style="gap:7px;flex-wrap:wrap"><h3 style="margin:0">'+esc(r.name)+'</h3><span class="business-type-badge">📺 Streaming</span>'+(r.is_demo?'<span class="pill">Demo</span>':'')+'</div><div class="pill subscription-'+sub.status+'">'+sub.label+'</div><div class="mut">Plan: '+esc(r.subscription_plan||'Prueba 30 días')+' · Precio: '+money(r.subscription_price,r.currency_code,r.locale)+'</div><div class="mut">Vence: '+subscriptionExpiryDateLabel(r)+'</div><div class="sub-progress"><i style="width:'+pct+'%"></i></div></div><div class="actions"><button class="primary" onclick="streamingAdminEditSubscription('+r.id+')">Editar configuración</button><button class="ghost" onclick="streamingAdminSetSubscription('+r.id+',\'active\')">Activar</button><button class="danger" onclick="streamingAdminSetSubscription('+r.id+',\'suspended\')">Suspender</button></div></div></div>'}).join('')||"<p class='mut'>No hay suscripciones Streaming con estos filtros.</p>";
+  adminPager('subscriptionPagination',adminSubscriptionPage,rows.length,pageSize,'setAdminSubscriptionPage');
+ }
+ window.streamingAdminEditSubscription=async function(id){
+  const r=ensureStreamingBusinessInRuntime(id);if(!r)return toast('No se encontró el negocio Streaming');
+  return editSubscription(id);
+ };
+ window.streamingAdminSetSubscription=async function(id,status){
+  const r=ensureStreamingBusinessInRuntime(id);if(!r)return toast('No se encontró el negocio Streaming');
+  return setSubscription(id,status);
+ };
+
+ const originalSyncSubscriptionBusinessFilter=window.syncSubscriptionBusinessFilter;
+ window.syncSubscriptionBusinessFilter=function(){
+  const type=document.getElementById('subscriptionBusinessTypeFilter')?.value||'all';
+  if(type!=='streaming')return originalSyncSubscriptionBusinessFilter?originalSyncSubscriptionBusinessFilter():undefined;
+  adminSubscriptionPage=1;
+  const list=document.getElementById('subscriptionList');if(list)list.innerHTML='<div class="item"><b>Cargando suscripciones Streaming…</b></div>';
+  return loadStreamingAdminBusinesses(true).then(()=>{fillStreamingSubscriptionBusinessSelect();renderStreamingAdminSubscriptions()}).catch(e=>{console.error(e);if(list)list.innerHTML="<p class='mut'>No se pudieron cargar las suscripciones Streaming.</p>"});
+ };
+ const originalRenderSubscriptions=window.renderSubscriptions;
+ window.renderSubscriptions=function(){
+  const type=document.getElementById('subscriptionBusinessTypeFilter')?.value||'all';
+  if(type!=='streaming')return originalRenderSubscriptions?originalRenderSubscriptions():undefined;
+  if(!streamingAdminBusinessesLoaded){
+   const list=document.getElementById('subscriptionList');if(list)list.innerHTML='<div class="item"><b>Cargando suscripciones Streaming…</b></div>';
+   loadStreamingAdminBusinesses().then(()=>{fillStreamingSubscriptionBusinessSelect();renderStreamingAdminSubscriptions()}).catch(e=>console.error(e));
+   return;
+  }
+  return renderStreamingAdminSubscriptions();
+ };
+
+ const originalPaymentHistoryBaseRows=window.paymentHistoryBaseRows;
+ window.paymentHistoryBaseRows=function(type,rid,provider){
+  if(type!=='streaming')return originalPaymentHistoryBaseRows?originalPaymentHistoryBaseRows(type,rid,provider):[];
+  return (subscriptionPayments||[]).filter(p=>{const r=streamingAdminBusinessById(p.restaurant_id);return !!r&&(rid==='all'||String(p.restaurant_id)===rid)&&(provider==='all'||providerGroup(p.provider)===provider)});
+ };
+
  async function refreshStreamingSummaryCard(){
   const box=document.getElementById('adminRetailSummary');if(!box)return;
   let count=0;
