@@ -56,6 +56,34 @@ async function compareBranches(repo) {
   return githubRequest(`/repos/${repo}/compare/main...staging`);
 }
 
+async function getBranchSha(repo, branch) {
+  const data = await githubRequest(`/repos/${repo}/git/ref/heads/${branch}`);
+  return data?.object?.sha || null;
+}
+
+function releaseBranchDate(branch) {
+  const match = String(branch || '').match(/^backup\/release-(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})/);
+  if (!match) return null;
+  const [, year, month, day, hour, minute, second] = match;
+  return `${year}-${month}-${day}T${hour}:${minute}:${second}Z`;
+}
+
+async function listReleaseBackups(limit = 10) {
+  const data = await githubRequest(`/repos/${REPOSITORIES[0].repo}/git/matching-refs/heads/backup/release-`);
+  return (Array.isArray(data) ? data : [])
+    .map((ref) => {
+      const branch = String(ref?.ref || '').replace(/^refs\/heads\//, '');
+      return {
+        branch,
+        admin_sha: ref?.object?.sha || null,
+        created_at: releaseBranchDate(branch),
+      };
+    })
+    .filter((item) => item.branch.startsWith('backup/release-'))
+    .sort((a, b) => String(b.branch).localeCompare(String(a.branch)))
+    .slice(0, limit);
+}
+
 async function inspectRepository(item) {
   const comparison = await compareBranches(item.repo);
   const status = String(comparison?.status || 'unknown');
@@ -179,6 +207,8 @@ module.exports = {
   REPOSITORIES,
   sendJson,
   inspectAllRepositories,
+  getBranchSha,
+  listReleaseBackups,
   requireSuperAdmin,
   releaseConfiguration,
   backupRefName,
