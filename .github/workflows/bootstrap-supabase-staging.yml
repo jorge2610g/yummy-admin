@@ -51,7 +51,7 @@ jobs:
             pg_dump \
               --host="aws-0-sa-east-1.pooler.supabase.com" \
               --port=5432 \
-              --username=postgres \
+              --username="postgres.$PROD_PROJECT_REF" \
               --dbname=postgres \
               --schema=public \
               --schema-only \
@@ -81,7 +81,7 @@ jobs:
             psql \
               --host="aws-0-sa-east-1.pooler.supabase.com" \
               --port=5432 \
-              --username=postgres \
+              --username="postgres.$STAGING_PROJECT_REF" \
               --dbname=postgres \
               --set=ON_ERROR_STOP=1 \
             < "$BASELINE_FILE"
