@@ -263,10 +263,37 @@ async function handleRelease(body: any, admin: any) {
   const expected = body?.expected || {};
   for (const item of repositories) {
     const exp = expected[item.key];
-    if (exp && (exp.main_sha !== item.main_sha || exp.staging_sha !== item.staging_sha)) {
+    if (!exp?.main_sha || !exp?.staging_sha) {
+      return { status: 400, body: { error: `Falta el snapshot esperado para ${item.label}. Vuelve a preparar el lanzamiento.`, repositories } };
+    }
+    if (exp.main_sha !== item.main_sha || exp.staging_sha !== item.staging_sha) {
       return { status: 409, body: { error: `El repositorio ${item.label} cambió después del diagnóstico. Vuelve a preparar el lanzamiento.`, repositories } };
     }
   }
+
+  // Revalidación autoritativa inmediatamente antes de crear respaldos o mover main.
+  // Nunca confiamos solo en los SHA derivados del compare endpoint.
+  const authoritative: any[] = [];
+  for (const item of repositories) {
+    const [mainSha, stagingSha] = await Promise.all([
+      getBranchSha(item.repo, "main"),
+      getBranchSha(item.repo, "staging"),
+    ]);
+    const exp = expected[item.key];
+    if (!mainSha || !stagingSha || mainSha !== exp.main_sha || stagingSha !== exp.staging_sha) {
+      return {
+        status: 409,
+        body: {
+          error: `Las referencias reales de ${item.label} cambiaron después del diagnóstico. No se modificó Producción; vuelve a preparar el lanzamiento.`,
+          repository: item.repo,
+          expected: { main_sha: exp.main_sha, staging_sha: exp.staging_sha },
+          current: { main_sha: mainSha, staging_sha: stagingSha },
+        },
+      };
+    }
+    authoritative.push({ ...item, main_sha: mainSha, staging_sha: stagingSha });
+  }
+  repositories = authoritative;
 
   const changed = repositories.filter((item) => item.needs_release);
   if (!changed.length) return { status: 200, body: { ok: true, released: false, message: "No había cambios pendientes.", repositories } };
