@@ -27,7 +27,6 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return sendJson(res, 405, { error: 'Método no permitido.' });
 
   try {
-    const admin = await requireSuperAdmin(req);
     const body = await readBody(req);
     const action = body?.action === 'release' ? 'release' : 'dry-run';
     const repositories = await inspectAllRepositories();
@@ -45,12 +44,14 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, {
         ok: true,
         mode: 'dry-run',
+        configuration: releaseConfiguration(),
         pending: changed.length,
         repositories,
         message: changed.length ? 'Diagnóstico correcto. No se modificó ninguna rama.' : 'Producción ya coincide con Pruebas. No hay cambios por lanzar.',
       });
     }
 
+    const admin = await requireSuperAdmin(req);
     const configuration = releaseConfiguration();
     if (!configuration.github_token_configured || !configuration.release_enabled) {
       return sendJson(res, 503, {
