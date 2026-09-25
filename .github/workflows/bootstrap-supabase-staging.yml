@@ -2,6 +2,12 @@ name: Bootstrap Supabase Staging
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - staging
+    paths:
+      - ".github/workflows/bootstrap-supabase-staging.yml"
+      - ".staging-bootstrap-trigger"
 
 permissions:
   contents: write
