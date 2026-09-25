@@ -2353,7 +2353,7 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
 </section>
 <section id="release_center" class="section admin-only">
 <div class="dashboard-hero" style="margin-top:8px">
-  <div><div class="eyebrow">PUBLICACIÓN CONTROLADA</div><h2>Centro de lanzamientos</h2><p>Promueve exactamente el código probado desde <b>staging</b> hacia <b>main</b> sin copiar datos entre ambientes.</p></div>
+  <div><div class="eyebrow">GITHUB + SUPABASE</div><h2>Centro de lanzamientos</h2><p>Promueve exactamente el código probado desde <b>staging</b> hacia <b>main</b>. El backend de este centro ya funciona en <b>Supabase</b>, sin depender de Vercel.</p></div>
   <button class="ghost refresh-btn" type="button" onclick="loadReleaseStatus()">↻ Actualizar estado</button>
 </div>
 <div class="grid">
@@ -2508,7 +2508,7 @@ function renderReleaseCenter(data,prepared=false){
   if(list)list.innerHTML=rows.map(item=>{
     const icon=item.safe?(item.needs_release?"🟡":"✅"):"⛔";
     const detail=item.error?esc(item.error):"main "+releaseShortSha(item.main_sha)+" → staging "+releaseShortSha(item.staging_sha);
-    const ciText=!item.ci?"CI: se verificará al habilitar publicaciones":item.ci.state==="passed"?"CI ✅ Calidad + Vercel":item.ci.state==="pending"?"CI ⏳ esperando Calidad/Vercel":"CI ⛔ Calidad/Vercel con error";
+    const ciText=item.quality?("Calidad "+(item.quality_ready?"✅ GitHub Actions":item.quality==="in_progress"?"⏳ en ejecución":"⛔ "+esc(item.quality))):"Calidad: se verificará al habilitar publicaciones";
     return '<div class="item"><div class="row between"><div><b>'+icon+" "+esc(item.label)+'</b><div class="mut">'+detail+'</div><div class="mut" style="margin-top:4px;font-size:12px">'+ciText+'</div></div><div style="text-align:right"><b>'+esc(releaseStatusLabel(item))+'</b><div class="mut">'+(item.changed_files||0)+' archivos detectados</div></div></div></div>';
   }).join("")||'<div class="mut">No hay información de repositorios.</div>';
 
@@ -2517,7 +2517,7 @@ function renderReleaseCenter(data,prepared=false){
   const safetyTitle=document.getElementById("releaseSafetyTitle");
   const safetyText=document.getElementById("releaseSafetyText");
   if(safetyTitle)safetyTitle.textContent=enabled?"Publicación habilitada":"Modo seguro";
-  if(safetyText)safetyText.textContent=enabled?"Publicar exige diagnóstico, Calidad ✅ y Vercel ✅ en los seis módulos.":"La publicación real está bloqueada por configuración; Calidad y Vercel se exigirán al activarla.";
+  if(safetyText)safetyText.textContent=enabled?"Backend Supabase · publicar exige diagnóstico y Calidad ✅ en GitHub.":"Backend Supabase ✅ · publicación real bloqueada hasta completar la migración a GitHub Pages.";
 
   const summary=document.getElementById("releaseSummary");
   if(summary){
@@ -2532,8 +2532,16 @@ function renderReleaseCenter(data,prepared=false){
   }
 }
 async function releaseAuthorizedFetch(path,options={}){
+  const actionByPath={"/api/release-status":"status","/api/release-history":"history","/api/release-rollback":"rollback"};
+  let payload={};
+  try{payload=options?.body?JSON.parse(options.body):{}}catch(_){payload={}}
+  if(!payload.action)payload.action=actionByPath[path]||"status";
   let session=await ensureAdminSession(false);
-  const send=s=>fetch(path,{...options,headers:{...(options.headers||{}),"Content-Type":"application/json","Authorization":"Bearer "+s.access_token}});
+  const send=s=>fetch(SB_URL.replace(/\/$/,"")+"/functions/v1/release-center",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+s.access_token},
+    body:JSON.stringify(payload)
+  });
   let res=await send(session);
   if(res.status===401){session=await ensureAdminSession(true);res=await send(session)}
   const raw=await res.text();let body={};try{body=raw?JSON.parse(raw):{}}catch(_){body={error:raw||"Respuesta inválida"}}
@@ -3645,7 +3653,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.61</footer><script>
+</script><footer class="admin-version">Versión v2.3.62</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
