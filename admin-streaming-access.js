@@ -199,6 +199,38 @@
  const originalLoadAdminRetailSummary=window.loadAdminRetailSummary;
  window.loadAdminRetailSummary=async function(){const result=originalLoadAdminRetailSummary?await originalLoadAdminRetailSummary():undefined;await refreshStreamingSummaryCard();return result};
 
+
+ async function streamingLoadBusinessesForAdmin(){
+  const {data,error}=await sb.from('restaurants').select('*').eq('business_type','streaming').order('created_at',{ascending:true});
+  if(error)throw error;
+  const incoming=data||[],base=(restaurants||[]).filter(r=>!isStreamingType(r.business_type));
+  restaurants=[...base,...incoming];
+  return incoming;
+ }
+ const originalSyncSubscriptionBusinessFilter=window.syncSubscriptionBusinessFilter;
+ window.syncSubscriptionBusinessFilter=function(){
+  adminSubscriptionPage=1;
+  const type=document.getElementById('subscriptionBusinessTypeFilter')?.value||'all';
+  if(type!=='streaming')return originalSyncSubscriptionBusinessFilter?originalSyncSubscriptionBusinessFilter():undefined;
+  const select=document.getElementById('subscriptionRestaurantFilter');
+  if(select)select.innerHTML='<option value="all">Cargando negocios Streaming…</option>';
+  streamingLoadBusinessesForAdmin().then(()=>{
+   fillBusinessSelect('subscriptionRestaurantFilter','streaming',false);
+   renderSubscriptions();
+  }).catch(e=>{console.error('Streaming subscription filter',e);toast('No se pudieron cargar los negocios Streaming')});
+ };
+ const originalSyncSubscriptionPaymentBusinessFilter=window.syncSubscriptionPaymentBusinessFilter;
+ window.syncSubscriptionPaymentBusinessFilter=function(){
+  adminPaymentPage=1;
+  const type=document.getElementById('subscriptionPaymentBusinessTypeFilter')?.value||'all';
+  if(type!=='streaming')return originalSyncSubscriptionPaymentBusinessFilter?originalSyncSubscriptionPaymentBusinessFilter():undefined;
+  const select=document.getElementById('subscriptionPaymentRestaurantFilter');
+  if(select)select.innerHTML='<option value="all">Cargando negocios Streaming…</option>';
+  streamingLoadBusinessesForAdmin().then(()=>{
+   fillBusinessSelect('subscriptionPaymentRestaurantFilter','streaming',false);
+   renderAdminSubscriptionPaymentHistory();
+  }).catch(e=>{console.error('Streaming payment filter',e);toast('No se pudieron cargar los negocios Streaming')});
+ };
  function refreshStreamingAdminUi(){
   installStreamingBusinessOptions();
   const copy=document.querySelector('#restaurants .card p.mut');if(copy&&copy.textContent.includes('Restaurantes, supermercados'))copy.textContent='Restaurantes, retail, profesionales y negocios Streaming administrados desde la misma plataforma.';
