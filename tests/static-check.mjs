@@ -20,7 +20,7 @@ const flowMarkers=['flowCredentialsCard','subscriptionFlowApiKey','subscriptionF
 
 for(const marker of ['planAnnualEnabled','planAnnualAmount','planAnnualBonusMonths','planAnnualDays','updateAnnualPlanPreview','annual_enabled','annual_bonus_months'])if(!admin.includes(marker))throw new Error('index.html: falta configuración anual '+marker);
 
-for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.48'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
+for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.49'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
 for(const marker of ['settingsBusinessGroupFilter','changeSettingsBusinessGroup','settingsRestaurantSelect','changeSettingsRestaurant','settingsBusinessBadge','demoApiInheritanceCard','demoApiInheritanceToggle','toggleDemoApiInheritance','set_demo_business_api_inheritance','use_demo_api_defaults','is_demo','API global de demos','Locales reales','Locales demo'])if(!admin.includes(marker))throw new Error('index.html: falta configuración de APIs para demos '+marker);
 for(const marker of ['data-tab="restaurants" title="Negocios"','<span class="nav-label">Negocios</span>','Ver información del negocio'])if(!admin.includes(marker))throw new Error('index.html: falta nomenclatura general de negocios '+marker);
 
@@ -48,3 +48,5 @@ for(const marker of ["refreshSession()","maybeSingle()","Ese negocio ya no exist
 
 
 for(const marker of ['async function openRestaurantPanel','maybeSingle()','Ese negocio ya no existe. La lista fue actualizada.','https://streaming.yummypro.online','https://pro.yummypro.online','https://retail.yummypro.online','refreshSession()'])if(!admin.includes(marker))throw new Error('index.html: falta validación global de acceso administrativo '+marker);
+for (const marker of ['settingsAdminPaymentTestModeToggle','Credenciales del administrador para pruebas','loadSettingsAdminPaymentTestMode','toggleSettingsAdminPaymentTestMode']) if (!admin.includes(marker)) throw new Error('Falta switch de credenciales del administrador en Configuración: '+marker);
+
