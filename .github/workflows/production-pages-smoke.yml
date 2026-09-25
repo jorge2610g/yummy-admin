@@ -1,0 +1,50 @@
+name: Verificar Producción GitHub Pages
+
+on:
+  push:
+    branches: [ops/verify-production-pages-2026-09-25]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar dominios de Producción
+        shell: bash
+        run: |
+          set -euo pipefail
+          urls=(
+            "https://admin.yummypro.online/"
+            "https://web.yummypro.online/"
+            "https://retail.yummypro.online/"
+            "https://pro.yummypro.online/"
+            "https://streaming.yummypro.online/"
+            "https://menu.yummypro.online/"
+          )
+          for url in "${urls[@]}"; do
+            echo "== $url =="
+            code=$(curl -L -sS -o /tmp/body --max-time 25 -w "%{http_code}" "$url")
+            echo "HTTP $code"
+            if [[ "$code" -lt 200 || "$code" -ge 400 ]]; then
+              echo "Fallo HTTP en $url"
+              exit 1
+            fi
+            bytes=$(wc -c < /tmp/body)
+            echo "bytes=$bytes"
+            if [[ "$bytes" -lt 100 ]]; then
+              echo "Respuesta demasiado pequeña en $url"
+              exit 1
+            fi
+          done
+
+      - name: Verificar DNS público
+        shell: bash
+        run: |
+          set -euo pipefail
+          for host in admin.yummypro.online web.yummypro.online retail.yummypro.online pro.yummypro.online streaming.yummypro.online menu.yummypro.online; do
+            echo "== $host =="
+            getent ahosts "$host" | head -n 3
+          done
