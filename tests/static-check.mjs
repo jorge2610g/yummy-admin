@@ -20,7 +20,7 @@ const flowMarkers=['flowCredentialsCard','subscriptionFlowApiKey','subscriptionF
 
 for(const marker of ['planAnnualEnabled','planAnnualAmount','planAnnualBonusMonths','planAnnualDays','updateAnnualPlanPreview','annual_enabled','annual_bonus_months'])if(!admin.includes(marker))throw new Error('index.html: falta configuración anual '+marker);
 
-for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.45'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
+for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.46'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
 for(const marker of ['settingsBusinessGroupFilter','changeSettingsBusinessGroup','settingsRestaurantSelect','changeSettingsRestaurant','settingsBusinessBadge','demoApiInheritanceCard','demoApiInheritanceToggle','toggleDemoApiInheritance','set_demo_business_api_inheritance','use_demo_api_defaults','is_demo','API global de demos','Locales reales','Locales demo'])if(!admin.includes(marker))throw new Error('index.html: falta configuración de APIs para demos '+marker);
 for(const marker of ['data-tab="restaurants" title="Negocios"','<span class="nav-label">Negocios</span>','Ver información del negocio'])if(!admin.includes(marker))throw new Error('index.html: falta nomenclatura general de negocios '+marker);
 
@@ -38,7 +38,10 @@ for(const marker of ['Actividad total','Actividad este mes','Negocios activos ·
 
 for(const marker of ['admin-mobile-information-v2325','mobile-section-switcher','restaurantBusinessTypeFilter','subscriptionBusinessTypeFilter','subscriptionPaymentBusinessTypeFilter','staffBusinessTypeFilter','customerBusinessTypeFilter','planBusinessType','business_type','retail_orders','retail_pos','retail_products','retail_suppliers','retail_purchases','Métodos de cobro'])if(!admin.includes(marker))throw new Error('index.html: falta navegación/filtros móviles '+marker);
 
-if(!admin.includes('/admin-streaming-access.js?v=1000'))throw new Error('index.html: falta integración Streaming del admin');
+if(!admin.includes('/admin-streaming-access.js?v=1001'))throw new Error('index.html: falta integración Streaming del admin');
 const streamingAdmin=readFileSync('admin-streaming-access.js','utf8');
 for(const marker of ['integración Streaming v1.0.0','https://streaming.yummypro.online','Negocios Streaming','openStreamingBusinessProfile','streaming_subscriptions','streaming_customers','streaming_accounts','streaming_platforms','streaming_renewals','ADMIN_PLAN_MODULES.streaming','ADMIN_PLAN_DEFAULTS.streaming','YUMMY_ADMIN_PREVIEW'])if(!streamingAdmin.includes(marker))throw new Error('admin-streaming-access.js: falta '+marker);
 for(const forbidden of ['subscription_price','Ventas totales','Ingresos','Ticket promedio','streaming_sales'])if(streamingAdmin.includes(forbidden))throw new Error('admin-streaming-access.js: expone métrica monetaria no requerida '+forbidden);
+
+const streamingPreviewHotfix=readFileSync('admin-streaming-access.js','utf8');
+for(const marker of ["refreshSession()","maybeSingle()","Ese negocio ya no existe o ya no pertenece a Streaming"])if(!streamingPreviewHotfix.includes(marker))throw new Error('admin-streaming-access.js: falta hotfix vista administrativa '+marker);
