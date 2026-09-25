@@ -54,6 +54,8 @@ test('Centro de lanzamientos responde desde Supabase sin Vercel',async({page})=>
   const status=await page.evaluate(async()=>await releaseAuthorizedFetch('/api/release-status',{method:'GET',headers:{}}));
   expect(status?.configuration?.backend).toBe('supabase');
   expect(status?.configuration?.hosting_target).toBe('github_pages');
+  expect(status?.configuration?.github_token_configured).toBe(true);
+  expect(status?.configuration?.release_enabled).toBe(true);
   expect(Array.isArray(status?.repositories)).toBeTruthy();
   expect(status.repositories).toHaveLength(6);
 });
