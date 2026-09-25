@@ -6,7 +6,6 @@ on:
     branches:
       - staging
     paths:
-      - ".github/workflows/bootstrap-supabase-staging.yml"
       - ".staging-bootstrap-trigger"
 
 permissions:
