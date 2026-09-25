@@ -17,10 +17,10 @@ test('admin publica integración Streaming y dominio correcto', async ({ request
   expect(body).toContain('streaming_accounts');
   expect(body).toContain('streaming_platforms');
   expect(body).toContain('streaming_renewals');
-  expect(body).toContain('YUMMY_ADMIN_PREVIEW');
-  expect(body).toContain('refreshSession()');
-  expect(body).toContain('maybeSingle()');
-  expect(body).toContain('Ese negocio ya no existe o ya no pertenece a Streaming');
+  expect(body).toContain('originalOpenRestaurantPanel');
+  expect(body).toContain('mismo ticket temporal de un solo uso');
+  expect(body).not.toContain('#admin_access=');
+  expect(body).not.toContain('#admin_refresh=');
   expect(body).not.toContain('subscription_price');
   expect(body).not.toContain('streaming_sales');
 });
