@@ -49,7 +49,7 @@ for(const marker of ["refreshSession()","maybeSingle()","Ese negocio ya no exist
 
 for(const marker of ['async function openRestaurantPanel','maybeSingle()','Ese negocio ya no existe. La lista fue actualizada.','https://streaming.yummypro.online','https://pro.yummypro.online','https://retail.yummypro.online','refreshSession()'])if(!admin.includes(marker))throw new Error('index.html: falta validación global de acceso administrativo '+marker);
 for (const marker of ['settingsAdminPaymentTestModeToggle','Credenciales del administrador para pruebas','loadSettingsAdminPaymentTestMode','toggleSettingsAdminPaymentTestMode']) if (!admin.includes(marker)) throw new Error('Falta switch de credenciales del administrador en Configuración: '+marker);
-if ((admin.match(/settingsAdminPaymentTestModeToggle/g)||[]).length!==1) throw new Error('Debe existir un solo switch de credenciales del administrador en Configuración');
+if ((admin.match(/id=\"settingsAdminPaymentTestModeToggle\"/g)||[]).length!==1) throw new Error('Debe existir un solo switch de credenciales del administrador en Configuración');
 if (admin.includes('adminPaymentTestModeToggle')) throw new Error('No debe existir un segundo switch de credenciales en el modal de negocio');
 if (!admin.includes('No modifica Mercado Pago')) throw new Error('VeriPagos demo debe aclarar que no modifica Mercado Pago');
 
