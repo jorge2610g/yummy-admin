@@ -2,13 +2,6 @@ name: Verify Staging Parity
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - staging
-    paths:
-      - "supabase/**"
-      - "scripts/staging-parity.sql"
-      - ".github/workflows/staging-parity.yml"
 
 permissions:
   contents: read
