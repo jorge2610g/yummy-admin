@@ -8,3 +8,17 @@ test('incluye historial global de pagos de suscripción',async({page})=>{await p
 test('incluye configuración de Flow Chile',async({page})=>{await page.goto('/');await expect(page.locator('#flowCredentialsCard')).toBeAttached();await expect(page.locator('#subscriptionFlowApiKey')).toBeAttached();await expect(page.locator('#subscriptionFlowEnvironment')).toBeAttached()});
 
 test('permite configurar precio y meses de regalo del plan anual',async({page})=>{await page.goto('/');const html=await page.content();expect(html).toContain('planAnnualEnabled');expect(html).toContain('planAnnualBonusMonths');expect(html).toContain('planAnnualAmount');expect(html).toContain('updateAnnualPlanPreview')});
+
+
+test('valida negocio antes de abrir cualquier vertical',async({request})=>{
+  const response=await request.get('/');
+  expect(response.ok()).toBeTruthy();
+  const html=await response.text();
+  expect(html).toContain('Versión v2.3.47');
+  expect(html).toContain('maybeSingle()');
+  expect(html).toContain('Ese negocio ya no existe. La lista fue actualizada.');
+  expect(html).toContain('https://streaming.yummypro.online');
+  expect(html).toContain('https://pro.yummypro.online');
+  expect(html).toContain('https://retail.yummypro.online');
+  expect(html).toContain('refreshSession()');
+});
