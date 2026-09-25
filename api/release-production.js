@@ -1,6 +1,7 @@
 const {
   sendJson,
   inspectAllRepositories,
+  inspectAllRepositoryHealth,
   requireSuperAdmin,
   releaseConfiguration,
   backupRefName,
@@ -29,8 +30,11 @@ module.exports = async function handler(req, res) {
   try {
     const body = await readBody(req);
     const action = body?.action === 'release' ? 'release' : 'dry-run';
-    const repositories = await inspectAllRepositories();
-    const unsafe = repositories.filter((item) => !item.safe || item.error);
+    const configuration = releaseConfiguration();
+    let repositories = await inspectAllRepositories();
+    const healthRequired = configuration.github_token_configured && configuration.release_enabled;
+    if (healthRequired) repositories = await inspectAllRepositoryHealth(repositories);
+    const unsafe = repositories.filter((item) => !item.safe || item.error || (healthRequired && !item.ci_ready));
     const changed = repositories.filter((item) => item.needs_release);
 
     if (unsafe.length) {
@@ -44,7 +48,9 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 200, {
         ok: true,
         mode: 'dry-run',
-        configuration: releaseConfiguration(),
+        configuration,
+        health_required: healthRequired,
+        ready: unsafe.length === 0,
         pending: changed.length,
         repositories,
         message: changed.length ? 'Diagnóstico correcto. No se modificó ninguna rama.' : 'Producción ya coincide con Pruebas. No hay cambios por lanzar.',
@@ -52,11 +58,19 @@ module.exports = async function handler(req, res) {
     }
 
     const admin = await requireSuperAdmin(req);
-    const configuration = releaseConfiguration();
     if (!configuration.github_token_configured || !configuration.release_enabled) {
       return sendJson(res, 503, {
         error: 'Los lanzamientos reales están deshabilitados. El modo seguro sigue activo.',
         configuration,
+      });
+    }
+
+    repositories = await inspectAllRepositoryHealth(repositories);
+    const unhealthy = repositories.filter((item) => !item.ci_ready);
+    if (unhealthy.length) {
+      return sendJson(res, 409, {
+        error: 'El lanzamiento está bloqueado porque Calidad o Vercel no están en verde para todos los módulos.',
+        repositories,
       });
     }
 

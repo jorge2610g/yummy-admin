@@ -1,18 +1,23 @@
 const {
   sendJson,
   inspectAllRepositories,
+  inspectAllRepositoryHealth,
   releaseConfiguration,
 } = require('./_release-core');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return sendJson(res, 405, { error: 'Método no permitido.' });
   try {
-    const repositories = await inspectAllRepositories();
-    const ready = repositories.every((item) => item.safe && !item.error);
+    const configuration = releaseConfiguration();
+    let repositories = await inspectAllRepositories();
+    const healthRequired = configuration.github_token_configured && configuration.release_enabled;
+    if (healthRequired) repositories = await inspectAllRepositoryHealth(repositories);
+    const ready = repositories.every((item) => item.safe && !item.error && (!healthRequired || item.ci_ready));
     const pending = repositories.filter((item) => item.needs_release).length;
     return sendJson(res, 200, {
       ok: true,
-      configuration: releaseConfiguration(),
+      configuration,
+      health_required: healthRequired,
       ready,
       pending,
       repositories,
