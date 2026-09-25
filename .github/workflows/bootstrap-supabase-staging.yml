@@ -49,7 +49,7 @@ jobs:
             -e PGPASSWORD="$PGPASSWORD" \
             postgres:17 \
             pg_dump \
-              --host="db.$PROD_PROJECT_REF.supabase.co" \
+              --host="aws-0-sa-east-1.pooler.supabase.com" \
               --port=5432 \
               --username=postgres \
               --dbname=postgres \
@@ -79,7 +79,7 @@ jobs:
             -e PGPASSWORD="$PGPASSWORD" \
             postgres:17 \
             psql \
-              --host="db.$STAGING_PROJECT_REF.supabase.co" \
+              --host="aws-0-sa-east-1.pooler.supabase.com" \
               --port=5432 \
               --username=postgres \
               --dbname=postgres \
