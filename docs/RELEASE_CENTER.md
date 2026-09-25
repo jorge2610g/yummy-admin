@@ -45,3 +45,13 @@ Mientras `YUMMY_RELEASE_ENABLED` no sea `true`, el Centro de lanzamientos funcio
 ## Lo que este flujo no hace
 
 Este flujo no aplica migraciones de base de datos, no sincroniza Supabase y no copia información entre Pruebas y Producción. Las migraciones deben tener un proceso separado y explícito.
+
+
+## Arquitectura GitHub + Supabase
+
+El Centro de lanzamientos dejó de depender de funciones `/api` del hosting. El frontend llama directamente a la Edge Function autenticada `release-center` del proyecto Supabase del ambiente.
+
+- GitHub conserva `main`, `staging`, historial, respaldos y pruebas automáticas.
+- Supabase conserva Auth, datos y funciones privadas.
+- El hosting estático puede ser GitHub Pages sin cambiar la lógica del Centro de lanzamientos.
+- Los lanzamientos reales siguen bloqueados mientras no existan `YUMMY_RELEASE_GITHUB_TOKEN` y `YUMMY_RELEASE_ENABLED=true` en Supabase.
