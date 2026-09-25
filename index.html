@@ -2372,6 +2372,13 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
     <div id="releaseRepoList" class="list" style="margin-top:12px"></div>
   </div>
   <div class="card span12">
+    <div class="row between">
+      <div><h2 style="margin-bottom:6px">Historial y restauración</h2><p class="mut" style="margin:0">Los respaldos se crean automáticamente antes de cada publicación real.</p></div>
+      <button class="ghost" type="button" onclick="loadReleaseHistory()">↻ Actualizar historial</button>
+    </div>
+    <div id="releaseHistoryList" class="list" style="margin-top:14px"><div class="mut">Consultando respaldos…</div></div>
+  </div>
+  <div class="card span12">
     <div class="row" style="align-items:flex-start"><span style="font-size:22px">🛡️</span><div><b>Datos protegidos</b><div class="mut" style="margin-top:4px">Este flujo solo promueve código. No copia usuarios, negocios, pedidos, productos, credenciales ni bases de datos de Pruebas a Producción.</div></div></div>
   </div>
 </div>
@@ -2540,6 +2547,7 @@ async function loadReleaseStatus(){
     const data=await releaseAuthorizedFetch("/api/release-status",{method:"GET",headers:{}});
     releaseSnapshot=null;
     renderReleaseCenter(data,false);
+    loadReleaseHistory();
   }catch(e){
     releaseSnapshot=null;
     if(summary)summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>"+esc(e.message)+"</span>";
@@ -2572,10 +2580,38 @@ async function launchProductionRelease(){
     releaseSnapshot=null;
     toast(result.message||"Lanzamiento completado.");
     await loadReleaseStatus();
+    await loadReleaseHistory();
   }catch(e){
     toast(e.message||"El lanzamiento no pudo completarse.");
     await loadReleaseStatus();
   }finally{if(btn)btn.textContent="🚀 Lanzar a Producción"}
+}
+
+async function loadReleaseHistory(){
+  if(!isSuperAdmin)return;
+  const list=document.getElementById("releaseHistoryList");if(list)list.innerHTML='<div class="mut">Consultando respaldos…</div>';
+  try{
+    const data=await releaseAuthorizedFetch("/api/release-history",{method:"GET",headers:{}});
+    const backups=data?.backups||[],config=data?.configuration||{};
+    const enabled=!!config.github_token_configured&&!!config.release_enabled;
+    if(!list)return;
+    if(!backups.length){list.innerHTML='<div class="item"><b>Sin respaldos todavía</b><div class="mut">El primer respaldo aparecerá aquí cuando hagas una publicación real a Producción.</div></div>';return}
+    list.innerHTML=backups.map(item=>{
+      const when=item.created_at?new Date(item.created_at).toLocaleString("es-CL"):"Fecha no disponible";
+      return '<div class="item"><div class="row between"><div><b>Respaldo de Producción</b><div class="mut">'+esc(when)+' · '+releaseShortSha(item.admin_sha)+'</div><div class="mut" style="font-size:11px;margin-top:3px">'+esc(item.branch)+'</div></div><button class="ghost" type="button" '+(enabled?'':'disabled title="Restauración deshabilitada mientras el modo seguro siga activo"')+' onclick="restoreProductionBackup(\''+String(item.branch).replace(/'/g,"\\'")+'\')">↩ Restaurar</button></div></div>';
+    }).join("");
+  }catch(e){if(list)list.innerHTML='<div class="item"><b style="color:var(--bad)">No se pudo cargar el historial</b><div class="mut">'+esc(e.message)+'</div></div>'}
+}
+async function restoreProductionBackup(branch){
+  if(!isSuperAdmin||!branch)return;
+  const confirmation=prompt('Vas a restaurar Producción a un respaldo anterior.\nPruebas no se modificarán.\n\nEscribe exactamente:\nRESTAURAR PRODUCCION');
+  if(confirmation===null)return;
+  if(String(confirmation).trim().toUpperCase()!=="RESTAURAR PRODUCCION"){toast("Restauración cancelada.");return}
+  try{
+    const result=await releaseAuthorizedFetch("/api/release-rollback",{method:"POST",body:JSON.stringify({backup_branch:branch,confirmation})});
+    toast(result.message||"Producción restaurada.");
+    await Promise.all([loadReleaseStatus(),loadReleaseHistory()]);
+  }catch(e){toast(e.message||"No se pudo restaurar Producción.")}
 }
 
 async function login(){
@@ -3608,7 +3644,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.59</footer><script>
+</script><footer class="admin-version">Versión v2.3.60</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
