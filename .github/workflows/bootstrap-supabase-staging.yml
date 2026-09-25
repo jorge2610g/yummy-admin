@@ -57,7 +57,6 @@ jobs:
               --schema=public \
               --schema-only \
               --no-owner \
-              --no-privileges \
             > "$BASELINE_FILE"
           test -s "$BASELINE_FILE"
 
@@ -77,7 +76,6 @@ jobs:
               --schema=private \
               --schema-only \
               --no-owner \
-              --no-privileges \
             > "$PRIVATE_FILE"
           test -s "$PRIVATE_FILE"
 
