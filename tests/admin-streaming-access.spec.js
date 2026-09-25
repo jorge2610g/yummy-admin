@@ -4,9 +4,9 @@ test('admin publica integración Streaming y dominio correcto', async ({ request
   const page = await request.get('/');
   expect(page.ok()).toBeTruthy();
   const html = await page.text();
-  expect(html).toContain('/admin-streaming-access.js?v=1001');
+  expect(html).toContain('/admin-streaming-access.js?v=1002');
 
-  const response = await request.get('/admin-streaming-access.js?v=1001');
+  const response = await request.get('/admin-streaming-access.js?v=1002');
   expect(response.ok()).toBeTruthy();
   const body = await response.text();
   expect(body).toContain('integración Streaming v1.0.0');
@@ -23,4 +23,15 @@ test('admin publica integración Streaming y dominio correcto', async ({ request
   expect(body).toContain('Ese negocio ya no existe o ya no pertenece a Streaming');
   expect(body).not.toContain('subscription_price');
   expect(body).not.toContain('streaming_sales');
+});
+
+
+test('Streaming no comparte tokens de la sesión principal del administrador', async ({ request }) => {
+  const response=await request.get('/admin-streaming-access.js?v=1002');
+  expect(response.ok()).toBeTruthy();
+  const body=await response.text();
+  expect(body).toContain('originalOpenRestaurantPanel');
+  expect(body).toContain('mismo ticket temporal de un solo uso');
+  expect(body).not.toContain('#admin_access=');
+  expect(body).not.toContain('#admin_refresh=');
 });
