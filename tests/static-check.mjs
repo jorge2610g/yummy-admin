@@ -37,3 +37,8 @@ for(const removed of ['Ventas totales','Ventas de hoy','Ticket promedio','Ingres
 for(const marker of ['Actividad total','Actividad este mes','Negocios activos · 7 días','Reservas creadas · 7 días'])if(!admin.includes(marker))throw new Error('index.html: falta analítica de uso por cantidades '+marker);
 
 for(const marker of ['admin-mobile-information-v2325','mobile-section-switcher','restaurantBusinessTypeFilter','subscriptionBusinessTypeFilter','subscriptionPaymentBusinessTypeFilter','staffBusinessTypeFilter','customerBusinessTypeFilter','planBusinessType','business_type','retail_orders','retail_pos','retail_products','retail_suppliers','retail_purchases','Métodos de cobro'])if(!admin.includes(marker))throw new Error('index.html: falta navegación/filtros móviles '+marker);
+
+if(!admin.includes('/admin-streaming-access.js?v=1000'))throw new Error('index.html: falta integración Streaming del admin');
+const streamingAdmin=readFileSync('admin-streaming-access.js','utf8');
+for(const marker of ['integración Streaming v1.0.0','https://streaming.yummypro.online','Negocios Streaming','openStreamingBusinessProfile','streaming_subscriptions','streaming_customers','streaming_accounts','streaming_platforms','streaming_renewals','ADMIN_PLAN_MODULES.streaming','ADMIN_PLAN_DEFAULTS.streaming','YUMMY_ADMIN_PREVIEW'])if(!streamingAdmin.includes(marker))throw new Error('admin-streaming-access.js: falta '+marker);
+for(const forbidden of ['subscription_price','Ventas totales','Ingresos','Ticket promedio','streaming_sales'])if(streamingAdmin.includes(forbidden))throw new Error('admin-streaming-access.js: expone métrica monetaria no requerida '+forbidden);
