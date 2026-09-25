@@ -2504,27 +2504,48 @@ async function toggleDemoApiInheritance(enabled){
  await loadSettings();
  toast(enabled?"API global aplicada a este demo.":"Herencia desactivada. Ahora puedes usar credenciales propias.")
 }
+let settingsDemoBusinesses=[];
 function settingsBusinessGroupFor(r){return r?.is_demo?"demo":"real"}
-function syncSettingsRestaurantSelector(){
+async function loadSettingsDemoBusinesses(){
+ const {data,error}=await sb.from("restaurants")
+  .select("id,name,business_type,is_demo,active,subscription_status")
+  .eq("is_demo",true)
+  .order("name");
+ if(error)throw error;
+ settingsDemoBusinesses=data||[];
+ return settingsDemoBusinesses
+}
+function settingsBusinessesForGroup(group){
+ return group==="demo"
+  ? settingsDemoBusinesses
+  : restaurants.filter(r=>settingsBusinessGroupFor(r)==="real")
+}
+async function syncSettingsRestaurantSelector(){
  const wrap=document.getElementById("settingsBusinessSelectorWrap"),group=document.getElementById("settingsBusinessGroupFilter"),sel=document.getElementById("settingsRestaurantSelect");
  if(!wrap||!sel)return;
  wrap.style.display=isSuperAdmin?"":"none";
  if(!isSuperAdmin)return;
- const current=restaurants.find(r=>Number(r.id)===Number(currentRestaurant));
+ const current=restaurants.find(r=>Number(r.id)===Number(currentRestaurant))||settingsDemoBusinesses.find(r=>Number(r.id)===Number(currentRestaurant))||currentRestaurantConfig;
  const desiredGroup=current?settingsBusinessGroupFor(current):(group?.value||"real");
  if(group)group.value=desiredGroup;
- const filtered=restaurants.filter(r=>settingsBusinessGroupFor(r)===desiredGroup);
+ if(desiredGroup==="demo"){
+  try{await loadSettingsDemoBusinesses()}catch(e){console.error("No se pudieron cargar los demos de Configuración",e)}
+ }
+ const filtered=settingsBusinessesForGroup(desiredGroup);
  const previous=String(currentRestaurant||"");
  sel.innerHTML=filtered.map(r=>'<option value="'+r.id+'">'+esc(r.name)+' · '+esc(businessTypeLabel(r.business_type||"restaurant"))+'</option>').join("");
  if(previous&&[...sel.options].some(o=>o.value===previous))sel.value=previous;
- else if(sel.options.length){currentRestaurant=Number(sel.options[0].value);sel.value=String(currentRestaurant)}
+ else if(sel.options.length){currentRestaurant=Number(sel.options[0].value);sel.value=String(currentRestaurant);currentRestaurantConfig=filtered[0]}
 }
 async function changeSettingsBusinessGroup(value){
  const group=value==="demo"?"demo":"real";
- const filtered=restaurants.filter(r=>settingsBusinessGroupFor(r)===group);
+ if(group==="demo"){
+  try{await loadSettingsDemoBusinesses()}catch(e){console.error("No se pudieron cargar los demos de Configuración",e);toast("No se pudieron cargar los locales demo.");return}
+ }
+ const filtered=settingsBusinessesForGroup(group);
  const sel=document.getElementById("settingsRestaurantSelect");
  if(sel)sel.innerHTML=filtered.map(r=>'<option value="'+r.id+'">'+esc(r.name)+' · '+esc(businessTypeLabel(r.business_type||"restaurant"))+'</option>').join("");
- if(!filtered.length){currentRestaurant=null;currentRestaurantConfig=null;toast(group==="demo"?"No hay locales demo.":"No hay locales reales.");return}
+ if(!filtered.length){currentRestaurant=null;currentRestaurantConfig=null;toast(group==="demo"?"No hay locales demo.":"No hay locales reales cargados en esta página.");return}
  currentRestaurant=Number(filtered[0].id);
  if(sel)sel.value=String(currentRestaurant);
  currentRestaurantConfig=filtered[0];
@@ -2533,7 +2554,7 @@ async function changeSettingsBusinessGroup(value){
 async function changeSettingsRestaurant(value){
  const id=Number(value);if(!id)return;
  currentRestaurant=id;
- currentRestaurantConfig=restaurants.find(r=>Number(r.id)===id)||null;
+ currentRestaurantConfig=restaurants.find(r=>Number(r.id)===id)||settingsDemoBusinesses.find(r=>Number(r.id)===id)||null;
  await loadSettings();
 }
 async function logout(){await sb.auth.signOut();window.location.replace("./")}
@@ -3408,7 +3429,7 @@ async function searchRestaurantAddress(){
   if(st)st.textContent="❌ No se pudo verificar la dirección. Revisa lo escrito e intenta nuevamente.";
  }
 }
-async function loadSettings(){if(!currentRestaurant)return;if(!platformCountries.length)await loadPlatformCountries();const {data,error}=await sb.from("restaurants").select("*").eq("id",currentRestaurant).single();if(error)return toast(error.message);currentRestaurantConfig=data;syncSettingsRestaurantSelector();const badge=document.getElementById("settingsBusinessBadge"),typeHint=document.getElementById("settingsBusinessTypeHint"),demoCard=document.getElementById("demoApiInheritanceCard"),demoToggle=document.getElementById("demoApiInheritanceToggle"),demoStatus=document.getElementById("demoApiProvidersStatus");if(badge)badge.textContent=(data.is_demo?"🧪 DEMO · ":"🏪 REAL · ")+(data.name||"Negocio");if(typeHint)typeHint.textContent=businessTypeLabel(data.business_type||"restaurant")+" · "+(data.is_demo?"Demo: usa credenciales propias o el modo de prueba del administrador desde Pagos.":"Real: usa sus credenciales propias o puede activar temporalmente el modo de prueba del administrador.");if(demoCard)demoCard.hidden=!(isSuperAdmin&&data.is_demo);if(demoToggle)demoToggle.checked=!!data.use_demo_api_defaults;if(demoStatus&&data.is_demo)demoStatus.textContent=data.use_demo_api_defaults?"APIs globales demo adicionales activadas. Mercado Pago se controla con el interruptor de pruebas.":"APIs globales demo adicionales desactivadas.";scountry.value=data.country_code||"CL";applyCountrySelection(scountry.value);sname.value=data.name||"";swhatsapp.value=data.whatsapp||"";saddress.value=data.address||"";const sma=document.getElementById("smapaddress");if(sma)sma.value=data.address||"";sopen.value=(data.open_time||"").slice(0,5);sclose.value=(data.close_time||"").slice(0,5);sinstagram.value=data.instagram||"";spickup.value=data.pickup_eta||"";sdelivery.value=data.delivery_eta||"";sdeliverynote.value=data.delivery_note||"";const scp=document.getElementById("scolorPrimary"),scs=document.getElementById("scolorSecondary"),sct=document.getElementById("scolorText"),sl=document.getElementById("slogo"),slp=document.getElementById("slogoPreview");if(scp)scp.value=data.theme_primary_color||"#ffc21a";if(scs)scs.value=data.theme_secondary_color||"#1e1f24";if(sct)sct.value=data.theme_text_color||"#1e1f24";if(sl)sl.value=data.logo_url||"";if(slp){if(data.logo_url){slp.src=data.logo_url;slp.hidden=false}else{slp.removeAttribute("src");slp.hidden=true}}sdeliverymode.value=data.delivery_pricing_mode||"fixed";sdeliveryprice.value=Number(data.delivery_fixed_price||0);slat.value=data.latitude??"";slng.value=data.longitude??"";sdeliveryzones.value=(Array.isArray(data.delivery_zones)?data.delivery_zones:[]).map(z=>String(z.max_km)+"="+String(z.price)).join("\n");const mst=document.getElementById("manualOpenStatusText");if(mst)mst.textContent=data.manual_open_status==="open"?"🟢 Forzado ABIERTO":data.manual_open_status==="closed"?"🔴 Forzado CERRADO":"🕒 Usando horario predeterminado";await Promise.all([loadSettingsAdminPaymentTestMode(),loadRestaurantMercadoPago()])}
+async function loadSettings(){if(!currentRestaurant)return;if(!platformCountries.length)await loadPlatformCountries();const {data,error}=await sb.from("restaurants").select("*").eq("id",currentRestaurant).single();if(error)return toast(error.message);currentRestaurantConfig=data;await syncSettingsRestaurantSelector();const badge=document.getElementById("settingsBusinessBadge"),typeHint=document.getElementById("settingsBusinessTypeHint"),demoCard=document.getElementById("demoApiInheritanceCard"),demoToggle=document.getElementById("demoApiInheritanceToggle"),demoStatus=document.getElementById("demoApiProvidersStatus");if(badge)badge.textContent=(data.is_demo?"🧪 DEMO · ":"🏪 REAL · ")+(data.name||"Negocio");if(typeHint)typeHint.textContent=businessTypeLabel(data.business_type||"restaurant")+" · "+(data.is_demo?"Demo: usa credenciales propias o el modo de prueba del administrador desde Pagos.":"Real: usa sus credenciales propias o puede activar temporalmente el modo de prueba del administrador.");if(demoCard)demoCard.hidden=!(isSuperAdmin&&data.is_demo);if(demoToggle)demoToggle.checked=!!data.use_demo_api_defaults;if(demoStatus&&data.is_demo)demoStatus.textContent=data.use_demo_api_defaults?"APIs globales demo adicionales activadas. Mercado Pago se controla con el interruptor de pruebas.":"APIs globales demo adicionales desactivadas.";scountry.value=data.country_code||"CL";applyCountrySelection(scountry.value);sname.value=data.name||"";swhatsapp.value=data.whatsapp||"";saddress.value=data.address||"";const sma=document.getElementById("smapaddress");if(sma)sma.value=data.address||"";sopen.value=(data.open_time||"").slice(0,5);sclose.value=(data.close_time||"").slice(0,5);sinstagram.value=data.instagram||"";spickup.value=data.pickup_eta||"";sdelivery.value=data.delivery_eta||"";sdeliverynote.value=data.delivery_note||"";const scp=document.getElementById("scolorPrimary"),scs=document.getElementById("scolorSecondary"),sct=document.getElementById("scolorText"),sl=document.getElementById("slogo"),slp=document.getElementById("slogoPreview");if(scp)scp.value=data.theme_primary_color||"#ffc21a";if(scs)scs.value=data.theme_secondary_color||"#1e1f24";if(sct)sct.value=data.theme_text_color||"#1e1f24";if(sl)sl.value=data.logo_url||"";if(slp){if(data.logo_url){slp.src=data.logo_url;slp.hidden=false}else{slp.removeAttribute("src");slp.hidden=true}}sdeliverymode.value=data.delivery_pricing_mode||"fixed";sdeliveryprice.value=Number(data.delivery_fixed_price||0);slat.value=data.latitude??"";slng.value=data.longitude??"";sdeliveryzones.value=(Array.isArray(data.delivery_zones)?data.delivery_zones:[]).map(z=>String(z.max_km)+"="+String(z.price)).join("\n");const mst=document.getElementById("manualOpenStatusText");if(mst)mst.textContent=data.manual_open_status==="open"?"🟢 Forzado ABIERTO":data.manual_open_status==="closed"?"🔴 Forzado CERRADO":"🕒 Usando horario predeterminado";await Promise.all([loadSettingsAdminPaymentTestMode(),loadRestaurantMercadoPago()])}
 async function saveSettings(){if(!currentRestaurant)return toast("No hay restaurante seleccionado");const country=countryByCode(scountry.value);const row={name:sname.value.trim(),whatsapp:swhatsapp.value.trim(),address:saddress.value.trim(),country_code:country.code,currency_code:country.currency_code,locale:country.locale,timezone:country.timezone,open_time:sopen.value,close_time:sclose.value,instagram:sinstagram.value.trim(),pickup_eta:spickup.value.trim(),delivery_eta:sdelivery.value.trim(),delivery_note:sdeliverynote.value.trim(),theme_primary_color:document.getElementById("scolorPrimary")?.value||"#ffc21a",theme_secondary_color:document.getElementById("scolorSecondary")?.value||"#1e1f24",theme_text_color:document.getElementById("scolorText")?.value||"#1e1f24",logo_url:document.getElementById("slogo")?.value||null,delivery_pricing_mode:sdeliverymode.value,delivery_fixed_price:Number(sdeliveryprice.value||0),latitude:slat.value===""?null:Number(slat.value),longitude:slng.value===""?null:Number(slng.value),delivery_zones:sdeliveryzones.value.split(/\n+/).map(x=>x.trim()).filter(Boolean).map(x=>{const p=x.split("=");return {max_km:Number(p[0]),price:Number(p[1])}}).filter(z=>Number.isFinite(z.max_km)&&z.max_km>0&&Number.isFinite(z.price)&&z.price>=0).sort((x,y)=>x.max_km-y.max_km),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurants").update(row).eq("id",currentRestaurant);if(error)return toast(error.message);currentRestaurantConfig={...(currentRestaurantConfig||{}),...row};await loadRestaurants();if(adminRestaurantMode){await loadSettings();renderRestaurantContent();renderQrPanel()}toast("País, moneda y configuración actualizados")}
 async function setManualOpenStatus(status){if(!currentRestaurant)return;const {error}=await sb.from("restaurants").update({manual_open_status:status,updated_at:new Date().toISOString()}).eq("id",currentRestaurant);if(error)return toast(error.message);await loadSettings();toast(status==="open"?"Local forzado como ABIERTO":status==="closed"?"Local forzado como CERRADO":"Se volvió al horario predeterminado")}
 function renderStats(){const valid=orders.filter(o=>o.status!=="cancelado"),sales=valid.reduce((a,o)=>a+Number(o.total||0),0);statProducts.textContent=products.filter(p=>p.available).length;statOrders.textContent=orders.length;statSales.textContent=money(sales);const av=document.getElementById("statAverage");if(av)av.textContent=money(valid.length?sales/valid.length:0);renderAnalytics(valid)}
@@ -3435,7 +3456,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.49</footer><script>
+</script><footer class="admin-version">Versión v2.3.50</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
