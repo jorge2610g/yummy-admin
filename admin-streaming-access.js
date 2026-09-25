@@ -108,16 +108,24 @@
   window.addEventListener('message',onReady);setTimeout(send,250);
  };
 
- function addStreamingSummaryCard(){
-  const box=document.getElementById('adminRetailSummary');if(!box||box.querySelector('[data-streaming-summary]'))return;
-  const usable=r=>{const s=subscriptionInfo(r).status;return r.active!==false&&['active','trial'].includes(s)};
-  const count=restaurants.filter(r=>isStreamingType(r.business_type)&&usable(r)).length;
-  const card=document.createElement('article');card.className='restaurant-metric';card.dataset.streamingSummary='1';card.innerHTML='<span>Streaming activos</span><strong>'+count+'</strong><small>Negocios Streaming operativos</small>';box.insertBefore(card,box.lastElementChild||null);
+ async function refreshStreamingSummaryCard(){
+  const box=document.getElementById('adminRetailSummary');if(!box)return;
+  let count=0;
+  try{const result=await sb.from('restaurants').select('id',{count:'exact',head:true}).eq('business_type','streaming');count=Number(result.count||0)}catch(e){console.error('Streaming admin count',e)}
+  let card=box.querySelector('[data-streaming-summary]');
+  if(!card){card=document.createElement('article');card.className='restaurant-metric';card.dataset.streamingSummary='1';box.insertBefore(card,box.lastElementChild||null)}
+  card.innerHTML='<span>Negocios Streaming</span><strong>'+count+'</strong><small>Registrados en YummyPro Streaming</small>';
  }
+ const originalRenderAdminBusinessSummaryServer=window.renderAdminBusinessSummaryServer;
+ window.renderAdminBusinessSummaryServer=function(){const result=originalRenderAdminBusinessSummaryServer?originalRenderAdminBusinessSummaryServer():undefined;refreshStreamingSummaryCard();return result};
  const originalLoadAdminRetailSummary=window.loadAdminRetailSummary;
- window.loadAdminRetailSummary=async function(){const result=originalLoadAdminRetailSummary?await originalLoadAdminRetailSummary():undefined;addStreamingSummaryCard();return result};
+ window.loadAdminRetailSummary=async function(){const result=originalLoadAdminRetailSummary?await originalLoadAdminRetailSummary():undefined;await refreshStreamingSummaryCard();return result};
 
- function refreshStreamingAdminUi(){installStreamingBusinessOptions();addStreamingSummaryCard();}
+ function refreshStreamingAdminUi(){
+  installStreamingBusinessOptions();
+  const copy=document.querySelector('#restaurants .card p.mut');if(copy&&copy.textContent.includes('Restaurantes, supermercados'))copy.textContent='Restaurantes, retail, profesionales y negocios Streaming administrados desde la misma plataforma.';
+  refreshStreamingSummaryCard();
+ }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refreshStreamingAdminUi);else refreshStreamingAdminUi();
  const observer=new MutationObserver(()=>installStreamingBusinessOptions());
  observer.observe(document.documentElement,{subtree:true,childList:true});
