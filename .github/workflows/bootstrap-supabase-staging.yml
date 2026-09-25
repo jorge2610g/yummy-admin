@@ -21,7 +21,6 @@ jobs:
       PROD_PROJECT_REF: gulctljitzlwokqydigx
       STAGING_PROJECT_REF: wodqqheeesrelsbacmgx
       BASELINE_FILE: supabase/migrations/20260925153000_production_baseline.sql
-      AUTH_STORAGE_FILE: supabase/migrations/20260925153001_auth_storage_custom.sql
 
     steps:
       - name: Checkout staging
@@ -30,71 +29,59 @@ jobs:
           ref: staging
           fetch-depth: 0
 
-      - name: Install Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
+      - name: Initialize migration directory
+        run: mkdir -p supabase/migrations
 
-      - name: Initialize Supabase directory
-        run: |
-          if [ ! -f supabase/config.toml ]; then
-            supabase init
-          fi
-          mkdir -p supabase/migrations
-
-      - name: Stop if baseline already exists
-        run: |
-          if [ -f "$BASELINE_FILE" ]; then
-            echo "Baseline already exists. Refusing to overwrite it."
-            exit 1
-          fi
-
-      - name: Link production read-only source
+      - name: Validate required secrets
         env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
-        run: supabase link --project-ref "$PROD_PROJECT_REF"
-
-      - name: Dump production schema only
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          PROD_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          STG_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
-          supabase db dump -f "$BASELINE_FILE"
+          test -n "$PROD_DB_PASSWORD" || (echo "Missing GitHub secret: PRODUCTION_DB_PASSWORD" && exit 1)
+          test -n "$STG_DB_PASSWORD" || (echo "Missing GitHub secret: STAGING_DB_PASSWORD" && exit 1)
+
+      - name: Dump production public schema only
+        if: ${{ hashFiles('supabase/migrations/20260925153000_production_baseline.sql') == '' }}
+        env:
+          PGPASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          docker run --rm \
+            -e PGPASSWORD="$PGPASSWORD" \
+            postgres:17 \
+            pg_dump \
+              --host="db.$PROD_PROJECT_REF.supabase.co" \
+              --port=5432 \
+              --username=postgres \
+              --dbname=postgres \
+              --schema=public \
+              --schema-only \
+              --no-owner \
+              --no-privileges \
+            > "$BASELINE_FILE"
           test -s "$BASELINE_FILE"
 
-      - name: Capture custom Auth and Storage schema changes
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+      - name: Commit reproducible baseline to staging
+        if: ${{ hashFiles('supabase/migrations/20260925153000_production_baseline.sql') != '' }}
         run: |
-          supabase db diff --linked --schema auth,storage > "$AUTH_STORAGE_FILE"
-          if [ ! -s "$AUTH_STORAGE_FILE" ]; then
-            echo "-- No custom auth/storage differences detected." > "$AUTH_STORAGE_FILE"
+          if git status --porcelain | grep -q .; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add supabase
+            git commit -m "chore(staging): baseline Supabase schema from production"
+            git push origin HEAD:staging
           fi
 
-      - name: Commit reproducible baseline to staging
+      - name: Apply public schema to YummyPro Staging
+        env:
+          PGPASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add supabase
-          git commit -m "chore(staging): baseline Supabase schema from production"
-          git push origin HEAD:staging
-
-      - name: Link YummyPro Staging
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
-        run: supabase link --project-ref "$STAGING_PROJECT_REF"
-
-      - name: Preview staging migration
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
-        run: supabase db push --dry-run
-
-      - name: Apply schema to YummyPro Staging
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
-        run: supabase db push
+          docker run --rm -i \
+            -e PGPASSWORD="$PGPASSWORD" \
+            postgres:17 \
+            psql \
+              --host="db.$STAGING_PROJECT_REF.supabase.co" \
+              --port=5432 \
+              --username=postgres \
+              --dbname=postgres \
+              --set=ON_ERROR_STOP=1 \
+            < "$BASELINE_FILE"
