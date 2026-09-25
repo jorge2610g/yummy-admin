@@ -42,3 +42,18 @@ test('Mercado Pago usa un solo switch y separa VeriPagos demo', async ({ page })
   expect(html).toContain('QR Bolivia / VeriPagos del demo');
   expect(html).toContain('No modifica Mercado Pago');
 });
+
+
+test('Centro de lanzamientos responde desde Supabase sin Vercel',async({page})=>{
+  test.skip(!process.env.ADMIN_TEST_EMAIL||!process.env.ADMIN_TEST_PASSWORD,'Credenciales de prueba no configuradas');
+  await page.goto('/');
+  await page.locator('#email').fill(process.env.ADMIN_TEST_EMAIL);
+  await page.locator('#password').fill(process.env.ADMIN_TEST_PASSWORD);
+  await page.getByRole('button',{name:/Ingresar/i}).click();
+  await expect(page.locator('#app')).toBeVisible({timeout:15000});
+  const status=await page.evaluate(async()=>await releaseAuthorizedFetch('/api/release-status',{method:'GET',headers:{}}));
+  expect(status?.configuration?.backend).toBe('supabase');
+  expect(status?.configuration?.hosting_target).toBe('github_pages');
+  expect(Array.isArray(status?.repositories)).toBeTruthy();
+  expect(status.repositories).toHaveLength(6);
+});
