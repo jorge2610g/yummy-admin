@@ -2187,6 +2187,7 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   <button class="tab admin-only" data-tab="customers" title="Clientes"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span class="nav-label">Clientes</span></button>
   <div class="nav-group-label">SISTEMA</div>
   <button class="tab admin-only" data-tab="push_center" title="Notificaciones Push"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span><span class="nav-label">Notificaciones Push</span></button>
+  <button class="tab admin-only" data-tab="release_center" title="Lanzar a Producción"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c3 2 5 5 5 9l-5 4-5-4c0-4 2-7 5-9Z"/><circle cx="12" cy="8" r="1.5"/><path d="M9 15l-2 4 5-2 5 2-2-4"/></svg></span><span class="nav-label">Lanzar a Producción</span></button>
   <button class="tab" data-tab="settings" title="Configuración"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.2 2.3 2.6.4.8 2.5 2.3 1.2-.7 2.6.7 2.6-2.3 1.2-.8 2.5-2.6.4L12 21l-1.2-2.3-2.6-.4-.8-2.5-2.3-1.2.7-2.6-.7-2.6 2.3-1.2.8-2.5 2.6-.4z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="nav-label">Configuración</span></button>
 </div>
 </aside>
@@ -2350,6 +2351,31 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   </div>
 </div>
 </section>
+<section id="release_center" class="section admin-only">
+<div class="dashboard-hero" style="margin-top:8px">
+  <div><div class="eyebrow">PUBLICACIÓN CONTROLADA</div><h2>Centro de lanzamientos</h2><p>Promueve exactamente el código probado desde <b>staging</b> hacia <b>main</b> sin copiar datos entre ambientes.</p></div>
+  <button class="ghost refresh-btn" type="button" onclick="loadReleaseStatus()">↻ Actualizar estado</button>
+</div>
+<div class="grid">
+  <div class="card span4"><div class="eyebrow">PRUEBAS</div><h3 style="margin:8px 0 4px">staging</h3><div class="mut">Origen del lanzamiento. Esta rama nunca se modifica durante una publicación.</div></div>
+  <div class="card span4"><div class="eyebrow">PRODUCCIÓN</div><h3 style="margin:8px 0 4px">main</h3><div class="mut">Destino del código aprobado. Los datos de Producción permanecen separados.</div></div>
+  <div class="card span4"><div class="eyebrow">SEGURO</div><h3 id="releaseSafetyTitle" style="margin:8px 0 4px">Modo seguro</h3><div class="mut" id="releaseSafetyText">Consultando configuración…</div></div>
+  <div class="card span12">
+    <div class="row between">
+      <div><h2 style="margin-bottom:6px">Versión coordinada</h2><p class="mut" style="margin:0">Admin, Restaurante, Retail, Profesionales, Streaming y Cliente se revisan juntos antes de mover cualquier rama.</p></div>
+      <div class="actions">
+        <button class="ghost" id="prepareReleaseBtn" type="button" onclick="prepareProductionRelease()">✓ Preparar lanzamiento</button>
+        <button class="primary" id="launchReleaseBtn" type="button" onclick="launchProductionRelease()" disabled>🚀 Lanzar a Producción</button>
+      </div>
+    </div>
+    <div id="releaseSummary" class="item" style="margin-top:16px"><b>Estado:</b> <span class="mut">Pulsa “Preparar lanzamiento” para hacer un diagnóstico sin modificar nada.</span></div>
+    <div id="releaseRepoList" class="list" style="margin-top:12px"></div>
+  </div>
+  <div class="card span12">
+    <div class="row" style="align-items:flex-start"><span style="font-size:22px">🛡️</span><div><b>Datos protegidos</b><div class="mut" style="margin-top:4px">Este flujo solo promueve código. No copia usuarios, negocios, pedidos, productos, credenciales ni bases de datos de Pruebas a Producción.</div></div></div>
+  </div>
+</div>
+</section>
 <section id="settings" class="section"><div class="card"><div id="settingsBusinessSelectorWrap" class="admin-only" style="margin-bottom:18px"><div class="admin-filter-grid"><label>Grupo de locales<select id="settingsBusinessGroupFilter" onchange="changeSettingsBusinessGroup(this.value)"><option value="real">🏪 Locales reales</option><option value="demo">🧪 Locales demo</option></select></label><label>Negocio a configurar<select id="settingsRestaurantSelect" onchange="changeSettingsRestaurant(this.value)"></select></label><div class="item" style="align-self:end"><b id="settingsBusinessBadge">Selecciona un negocio</b><div class="mut" id="settingsBusinessTypeHint">Primero elige el grupo y luego el negocio.</div></div></div></div><h2>Datos del negocio</h2><div class="grid">
 <div class="span4"><label>Nombre</label><input id="sname"></div><div class="span4"><label>WhatsApp</label><input id="swhatsapp"></div><div class="span4"><label>Instagram</label><input id="sinstagram"></div>
 <div class="span12"><label>Dirección</label><input id="saddress"></div><div class="span4"><label>Apertura</label><input id="sopen" type="time"></div><div class="span4"><label>Cierre</label><input id="sclose" type="time"></div><div class="span4"><label>Tiempo retiro</label><input id="spickup"></div><div class="span8"><label>Tiempo delivery</label><input id="sdelivery"></div><div class="span12"><label>Nota delivery</label><input id="sdeliverynote"></div>
@@ -2459,6 +2485,100 @@ async function adminAuthorizedFetch(path,options={}){
  }
  return res
 }
+let releaseSnapshot=null;
+function releaseShortSha(value){return value?String(value).slice(0,8):"—"}
+function releaseStatusLabel(item){
+  if(item.error)return "Error";
+  if(item.status==="identical")return "Sin cambios";
+  if(item.status==="ahead")return item.ahead_by+" cambio"+(item.ahead_by===1?"":"s")+" pendiente"+(item.ahead_by===1?"":"s");
+  if(item.status==="diverged")return "Ramas divergentes";
+  if(item.status==="behind")return "Pruebas está detrás";
+  return item.status||"Desconocido";
+}
+function renderReleaseCenter(data,prepared=false){
+  const rows=data?.repositories||[];
+  const list=document.getElementById("releaseRepoList");
+  if(list)list.innerHTML=rows.map(item=>{
+    const icon=item.safe?(item.needs_release?"🟡":"✅"):"⛔";
+    const detail=item.error?esc(item.error):"main "+releaseShortSha(item.main_sha)+" → staging "+releaseShortSha(item.staging_sha);
+    return '<div class="item"><div class="row between"><div><b>'+icon+" "+esc(item.label)+'</b><div class="mut">'+detail+'</div></div><div style="text-align:right"><b>'+esc(releaseStatusLabel(item))+'</b><div class="mut">'+(item.changed_files||0)+' archivos detectados</div></div></div></div>';
+  }).join("")||'<div class="mut">No hay información de repositorios.</div>';
+
+  const config=data?.configuration||{};
+  const enabled=!!config.github_token_configured&&!!config.release_enabled;
+  const safetyTitle=document.getElementById("releaseSafetyTitle");
+  const safetyText=document.getElementById("releaseSafetyText");
+  if(safetyTitle)safetyTitle.textContent=enabled?"Publicación habilitada":"Modo seguro";
+  if(safetyText)safetyText.textContent=enabled?"El backend puede publicar después de un diagnóstico y confirmación.":"La publicación real está bloqueada por configuración; solo se permite diagnóstico.";
+
+  const summary=document.getElementById("releaseSummary");
+  if(summary){
+    if(!data?.ready)summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>Lanzamiento bloqueado. Revisa los módulos marcados con error o divergencia.</span>";
+    else if(!data?.pending)summary.innerHTML="<b>Estado:</b> <span style='color:var(--ok)'>Producción ya coincide con Pruebas. No hay cambios pendientes.</span>";
+    else summary.innerHTML="<b>Estado:</b> <span>"+data.pending+" módulo"+(data.pending===1?"":"s")+" con cambios pendientes."+(prepared?" Diagnóstico completado sin modificar ramas.":"")+"</span>";
+  }
+  const launch=document.getElementById("launchReleaseBtn");
+  if(launch){
+    launch.disabled=!(prepared&&data?.ready&&data?.pending>0&&enabled);
+    launch.title=launch.disabled?(enabled?"Primero prepara el lanzamiento.":"Publicación deshabilitada por configuración."):"Lanzar la versión preparada";
+  }
+}
+async function releaseAuthorizedFetch(path,options={}){
+  let session=await ensureAdminSession(false);
+  const send=s=>fetch(path,{...options,headers:{...(options.headers||{}),"Content-Type":"application/json","Authorization":"Bearer "+s.access_token}});
+  let res=await send(session);
+  if(res.status===401){session=await ensureAdminSession(true);res=await send(session)}
+  const raw=await res.text();let body={};try{body=raw?JSON.parse(raw):{}}catch(_){body={error:raw||"Respuesta inválida"}}
+  if(!res.ok)throw Object.assign(new Error(body.error||"No se pudo completar la operación."),{payload:body,status:res.status});
+  return body;
+}
+async function loadReleaseStatus(){
+  if(!isSuperAdmin)return;
+  const summary=document.getElementById("releaseSummary");
+  if(summary)summary.innerHTML="<b>Estado:</b> <span class='mut'>Consultando ramas main y staging…</span>";
+  try{
+    const data=await releaseAuthorizedFetch("/api/release-status",{method:"GET",headers:{}});
+    releaseSnapshot=null;
+    renderReleaseCenter(data,false);
+  }catch(e){
+    releaseSnapshot=null;
+    if(summary)summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>"+esc(e.message)+"</span>";
+    const launch=document.getElementById("launchReleaseBtn");if(launch)launch.disabled=true;
+  }
+}
+async function prepareProductionRelease(){
+  if(!isSuperAdmin)return;
+  const btn=document.getElementById("prepareReleaseBtn");if(btn){btn.disabled=true;btn.textContent="↻ Revisando…"}
+  try{
+    const status=await releaseAuthorizedFetch("/api/release-status",{method:"GET",headers:{}});
+    const dry=await releaseAuthorizedFetch("/api/release-production",{method:"POST",body:JSON.stringify({action:"dry-run"})});
+    const expected={};(dry.repositories||[]).forEach(item=>{expected[item.key]={main_sha:item.main_sha,staging_sha:item.staging_sha}});
+    releaseSnapshot={expected,configuration:status.configuration||{},repositories:dry.repositories||[],pending:dry.pending||0,ready:true};
+    renderReleaseCenter({...status,repositories:dry.repositories,pending:dry.pending,ready:true},true);
+    toast(dry.message||"Diagnóstico completado. No se modificó ninguna rama.");
+  }catch(e){
+    releaseSnapshot=null;
+    if(e.payload?.repositories)renderReleaseCenter({repositories:e.payload.repositories,ready:false,pending:0,configuration:{}},false);
+    toast(e.message||"No se pudo preparar el lanzamiento.");
+  }finally{if(btn){btn.disabled=false;btn.textContent="✓ Preparar lanzamiento"}}
+}
+async function launchProductionRelease(){
+  if(!isSuperAdmin||!releaseSnapshot)return;
+  const confirmation=prompt('Para lanzar la versión preparada escribe exactamente:\nLANZAR A PRODUCCION');
+  if(confirmation===null)return;
+  if(String(confirmation).trim().toUpperCase()!=="LANZAR A PRODUCCION"){toast("Confirmación cancelada.");return}
+  const btn=document.getElementById("launchReleaseBtn");if(btn){btn.disabled=true;btn.textContent="🚀 Publicando…"}
+  try{
+    const result=await releaseAuthorizedFetch("/api/release-production",{method:"POST",body:JSON.stringify({action:"release",confirmation,expected:releaseSnapshot.expected})});
+    releaseSnapshot=null;
+    toast(result.message||"Lanzamiento completado.");
+    await loadReleaseStatus();
+  }catch(e){
+    toast(e.message||"El lanzamiento no pudo completarse.");
+    await loadReleaseStatus();
+  }finally{if(btn)btn.textContent="🚀 Lanzar a Producción"}
+}
+
 async function login(){
   const msg=document.getElementById("loginMsg"), emailEl=document.getElementById("email"), passEl=document.getElementById("password");
   msg.textContent="Ingresando...";
@@ -2652,7 +2772,7 @@ async function enter(user){
   }catch(e){msg.textContent=e.message||"No se pudo abrir el panel."}
 }
 async function restoreSession(){try{const {data,error}=await sb.auth.getSession();if(error)throw error;if(data.session){await enter(data.session.user)}else{document.getElementById("login").classList.remove("hidden")}}catch(e){document.getElementById("login").classList.remove("hidden");document.getElementById("loginMsg").textContent=e.message||"No se pudo validar la sesión."}finally{document.body.classList.remove("auth-loading")}}restoreSession();
-document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{const tabName=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));const activity=document.getElementById("adminAuthenticatedActivity");if(activity)activity.classList.toggle("hidden",tabName!=="dashboard");b.classList.add("active");document.getElementById(tabName)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){const refreshId=++dashboardRefreshSequence;scheduleAdminDeferredDashboard(refreshId);renderBusinessStatus(dashboardRestaurantScope==="all"?null:(currentRestaurantConfig||restaurants.find(r=>Number(r.id)===Number(currentRestaurant))))}else if(b.dataset.tab==="orders"){await loadOrders()}else if(b.dataset.tab==="customers"){await loadAdminCustomers()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{const tabName=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));const activity=document.getElementById("adminAuthenticatedActivity");if(activity)activity.classList.toggle("hidden",tabName!=="dashboard");b.classList.add("active");document.getElementById(tabName)?.classList.add("active");closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){const refreshId=++dashboardRefreshSequence;scheduleAdminDeferredDashboard(refreshId);renderBusinessStatus(dashboardRestaurantScope==="all"?null:(currentRestaurantConfig||restaurants.find(r=>Number(r.id)===Number(currentRestaurant))))}else if(b.dataset.tab==="orders"){await loadOrders()}else if(b.dataset.tab==="customers"){await loadAdminCustomers()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}else if(b.dataset.tab==="release_center"){await loadReleaseStatus()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
 let dashboardRefreshSequence=0;
 function setDashboardLoading(loading){
  const btn=document.getElementById("refreshDashboardBtn");
@@ -3489,7 +3609,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.56</footer><script>
+</script><footer class="admin-version">Versión v2.3.57</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
