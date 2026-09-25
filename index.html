@@ -2550,11 +2550,10 @@ async function prepareProductionRelease(){
   if(!isSuperAdmin)return;
   const btn=document.getElementById("prepareReleaseBtn");if(btn){btn.disabled=true;btn.textContent="↻ Revisando…"}
   try{
-    const status=await releaseAuthorizedFetch("/api/release-status",{method:"GET",headers:{}});
     const dry=await releaseAuthorizedFetch("/api/release-production",{method:"POST",body:JSON.stringify({action:"dry-run"})});
     const expected={};(dry.repositories||[]).forEach(item=>{expected[item.key]={main_sha:item.main_sha,staging_sha:item.staging_sha}});
-    releaseSnapshot={expected,configuration:status.configuration||{},repositories:dry.repositories||[],pending:dry.pending||0,ready:true};
-    renderReleaseCenter({...status,repositories:dry.repositories,pending:dry.pending,ready:true},true);
+    releaseSnapshot={expected,configuration:dry.configuration||{},repositories:dry.repositories||[],pending:dry.pending||0,ready:true};
+    renderReleaseCenter({configuration:dry.configuration||{},repositories:dry.repositories,pending:dry.pending,ready:true},true);
     toast(dry.message||"Diagnóstico completado. No se modificó ninguna rama.");
   }catch(e){
     releaseSnapshot=null;
@@ -3609,7 +3608,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.57</footer><script>
+</script><footer class="admin-version">Versión v2.3.58</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
