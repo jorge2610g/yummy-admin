@@ -2424,6 +2424,41 @@ async function loadPlatformCountries(force=false){if(platformCountries.length&&!
 function applyCountrySelection(code){const c=countryByCode(code);if(window.scurrency)scurrency.value=c.currency_code;if(window.stimezone)stimezone.value=c.timezone;const mp=document.getElementById("restaurantMpSettings");if(mp)mp.style.display=c.mercadopago_enabled?"":"none"}
 window.togglePassword=function(id,btn){const el=document.getElementById(id);if(!el)return false;const show=el.getAttribute("type")==="password";el.setAttribute("type",show?"text":"password");btn.textContent=show?"Ocultar":"Ver";btn.setAttribute("aria-pressed",show?"true":"false");return false}
 function toast(t){const e=document.getElementById("toast");e.textContent=t;e.style.display="block";setTimeout(()=>e.style.display="none",2500)}
+let adminSessionRefreshPromise=null;
+async function ensureAdminSession(force=false){
+ if(adminSessionRefreshPromise)return adminSessionRefreshPromise;
+ adminSessionRefreshPromise=(async()=>{
+  let result=await sb.auth.getSession();
+  if(result.error)throw result.error;
+  let session=result.data?.session||null;
+  const expiresAt=Number(session?.expires_at||0)*1000;
+  const nearExpiry=!expiresAt||expiresAt-Date.now()<120000;
+  if(force||!session?.access_token||nearExpiry){
+   const refreshed=await sb.auth.refreshSession();
+   if(refreshed.error)throw refreshed.error;
+   session=refreshed.data?.session||session;
+  }
+  if(!session?.access_token)throw new Error("Sesión vencida. Vuelve a iniciar sesión.");
+  const checked=await sb.auth.getUser();
+  if(checked.error||!checked.data?.user){
+   const refreshed=await sb.auth.refreshSession();
+   if(refreshed.error||!refreshed.data?.session)throw new Error("Sesión inválida o vencida. Vuelve a iniciar sesión.");
+   session=refreshed.data.session;
+  }
+  return session;
+ })().finally(()=>{adminSessionRefreshPromise=null});
+ return adminSessionRefreshPromise;
+}
+async function adminAuthorizedFetch(path,options={}){
+ let session=await ensureAdminSession(false);
+ const send=s=>fetch(SB_URL+"/functions/v1/"+path,{...options,headers:{...(options.headers||{}),"apikey":SB_KEY,"Authorization":"Bearer "+s.access_token}});
+ let res=await send(session);
+ if(res.status===401){
+  session=await ensureAdminSession(true);
+  res=await send(session);
+ }
+ return res
+}
 async function login(){
   const msg=document.getElementById("loginMsg"), emailEl=document.getElementById("email"), passEl=document.getElementById("password");
   msg.textContent="Ingresando...";
@@ -2486,9 +2521,7 @@ async function verifyRestaurantMercadoPago(){
  const r=currentRestaurantConfig||restaurants.find(x=>Number(x.id)===Number(currentRestaurant)),box=document.getElementById("restaurantMpStatus");
  if(box)box.textContent="Verificando credenciales con Mercado Pago…";
  try{
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session?.access_token){if(box)box.textContent="❌ Sesión vencida.";return}
-  const res=await fetch(SB_URL+"/functions/v1/verify-restaurant-mercadopago",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({restaurant_id:Number(currentRestaurant)})});
+  const res=await adminAuthorizedFetch("verify-restaurant-mercadopago",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({restaurant_id:Number(currentRestaurant)})});
   const data=await res.json();
   if(box)box.textContent=data.ok?"✅ "+(data.message||"Credenciales válidas."):"❌ "+(data.error||"Las credenciales no son válidas.");
  }catch(e){if(box)box.textContent="❌ No se pudo verificar Mercado Pago."}
@@ -2755,15 +2788,12 @@ function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;
   const numericId=Number(id);
   if(!Number.isFinite(numericId)||numericId<=0)return toast("Negocio inválido");
 
-  // Abrir primero la pestaña para conservar el gesto del usuario en móvil.
   const w=window.open("about:blank","_blank");
   if(!w)return toast("Permite ventanas emergentes para abrir el panel");
 
-  // No confiar en una fila antigua que haya quedado en memoria del administrador.
-  // Volvemos a consultar el negocio real antes de entregar credenciales a otro dominio.
   let r=null;
   try{
-    const result=await sb.from("restaurants").select("id,name,business_type,active").eq("id",numericId).maybeSingle();
+    const result=await sb.from("restaurants").select("id,name,business_type,active,is_demo").eq("id",numericId).maybeSingle();
     if(result.error)throw result.error;
     r=result.data||null;
   }catch(e){
@@ -2773,24 +2803,26 @@ function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;
   }
   if(!r){
     try{w.close()}catch(_){}
-    restaurants=restaurants.filter(x=>Number(x.id)!==numericId);
-    if(typeof loadAdminBusinessDirectoryPage==="function")loadAdminBusinessDirectoryPage(false).catch(()=>{});
-    return toast("Ese negocio ya no existe. La lista fue actualizada.")
+    return toast("Ese negocio ya no existe.")
   }
 
-  let session=null;
+  let ticket=null;
   try{
-    const current=await sb.auth.getSession();
-    session=current.data?.session||null;
-    const refreshed=await sb.auth.refreshSession();
-    if(refreshed.data?.session)session=refreshed.data.session;
-  }catch(e){console.error("No se pudo refrescar la sesión administrativa",e)}
-  if(!session?.access_token||!session?.refresh_token){
+    await ensureAdminSession(false);
+    const res=await adminAuthorizedFetch("create-admin-preview-login",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({restaurant_id:numericId})
+    });
+    const data=await res.json();
+    if(!res.ok||!data?.token_hash)throw new Error(data?.error||"No se pudo crear el acceso temporal.");
+    ticket=data;
+  }catch(e){
+    console.error("No se pudo crear la sesión temporal del panel",e);
     try{w.close()}catch(_){}
-    return toast("Tu sesión de administrador venció. Vuelve a iniciar sesión.")
+    return toast(e.message||"No se pudo abrir el panel del negocio.")
   }
 
-  // Cada vertical conserva su panel independiente.
   const businessType=String(r.business_type||"restaurant").toLowerCase();
   const panelOrigin=businessType==="streaming"
     ?"https://streaming.yummypro.online"
@@ -2798,12 +2830,12 @@ function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;
       ?"https://pro.yummypro.online"
       :(["supermarket","minimarket"].includes(businessType)?"https://retail.yummypro.online":"https://web.yummypro.online");
 
-  const baseTarget=panelOrigin+"/panel?admin_preview="+encodeURIComponent(r.id)+"&tab="+encodeURIComponent(section);
-  const handoff="#admin_access="+encodeURIComponent(session.access_token)+"&admin_refresh="+encodeURIComponent(session.refresh_token);
+  const baseTarget=panelOrigin+"/panel/?admin_preview="+encodeURIComponent(r.id)+"&tab="+encodeURIComponent(section);
+  const handoff="#admin_token_hash="+encodeURIComponent(ticket.token_hash);
   const target=baseTarget+handoff;
   try{w.location.replace(target)}catch(_){w.location.href=target}
 
-  const payload={type:"YUMMY_ADMIN_PREVIEW",restaurant_id:Number(r.id),tab:section,access_token:session.access_token,refresh_token:session.refresh_token};
+  const payload={type:"YUMMY_ADMIN_PREVIEW",restaurant_id:Number(r.id),tab:section,token_hash:ticket.token_hash};
   let acknowledged=false,attempts=0;
   const send=()=>{
     if(w.closed)return;
@@ -2820,10 +2852,9 @@ function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;
   setTimeout(send,250);
   setTimeout(()=>{
     window.removeEventListener("message",onReady);
-    if(!acknowledged&&!w.closed)console.warn("El panel no confirmó el handoff por postMessage; se mantiene el respaldo por fragmento.")
+    if(!acknowledged&&!w.closed)console.warn("El panel no confirmó el ticket por postMessage; se mantiene el respaldo por fragmento.")
   },18000);
 }
-
 async function returnToAdminPanel(){
   if(!isSuperAdmin||!adminRestaurantMode)return;
   adminRestaurantMode=false;currentRole="";
@@ -3455,15 +3486,13 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.51</footer><script>
+</script><footer class="admin-version">Versión v2.3.52</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
  box.innerHTML="<b>Estado:</b> <span class='mut'>Verificando conexión con Mercado Pago…</span>";
  try{
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session?.access_token){box.innerHTML="<b>Estado:</b> ❌ Sesión vencida. Vuelve a iniciar sesión.";return}
-  const res=await fetch(SB_URL+"/functions/v1/verify-subscription-mercadopago",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+session.access_token}});
+  const res=await adminAuthorizedFetch("verify-subscription-mercadopago");
   const data=await res.json();
   box.innerHTML=data.ok
    ? "<b>Estado:</b> ✅ "+esc(data.message)
@@ -3475,8 +3504,7 @@ async function verifySubscriptionMercadoPago(){
 async function loadSubscriptionMercadoPagoSettings(){
  if(!isSuperAdmin)return;
  try{
-  const {data:{session}}=await sb.auth.getSession(); if(!session?.access_token)return;
-  const res=await fetch(SB_URL+"/functions/v1/subscription-mercadopago-settings",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+session.access_token}});
+  const res=await adminAuthorizedFetch("subscription-mercadopago-settings");
   const d=await res.json(); if(!res.ok)return;
   const pk=document.getElementById("subscriptionMpPublicKey"), hint=document.getElementById("subscriptionMpTokenHint");
   if(pk)pk.value=d.public_key||"";
@@ -3485,11 +3513,11 @@ async function loadSubscriptionMercadoPagoSettings(){
 }
 async function saveSubscriptionMercadoPago(){
  try{
-  const {data:{session}}=await sb.auth.getSession(); if(!session?.access_token)return toast("Tu sesión venció.");
+  await ensureAdminSession(false);
   const public_key=document.getElementById("subscriptionMpPublicKey")?.value.trim()||"";
   const access_token=document.getElementById("subscriptionMpAccessToken")?.value.trim()||"";
   if(!public_key)return toast("Ingresa la Public Key de Express.");
-  const res=await fetch(SB_URL+"/functions/v1/subscription-mercadopago-settings",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({public_key,access_token})});
+  const res=await adminAuthorizedFetch("subscription-mercadopago-settings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({public_key,access_token})});
   const raw=await res.text(); let d={}; try{d=JSON.parse(raw)}catch(_){d={error:raw||"Respuesta inválida del servidor"}} if(!res.ok)return toast(d.error||"No se pudieron guardar las credenciales.");
   document.getElementById("subscriptionMpAccessToken").value="";
   toast("Credenciales de Mercado Pago Express guardadas.");
@@ -3676,19 +3704,23 @@ function openCategoryAdminModal(){clearCategory();openAdminFormModal("adminCateg
 function openUserAdminModal(){staffEmail.value="";staffPassword.value="";openAdminFormModal("adminUserModal")}
 async function adminPaymentTestGlobalMode(){
  try{
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session?.access_token)return {ready:false,label:"Sesión vencida"};
-  const res=await fetch(SB_URL+"/functions/v1/subscription-mercadopago-settings",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+session.access_token}});
+  const res=await adminAuthorizedFetch("subscription-mercadopago-settings");
   const d=await res.json();
+  if(!res.ok)throw new Error(d?.error||"No autorizado");
   const pk=String(d?.public_key||"").trim();
   const ready=!!pk&&!!d?.has_access_token;
   return {ready,test:pk.startsWith("TEST-"),configured:ready,label:ready?(pk.startsWith("TEST-")?"Credenciales TEST del administrador":"Credenciales reales del administrador"):"Credenciales globales no configuradas"};
- }catch(_){return {ready:false,test:false,label:"No se pudo comprobar la configuración global"}}
+ }catch(e){return {ready:false,test:false,label:e?.message||"No se pudo comprobar la configuración global"}}
 }
 async function getBusinessPaymentTestState(id){
- const {data,error}=await sb.rpc("admin_get_business_payment_test_credentials",{p_restaurant_id:Number(id)});
- if(error)throw error;
- return data||{}
+ await ensureAdminSession(false);
+ let result=await sb.rpc("admin_get_business_payment_test_credentials",{p_restaurant_id:Number(id)});
+ if(result.error&&/jwt|session|expired|unauthor/i.test(String(result.error.message||""))){
+  await ensureAdminSession(true);
+  result=await sb.rpc("admin_get_business_payment_test_credentials",{p_restaurant_id:Number(id)});
+ }
+ if(result.error)throw result.error;
+ return result.data||{}
 }
 function paymentTestStatusText(r,state,mode){
  const kind=r?.is_demo?"🧪 Demo":"🏪 Negocio real";
@@ -3700,9 +3732,14 @@ async function setBusinessPaymentTestMode(id,enabled){
  const mode=await adminPaymentTestGlobalMode();
  if(enabled&&!mode.ready)throw new Error("Las credenciales del administrador no están configuradas.");
  if(enabled&&!mode.test&&!confirm("Las credenciales del administrador son REALES. Una compra de prueba puede generar un cobro real. ¿Quieres activarlas temporalmente en este negocio?"))return null;
- const {data,error}=await sb.rpc("admin_set_business_payment_test_credentials",{p_restaurant_id:Number(id),p_enabled:!!enabled});
- if(error)throw error;
- return data
+ await ensureAdminSession(false);
+ let result=await sb.rpc("admin_set_business_payment_test_credentials",{p_restaurant_id:Number(id),p_enabled:!!enabled});
+ if(result.error&&/jwt|session|expired|unauthor/i.test(String(result.error.message||""))){
+  await ensureAdminSession(true);
+  result=await sb.rpc("admin_set_business_payment_test_credentials",{p_restaurant_id:Number(id),p_enabled:!!enabled});
+ }
+ if(result.error)throw result.error;
+ return result.data
 }
 async function loadSettingsAdminPaymentTestMode(){
  const toggle=document.getElementById("settingsAdminPaymentTestModeToggle"),status=document.getElementById("settingsAdminPaymentTestModeStatus");
@@ -3765,8 +3802,7 @@ async function loadSubscriptionFlowSettings(){
  if(!isSuperAdmin||adminRestaurantMode)return;
  const status=document.getElementById("subscriptionFlowStatus"),badge=document.getElementById("flowConfigBadge");
  try{
-  const {data:{session}}=await sb.auth.getSession();if(!session?.access_token)return;
-  const res=await fetch(SB_URL+"/functions/v1/subscription-flow-settings",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+session.access_token}});
+  const res=await adminAuthorizedFetch("subscription-flow-settings");
   const d=await res.json();
   if(!res.ok){if(status)status.innerHTML="<b>Estado:</b> ❌ "+esc(d.error||"No se pudo cargar Flow");return}
   const api=document.getElementById("subscriptionFlowApiKey"),env=document.getElementById("subscriptionFlowEnvironment"),enabled=document.getElementById("subscriptionFlowEnabled"),hint=document.getElementById("subscriptionFlowSecretHint");
@@ -3780,13 +3816,13 @@ async function loadSubscriptionFlowSettings(){
 }
 async function saveSubscriptionFlowSettings(){
  try{
-  const {data:{session}}=await sb.auth.getSession();if(!session?.access_token)return toast("Tu sesión venció.");
+  await ensureAdminSession(false);
   const api_key=document.getElementById("subscriptionFlowApiKey")?.value.trim()||"";
   const secret_key=document.getElementById("subscriptionFlowSecretKey")?.value.trim()||"";
   const environment=document.getElementById("subscriptionFlowEnvironment")?.value||"sandbox";
   const enabled=!!document.getElementById("subscriptionFlowEnabled")?.checked;
   if(enabled&&!api_key)return toast("Ingresa la API Key de Flow.");
-  const res=await fetch(SB_URL+"/functions/v1/subscription-flow-settings",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({api_key,secret_key,environment,enabled})});
+  const res=await adminAuthorizedFetch("subscription-flow-settings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({api_key,secret_key,environment,enabled})});
   const d=await res.json();if(!res.ok)return toast(d.error||"No se pudo guardar Flow.");
   const secret=document.getElementById("subscriptionFlowSecretKey");if(secret)secret.value="";
   toast(d.message||"Flow guardado.");
@@ -3798,8 +3834,7 @@ async function loadSubscriptionVeripagosSettings(){
  if(!isSuperAdmin||adminRestaurantMode)return;
  const status=document.getElementById("subscriptionVeripagosStatus"),badge=document.getElementById("veripagosSubscriptionBadge");
  try{
-  const {data:{session}}=await sb.auth.getSession();if(!session?.access_token)return;
-  const res=await fetch(SB_URL+"/functions/v1/subscription-veripagos-settings",{headers:{"apikey":SB_KEY,"Authorization":"Bearer "+session.access_token}});
+  const res=await adminAuthorizedFetch("subscription-veripagos-settings");
   const d=await res.json();
   if(!res.ok){if(status)status.innerHTML="<b>Estado:</b> ❌ "+esc(d.error||"No se pudo cargar VeriPagos");return}
   const user=document.getElementById("subscriptionVeripagosUser"),enabled=document.getElementById("subscriptionVeripagosEnabled"),vig=document.getElementById("subscriptionVeripagosVigencia");
@@ -3813,14 +3848,14 @@ async function loadSubscriptionVeripagosSettings(){
 }
 async function saveSubscriptionVeripagosSettings(){
  try{
-  const {data:{session}}=await sb.auth.getSession();if(!session?.access_token)return toast("Tu sesión venció.");
+  await ensureAdminSession(false);
   const basic_username=document.getElementById("subscriptionVeripagosUser")?.value.trim()||"";
   const basic_password=document.getElementById("subscriptionVeripagosPassword")?.value||"";
   const secret_key=document.getElementById("subscriptionVeripagosSecret")?.value||"";
   const vigencia=document.getElementById("subscriptionVeripagosVigencia")?.value.trim()||"0/00:15";
   const enabled=!!document.getElementById("subscriptionVeripagosEnabled")?.checked;
   if(enabled&&!basic_username)return toast("Ingresa el usuario Basic Auth de VeriPagos.");
-  const res=await fetch(SB_URL+"/functions/v1/subscription-veripagos-settings",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify({basic_username,basic_password,secret_key,vigencia,enabled})});
+  const res=await adminAuthorizedFetch("subscription-veripagos-settings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({basic_username,basic_password,secret_key,vigencia,enabled})});
   const d=await res.json();if(!res.ok)return toast(d.error||"No se pudo guardar VeriPagos.");
   const p=document.getElementById("subscriptionVeripagosPassword"),s=document.getElementById("subscriptionVeripagosSecret");if(p)p.value="";if(s)s.value="";
   toast(d.message||"VeriPagos guardado.");await loadSubscriptionVeripagosSettings();
@@ -3829,10 +3864,10 @@ async function saveSubscriptionVeripagosSettings(){
 async function verifySubscriptionVeripagosCredentials(){
  const status=document.getElementById("subscriptionVeripagosStatus");
  try{
-  const {data:{session}}=await sb.auth.getSession();if(!session?.access_token)return toast("Tu sesión venció.");
+  await ensureAdminSession(false);
   if(status)status.innerHTML="<b>Estado:</b> ⏳ Verificando credenciales directamente con VeriPagos…";
   const body={basic_username:document.getElementById("subscriptionVeripagosUser")?.value.trim()||"",basic_password:document.getElementById("subscriptionVeripagosPassword")?.value||"",secret_key:document.getElementById("subscriptionVeripagosSecret")?.value||""};
-  const res=await fetch(SB_URL+"/functions/v1/verify-subscription-veripagos",{method:"POST",headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+session.access_token},body:JSON.stringify(body)});
+  const res=await adminAuthorizedFetch("verify-subscription-veripagos",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
   const d=await res.json();
   if(!res.ok||!d.ok){if(status)status.innerHTML="<b>Estado:</b> ❌ "+esc(d.error||"Las credenciales fueron rechazadas por VeriPagos.");return}
   if(status)status.innerHTML="<b>Estado:</b> ✅ Credenciales correctas. Conexión verificada con VeriPagos.";
