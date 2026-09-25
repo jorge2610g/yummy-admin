@@ -1,0 +1,94 @@
+name: Bootstrap Supabase Staging
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+
+    env:
+      PROD_PROJECT_REF: gulctljitzlwokqydigx
+      STAGING_PROJECT_REF: wodqqheeesrelsbacmgx
+      BASELINE_FILE: supabase/migrations/20260925153000_production_baseline.sql
+      AUTH_STORAGE_FILE: supabase/migrations/20260925153001_auth_storage_custom.sql
+
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          fetch-depth: 0
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Initialize Supabase directory
+        run: |
+          if [ ! -f supabase/config.toml ]; then
+            supabase init
+          fi
+          mkdir -p supabase/migrations
+
+      - name: Stop if baseline already exists
+        run: |
+          if [ -f "$BASELINE_FILE" ]; then
+            echo "Baseline already exists. Refusing to overwrite it."
+            exit 1
+          fi
+
+      - name: Link production read-only source
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: supabase link --project-ref "$PROD_PROJECT_REF"
+
+      - name: Dump production schema only
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          supabase db dump -f "$BASELINE_FILE"
+          test -s "$BASELINE_FILE"
+
+      - name: Capture custom Auth and Storage schema changes
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          supabase db diff --linked --schema auth,storage > "$AUTH_STORAGE_FILE"
+          if [ ! -s "$AUTH_STORAGE_FILE" ]; then
+            echo "-- No custom auth/storage differences detected." > "$AUTH_STORAGE_FILE"
+          fi
+
+      - name: Commit reproducible baseline to staging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add supabase
+          git commit -m "chore(staging): baseline Supabase schema from production"
+          git push origin HEAD:staging
+
+      - name: Link YummyPro Staging
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: supabase link --project-ref "$STAGING_PROJECT_REF"
+
+      - name: Preview staging migration
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: supabase db push --dry-run
+
+      - name: Apply schema to YummyPro Staging
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: supabase db push
