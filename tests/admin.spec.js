@@ -14,11 +14,19 @@ test('valida negocio antes de abrir cualquier vertical',async({request})=>{
   const response=await request.get('/');
   expect(response.ok()).toBeTruthy();
   const html=await response.text();
-  expect(html).toContain('Versión v2.3.48');
+  expect(html).toContain('Versión v2.3.49');
   expect(html).toContain('maybeSingle()');
   expect(html).toContain('Ese negocio ya no existe. La lista fue actualizada.');
   expect(html).toContain('https://streaming.yummypro.online');
   expect(html).toContain('https://pro.yummypro.online');
   expect(html).toContain('https://retail.yummypro.online');
   expect(html).toContain('refreshSession()');
+});
+
+
+test('configuración muestra switch de credenciales del administrador', async ({ page }) => {
+  await page.goto('/');
+  const html=await page.content();
+  expect(html).toContain('settingsAdminPaymentTestModeToggle');
+  expect(html).toContain('Credenciales del administrador para pruebas');
 });
