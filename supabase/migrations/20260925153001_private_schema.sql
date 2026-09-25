@@ -2,7 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict CZmZHpAb36JXDgykQacWm1z1oqTl1o8aoshn2HPV0bDgfgWPMWTepFdKIKQeE6F
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -294,5 +293,4 @@ ALTER TABLE ONLY private.push_notification_log
 -- PostgreSQL database dump complete
 --
 
-\unrestrict CZmZHpAb36JXDgykQacWm1z1oqTl1o8aoshn2HPV0bDgfgWPMWTepFdKIKQeE6F
 
