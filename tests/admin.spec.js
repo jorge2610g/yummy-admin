@@ -14,7 +14,7 @@ test('valida negocio antes de abrir cualquier vertical',async({request})=>{
   const response=await request.get('/');
   expect(response.ok()).toBeTruthy();
   const html=await response.text();
-  expect(html).toContain('Versión v2.3.50');
+  expect(html).toContain('Versión v2.3.51');
   expect(html).toContain('maybeSingle()');
   expect(html).toContain('Ese negocio ya no existe. La lista fue actualizada.');
   expect(html).toContain('https://streaming.yummypro.online');
@@ -29,4 +29,14 @@ test('configuración muestra switch de credenciales del administrador', async ({
   const html=await page.content();
   expect(html).toContain('settingsAdminPaymentTestModeToggle');
   expect(html).toContain('Credenciales del administrador para pruebas');
+});
+
+
+test('Mercado Pago usa un solo switch y separa VeriPagos demo', async ({ page }) => {
+  await page.goto('/');
+  const html=await page.content();
+  expect((html.match(/settingsAdminPaymentTestModeToggle/g)||[]).length).toBe(1);
+  expect(html).not.toContain('adminPaymentTestModeToggle');
+  expect(html).toContain('QR Bolivia / VeriPagos del demo');
+  expect(html).toContain('No modifica Mercado Pago');
 });
