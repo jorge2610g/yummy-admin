@@ -16,7 +16,9 @@ test('valida negocio antes de abrir cualquier vertical',async({request})=>{
   const html=await response.text();
   expect(html).toContain('Versión v2.3.52');
   expect(html).toContain('maybeSingle()');
-  expect(html).toContain('Ese negocio ya no existe. La lista fue actualizada.');
+  expect(html).toContain('Ese negocio ya no existe.');
+  expect(html).toContain('create-admin-preview-login');
+  expect(html).toContain('admin_token_hash');
   expect(html).toContain('https://streaming.yummypro.online');
   expect(html).toContain('https://pro.yummypro.online');
   expect(html).toContain('https://retail.yummypro.online');
