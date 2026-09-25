@@ -1,0 +1,70 @@
+name: Verify Staging Parity
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - staging
+    paths:
+      - "supabase/**"
+      - "scripts/staging-parity.sql"
+      - ".github/workflows/staging-parity.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    env:
+      PROD_PROJECT_REF: gulctljitzlwokqydigx
+      STAGING_PROJECT_REF: wodqqheeesrelsbacmgx
+
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          fetch-depth: 0
+
+      - name: Validate required secrets
+        env:
+          PROD_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          STG_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: |
+          test -n "$PROD_DB_PASSWORD" || (echo "Missing GitHub secret: PRODUCTION_DB_PASSWORD" && exit 1)
+          test -n "$STG_DB_PASSWORD" || (echo "Missing GitHub secret: STAGING_DB_PASSWORD" && exit 1)
+
+      - name: Verify staging contains production history
+        run: |
+          git fetch origin main --depth=1
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo "staging does not contain the current main history"
+            exit 1
+          fi
+
+      - name: Compare database runtime fingerprints
+        env:
+          PROD_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          STG_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: |
+          prod_hash="$(
+            docker run --rm -i               -e PGPASSWORD="$PROD_DB_PASSWORD"               postgres:17               psql                 --host="aws-0-sa-east-1.pooler.supabase.com"                 --port=5432                 --username="postgres.$PROD_PROJECT_REF"                 --dbname=postgres                 --no-align                 --tuples-only                 --set=ON_ERROR_STOP=1               < scripts/staging-parity.sql
+          )"
+
+          staging_hash="$(
+            docker run --rm -i               -e PGPASSWORD="$STG_DB_PASSWORD"               postgres:17               psql                 --host="aws-0-sa-east-1.pooler.supabase.com"                 --port=5432                 --username="postgres.$STAGING_PROJECT_REF"                 --dbname=postgres                 --no-align                 --tuples-only                 --set=ON_ERROR_STOP=1               < scripts/staging-parity.sql
+          )"
+
+          prod_hash="$(echo "$prod_hash" | tr -d '[:space:]')"
+          staging_hash="$(echo "$staging_hash" | tr -d '[:space:]')"
+
+          echo "Production fingerprint: $prod_hash"
+          echo "Staging fingerprint:    $staging_hash"
+
+          if [ "$prod_hash" != "$staging_hash" ]; then
+            echo "ERROR: YummyPro staging database is not functionally identical to production."
+            exit 1
+          fi
+
+          echo "OK: database structure and runtime permissions match production."
