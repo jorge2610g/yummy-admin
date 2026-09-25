@@ -35,7 +35,7 @@ test('configuración muestra switch de credenciales del administrador', async ({
 test('Mercado Pago usa un solo switch y separa VeriPagos demo', async ({ page }) => {
   await page.goto('/');
   const html=await page.content();
-  expect((html.match(/settingsAdminPaymentTestModeToggle/g)||[]).length).toBe(1);
+  expect((html.match(/id=\"settingsAdminPaymentTestModeToggle\"/g)||[]).length).toBe(1);
   expect(html).not.toContain('adminPaymentTestModeToggle');
   expect(html).toContain('QR Bolivia / VeriPagos del demo');
   expect(html).toContain('No modifica Mercado Pago');
