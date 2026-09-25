@@ -1,0 +1,38 @@
+name: Patch Admin Streaming once
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/admin-streaming-patch-once.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/admin-streaming-access-v1
+          fetch-depth: 0
+      - name: Connect Streaming integration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          tag='<script src="/admin-streaming-access.js?v=1000"></script>'
+          if tag not in s:
+              if '</body>' not in s:
+                  raise SystemExit('index.html no contiene cierre body')
+              head,tail=s.rsplit('</body>',1)
+              s=head+'\n'+tag+'\n</body>'+tail
+              p.write_text(s)
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "feat(admin): cargar integración Streaming"
+            git push origin HEAD:test/admin-streaming-access-v1
+          fi
