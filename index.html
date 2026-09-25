@@ -2353,7 +2353,7 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
 </section>
 <section id="release_center" class="section admin-only">
 <div class="dashboard-hero" style="margin-top:8px">
-  <div><div class="eyebrow">GITHUB + SUPABASE</div><h2>Centro de lanzamientos</h2><p>Promueve exactamente el código probado desde <b>staging</b> hacia <b>main</b>. El backend de este centro ya funciona en <b>Supabase</b>, sin depender de Vercel.</p></div>
+  <div><div class="eyebrow">GITHUB + SUPABASE</div><h2>Centro de lanzamientos</h2><p>Promueve exactamente el código probado desde <b>staging</b> hacia <b>main</b>. Backend en <b>Supabase</b> y hosting en <b>GitHub Pages</b>.</p></div>
   <button class="ghost refresh-btn" type="button" onclick="loadReleaseStatus()">↻ Actualizar estado</button>
 </div>
 <div class="grid">
@@ -2988,16 +2988,17 @@ function viewRestaurant(id){const r=restaurants.find(x=>x.id===id);if(!r)return;
   }
 
   const businessType=String(r.business_type||"restaurant").toLowerCase();
-  const stagingRuntime=location.hostname.endsWith(".vercel.app");
-  const panelOrigin=businessType==="streaming"
-    ?(stagingRuntime?"https://yummy-streaming.vercel.app":"https://streaming.yummypro.online")
+  const stagingRuntime=location.hostname==="jorge2610g.github.io"&&location.pathname.startsWith("/yummy-admin-pruebas/");
+  const panelBase=businessType==="streaming"
+    ?(stagingRuntime?"https://jorge2610g.github.io/yummy-streaming-pruebas":"https://streaming.yummypro.online")
     :businessType==="professional"
-      ?(stagingRuntime?"https://yummy-profesionales.vercel.app":"https://pro.yummypro.online")
+      ?(stagingRuntime?"https://jorge2610g.github.io/yummy-profesionales-pruebas":"https://pro.yummypro.online")
       :(["supermarket","minimarket"].includes(businessType)
-        ?(stagingRuntime?"https://yummy-retail-fxsh.vercel.app":"https://retail.yummypro.online")
-        :(stagingRuntime?"https://yummy-restaurante-nu.vercel.app":"https://web.yummypro.online"));
+        ?(stagingRuntime?"https://jorge2610g.github.io/yummy-retail-pruebas":"https://retail.yummypro.online")
+        :(stagingRuntime?"https://jorge2610g.github.io/yummy-restaurante-pruebas":"https://web.yummypro.online"));
+  const panelOrigin=new URL(panelBase).origin;
 
-  const baseTarget=panelOrigin+"/panel/?admin_preview="+encodeURIComponent(r.id)+"&tab="+encodeURIComponent(section);
+  const baseTarget=panelBase+"/panel/?admin_preview="+encodeURIComponent(r.id)+"&tab="+encodeURIComponent(section);
   const handoff="#admin_token_hash="+encodeURIComponent(ticket.token_hash);
   const target=baseTarget+handoff;
   try{w.location.replace(target)}catch(_){w.location.href=target}
@@ -3653,7 +3654,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.63</footer><script>
+</script><footer class="admin-version">Versión v2.3.64</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
