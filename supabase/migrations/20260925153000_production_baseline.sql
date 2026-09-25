@@ -2,7 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5IxSCgkEQcAXm2VzdxtUbKlHAc5J8vBUWMns3tNJPjLxYHx4He8Ql0vJJ6Cs2bS
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg13+2)
@@ -14060,5 +14059,4 @@ ALTER TABLE public.whatsapp_webhook_diagnostic_log ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5IxSCgkEQcAXm2VzdxtUbKlHAc5J8vBUWMns3tNJPjLxYHx4He8Ql0vJJ6Cs2bS
 
