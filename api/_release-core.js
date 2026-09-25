@@ -125,6 +125,51 @@ async function inspectAllRepositories() {
   return results;
 }
 
+async function inspectRepositoryHealth(item) {
+  if (!item?.staging_sha || item.error) {
+    return { ...item, ci_ready: false, ci: { state: 'unavailable', quality: 'unavailable', deployment: 'unavailable' } };
+  }
+  const [checks, statuses] = await Promise.all([
+    githubRequest(`/repos/${item.repo}/commits/${item.staging_sha}/check-runs`),
+    githubRequest(`/repos/${item.repo}/commits/${item.staging_sha}/status`),
+  ]);
+  const quality = (checks?.check_runs || []).find((check) => check?.name === 'quality');
+  const deployment = (statuses?.statuses || []).find((status) => status?.context === 'Vercel');
+  const qualityOk = quality?.status === 'completed' && ['success', 'neutral', 'skipped'].includes(String(quality?.conclusion || ''));
+  const deploymentOk = deployment?.state === 'success';
+  const qualityFailed = quality?.status === 'completed' && !qualityOk;
+  const deploymentFailed = ['failure', 'error'].includes(String(deployment?.state || ''));
+  const state = qualityOk && deploymentOk
+    ? 'passed'
+    : (qualityFailed || deploymentFailed ? 'failed' : 'pending');
+  return {
+    ...item,
+    ci_ready: state === 'passed',
+    ci: {
+      state,
+      quality: quality ? (quality.status === 'completed' ? quality.conclusion : quality.status) : 'missing',
+      deployment: deployment?.state || 'missing',
+    },
+  };
+}
+
+async function inspectAllRepositoryHealth(repositories) {
+  const results = [];
+  for (const item of repositories) {
+    try {
+      results.push(await inspectRepositoryHealth(item));
+    } catch (error) {
+      results.push({
+        ...item,
+        ci_ready: false,
+        ci: { state: 'error', quality: 'error', deployment: 'error' },
+        ci_error: error.message || 'No se pudo verificar Calidad/Vercel',
+      });
+    }
+  }
+  return results;
+}
+
 async function requireSuperAdmin(req) {
   const authorization = String(req.headers.authorization || '');
   const match = authorization.match(/^Bearer\s+(.+)$/i);
@@ -207,6 +252,7 @@ module.exports = {
   REPOSITORIES,
   sendJson,
   inspectAllRepositories,
+  inspectAllRepositoryHealth,
   getBranchSha,
   listReleaseBackups,
   requireSuperAdmin,
