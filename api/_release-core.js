@@ -52,22 +52,18 @@ async function githubRequest(path, options = {}) {
   return data;
 }
 
-async function getRef(repo, branch) {
-  const data = await githubRequest(`/repos/${repo}/git/ref/heads/${encodeURIComponent(branch)}`);
-  return data?.object?.sha || null;
-}
-
 async function compareBranches(repo) {
   return githubRequest(`/repos/${repo}/compare/main...staging`);
 }
 
 async function inspectRepository(item) {
-  const [mainSha, stagingSha, comparison] = await Promise.all([
-    getRef(item.repo, 'main'),
-    getRef(item.repo, 'staging'),
-    compareBranches(item.repo),
-  ]);
+  const comparison = await compareBranches(item.repo);
   const status = String(comparison?.status || 'unknown');
+  const mainSha = comparison?.base_commit?.sha || null;
+  const commits = Array.isArray(comparison?.commits) ? comparison.commits : [];
+  const stagingSha = status === 'identical'
+    ? mainSha
+    : commits.at(-1)?.sha || comparison?.merge_base_commit?.sha || null;
   const aheadBy = Number(comparison?.ahead_by || 0);
   const behindBy = Number(comparison?.behind_by || 0);
   const safe = status === 'identical' || (status === 'ahead' && behindBy === 0);
