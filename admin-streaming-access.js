@@ -89,19 +89,52 @@
 
  const originalOpenRestaurantPanel=window.openRestaurantPanel;
  window.openRestaurantPanel=async function(id,section='dashboard'){
-  const r=restaurants.find(x=>Number(x.id)===Number(id));
-  if(!r||!isStreamingType(r.business_type))return originalOpenRestaurantPanel?originalOpenRestaurantPanel(id,section):undefined;
+  const local=restaurants.find(x=>Number(x.id)===Number(id))||streamingAdminBusinessById(id);
+  if(!local||!isStreamingType(local.business_type))return originalOpenRestaurantPanel?originalOpenRestaurantPanel(id,section):undefined;
   if(!isSuperAdmin)return toast('Acceso exclusivo del administrador general');
+
+  // Abrir inmediatamente para conservar el gesto del usuario y evitar bloqueos de popup.
   const w=window.open('about:blank','_blank');
   if(!w)return toast('El navegador bloqueó la nueva pestaña. Habilita ventanas emergentes para abrir el panel.');
+
+  // Validar contra la base real antes de entregar una sesión al panel.
+  // Esto evita abrir IDs antiguos que hayan quedado en una pestaña del admin mucho tiempo.
+  let fresh=null;
+  try{
+   const result=await sb.from('restaurants').select('id,name,business_type,active').eq('id',Number(id)).maybeSingle();
+   if(result.error)throw result.error;
+   fresh=result.data||null;
+  }catch(e){
+   console.error('No se pudo validar el negocio Streaming antes de abrirlo',e);
+   try{w.close()}catch(_){}
+   return toast('No se pudo validar el negocio. Actualiza el administrador e inténtalo nuevamente.');
+  }
+  if(!fresh||!isStreamingType(fresh.business_type)){
+   try{w.close()}catch(_){}
+   streamingAdminBusinesses=streamingAdminBusinesses.filter(x=>Number(x.id)!==Number(id));
+   restaurants=restaurants.filter(x=>Number(x.id)!==Number(id));
+   loadStreamingAdminBusinesses(true).catch(()=>{});
+   if(typeof loadAdminBusinessDirectoryPage==='function')loadAdminBusinessDirectoryPage(false).catch(()=>{});
+   return toast('Ese negocio ya no existe o ya no pertenece a Streaming. La lista fue actualizada.');
+  }
+
   let session=null;
-  try{session=(await sb.auth.getSession()).data?.session||null}catch(_){session=null}
-  if(!session?.access_token||!session?.refresh_token){try{w.close()}catch(_){}return toast('Tu sesión de administrador venció. Vuelve a iniciar sesión.')}
-  const baseTarget=STREAMING_ORIGIN+'/panel?admin_preview='+encodeURIComponent(id)+'&tab='+encodeURIComponent(section);
+  try{
+   session=(await sb.auth.getSession()).data?.session||null;
+   const refreshed=await sb.auth.refreshSession();
+   if(refreshed.data?.session)session=refreshed.data.session;
+  }catch(e){console.error('No se pudo refrescar la sesión administrativa para Streaming',e)}
+  if(!session?.access_token||!session?.refresh_token){
+   try{w.close()}catch(_){}
+   return toast('Tu sesión de administrador venció. Vuelve a iniciar sesión.');
+  }
+
+  const baseTarget=STREAMING_ORIGIN+'/panel?admin_preview='+encodeURIComponent(fresh.id)+'&tab='+encodeURIComponent(section);
   const handoff='#admin_access='+encodeURIComponent(session.access_token)+'&admin_refresh='+encodeURIComponent(session.refresh_token);
   const target=baseTarget+handoff;
   try{w.location.replace(target)}catch(_){w.location.href=target}
-  const payload={type:'YUMMY_ADMIN_PREVIEW',restaurant_id:Number(id),tab:section,access_token:session.access_token,refresh_token:session.refresh_token};
+
+  const payload={type:'YUMMY_ADMIN_PREVIEW',restaurant_id:Number(fresh.id),tab:section,access_token:session.access_token,refresh_token:session.refresh_token};
   let attempts=0,acknowledged=false;
   const send=()=>{if(acknowledged||w.closed)return;attempts++;try{w.postMessage(payload,STREAMING_ORIGIN)}catch(_){}if(attempts<40)setTimeout(send,400)};
   const onReady=e=>{if(e.origin!==STREAMING_ORIGIN||e.source!==w||e.data?.type!=='YUMMY_ADMIN_PREVIEW_READY')return;acknowledged=true;try{w.postMessage(payload,STREAMING_ORIGIN)}catch(_){};setTimeout(()=>window.removeEventListener('message',onReady),1500)};
