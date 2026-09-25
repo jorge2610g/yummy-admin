@@ -14,7 +14,7 @@ test('valida negocio antes de abrir cualquier vertical',async({request})=>{
   const response=await request.get('/');
   expect(response.ok()).toBeTruthy();
   const html=await response.text();
-  expect(html).toContain('Versión v2.3.51');
+  expect(html).toContain('Versión v2.3.52');
   expect(html).toContain('maybeSingle()');
   expect(html).toContain('Ese negocio ya no existe. La lista fue actualizada.');
   expect(html).toContain('https://streaming.yummypro.online');
