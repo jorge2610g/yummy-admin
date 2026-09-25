@@ -2444,24 +2444,25 @@ async function loadRestaurantMercadoPago(){
  const r=currentRestaurantConfig||restaurants.find(x=>Number(x.id)===Number(currentRestaurant));
  if(!r)return;
  const pk=document.getElementById("restaurantMpPublicKey"),token=document.getElementById("restaurantMpAccessToken"),status=document.getElementById("restaurantMpStatus"),help=document.getElementById("restaurantMpHelp"),save=document.getElementById("saveRestaurantMpBtn"),verify=document.getElementById("verifyRestaurantMpBtn");
- if(pk)pk.value=r.mercadopago_public_key||"";
+ let usingAdmin=false;
+ try{const state=await getBusinessPaymentTestState(currentRestaurant);usingAdmin=!!state?.using_admin_credentials}catch(_){}
+ if(pk)pk.value=usingAdmin?"":(r.mercadopago_public_key||"");
  if(token)token.value="";
- const inherited=!!r.is_demo&&!!r.use_demo_api_defaults;
- if(help)help.textContent=inherited?"Este demo usa automáticamente la API global de YummyPro. Desactiva la herencia solo si quieres credenciales propias para este demo.":r.is_demo?"Este demo usa credenciales propias. Como superadmin puedes guardarlas o verificarlas aquí.":"Credenciales propias de este negocio real. Como superadmin puedes ayudar a configurarlas o verificarlas aquí sin aplicar la API global.";
- if(pk)pk.disabled=inherited;
- if(token){token.disabled=inherited;token.placeholder=inherited?"Access Token global protegido":"APP_USR-..."}
- if(save)save.disabled=inherited;
+ if(help)help.textContent=usingAdmin?"Modo de prueba activo: este negocio está usando temporalmente las credenciales del administrador. Desactiva el interruptor superior para volver a sus credenciales propias.":r.is_demo?"Esta demo puede usar credenciales propias o activar temporalmente las del administrador desde el interruptor superior.":"Credenciales propias de este negocio real. El administrador puede activar temporalmente sus credenciales de prueba desde el interruptor superior.";
+ if(pk)pk.disabled=usingAdmin;
+ if(token){token.disabled=usingAdmin;token.placeholder=usingAdmin?"Credenciales del administrador protegidas":"APP_USR-..."}
+ if(save)save.disabled=usingAdmin;
  if(verify)verify.disabled=false;
  try{
   const {data}=await sb.rpc("restaurant_mp_connection_status",{rid:Number(currentRestaurant)});
   const row=Array.isArray(data)?data[0]:data;
-  if(status)status.textContent=row?.configured?(inherited?"✅ API global de demos conectada.":"✅ Mercado Pago configurado para este negocio."):"Mercado Pago aún no está configurado.";
- }catch(_){if(status)status.textContent=inherited?"API global de demos seleccionada.":"Mercado Pago aún no configurado."}
+  if(status)status.textContent=row?.configured?(usingAdmin?"✅ Modo de prueba activo con credenciales del administrador.":"✅ Mercado Pago configurado para este negocio."):(r.is_demo?"Pagos deshabilitados en esta demo hasta configurar credenciales o activar el modo de prueba.":"Mercado Pago aún no está configurado.");
+ }catch(_){if(status)status.textContent=usingAdmin?"Modo de prueba activo.":"Mercado Pago aún no configurado."}
 }
 async function saveRestaurantMercadoPago(){
  if(!currentRestaurant)return toast("No hay negocio seleccionado");
  const r=currentRestaurantConfig||restaurants.find(x=>Number(x.id)===Number(currentRestaurant));
- if(r?.is_demo&&r?.use_demo_api_defaults)return toast("Este demo usa la API global. Desactiva la herencia para usar credenciales propias.");
+ try{const state=await getBusinessPaymentTestState(currentRestaurant);if(state?.using_admin_credentials)return toast("Desactiva primero las credenciales del administrador para editar las propias del negocio.")}catch(_){}
  const key=restaurantMpPublicKey.value.trim(),token=restaurantMpAccessToken.value.trim();
  if(!key||!token)return toast("Ingresa Public Key y Access Token");
  restaurantMpStatus.textContent="Verificando credenciales…";
