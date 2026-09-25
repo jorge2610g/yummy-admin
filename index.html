@@ -2517,7 +2517,7 @@ function renderReleaseCenter(data,prepared=false){
   const safetyTitle=document.getElementById("releaseSafetyTitle");
   const safetyText=document.getElementById("releaseSafetyText");
   if(safetyTitle)safetyTitle.textContent=enabled?"Publicación habilitada":"Modo seguro";
-  if(safetyText)safetyText.textContent=enabled?"Backend Supabase · publicar exige diagnóstico y Calidad ✅ en GitHub.":"Backend Supabase ✅ · publicación real bloqueada hasta completar la migración a GitHub Pages.";
+  if(safetyText)safetyText.textContent=enabled?"Backend Supabase · publicar exige diagnóstico y Calidad ✅ en GitHub.":"Backend Supabase ✅ · publicación real bloqueada hasta validar la credencial privada de GitHub y habilitar lanzamientos.";
 
   const summary=document.getElementById("releaseSummary");
   if(summary){
