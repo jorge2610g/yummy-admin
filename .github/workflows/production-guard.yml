@@ -21,18 +21,37 @@ jobs:
         run: |
           set -euo pipefail
           branch="${GITHUB_REF_NAME}"
+
           if [ "$branch" = "staging" ]; then
             git fetch origin main --depth=1
             git merge-base --is-ancestor origin/main HEAD || {
               echo "ERROR: staging ya no contiene main. Hay divergencia o staging quedó detrás."
               exit 1
             }
+            echo "OK: staging contiene el estado actual de main."
+
           elif [ "$branch" = "main" ]; then
             git fetch origin staging --depth=1
-            git merge-base --is-ancestor HEAD origin/staging || {
-              echo "ERROR: main contiene cambios que no existen en staging. Producción fue modificada fuera del flujo de release."
+
+            parent_count="$(git show -s --format=%P HEAD | wc -w | tr -d ' ')"
+            if [ "$parent_count" -lt 2 ]; then
+              echo "ERROR: main debe actualizarse mediante un merge controlado desde staging."
+              exit 1
+            fi
+
+            release_parent="$(git rev-parse HEAD^2)"
+
+            git merge-base --is-ancestor "$release_parent" origin/staging || {
+              echo "ERROR: el commit fusionado en main no pertenece al historial de staging."
               exit 1
             }
+
+            git diff --quiet "$release_parent" HEAD || {
+              echo "ERROR: el árbol publicado en main no coincide exactamente con el candidato fusionado desde staging."
+              exit 1
+            }
+
+            echo "OK: main fue actualizado mediante un merge controlado desde staging."
           fi
 
       - name: Verificar control de versión
