@@ -20,7 +20,7 @@ const flowMarkers=['flowCredentialsCard','subscriptionFlowApiKey','subscriptionF
 
 for(const marker of ['planAnnualEnabled','planAnnualAmount','planAnnualBonusMonths','planAnnualDays','updateAnnualPlanPreview','annual_enabled','annual_bonus_months'])if(!admin.includes(marker))throw new Error('index.html: falta configuración anual '+marker);
 
-for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.75'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
+for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.76'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
 for(const marker of ['settingsBusinessGroupFilter','changeSettingsBusinessGroup','settingsRestaurantSelect','changeSettingsRestaurant','settingsBusinessBadge','demoApiInheritanceCard','demoApiInheritanceToggle','toggleDemoApiInheritance','set_demo_business_api_inheritance','use_demo_api_defaults','is_demo','QR Bolivia / VeriPagos del demo','Locales reales','Locales demo'])if(!admin.includes(marker))throw new Error('index.html: falta configuración de APIs para demos '+marker);
 for(const marker of ['data-tab="restaurants" title="Negocios"','<span class="nav-label">Negocios</span>','Ver información del negocio'])if(!admin.includes(marker))throw new Error('index.html: falta nomenclatura general de negocios '+marker);
 
@@ -74,3 +74,5 @@ for(const marker of ['releaseEmergencyCard','Modo de emergencia','retryReleaseQu
 
 
 for(const marker of ['data-tab="ai_auditor"','Auditor IA de Pruebas','loadAiAuditStatus','runAiAuditNow','openAiAuditReport','Gemini 3.8 Flash','Groq'])if(!admin.includes(marker))throw new Error('index.html: falta Auditor IA de Pruebas '+marker);
+
+for(const marker of ['./admin-streaming-access.js?v=1002','./manifest.webmanifest?v=2320','navigator.serviceWorker.register("./pwa-sw.js")'])if(!admin.includes(marker))throw new Error('index.html: falta ruta PWA segura para GitHub Pages '+marker);
