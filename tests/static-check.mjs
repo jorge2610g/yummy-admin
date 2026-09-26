@@ -28,9 +28,9 @@ if(!admin.includes('/manifest.webmanifest?v=2320'))throw new Error('index.html: 
 
 for(const marker of ['adminObservabilityPanel','loadAdminObservability','admin_observability_summary','admin_plan_recommendations','obsSystemErrors','obsUserErrors','obsRecommendations','obsRecentReports'])if(!admin.includes(marker))throw new Error('index.html: falta observabilidad admin '+marker);
 
-for(const marker of ['rbusinessType','business_type','adminRetailSummary','loadAdminRetailSummary','openRetailBusinessProfile','retail_products','retail_sales','retail_purchases','Restaurantes activos','Negocios activos'])if(!admin.includes(marker))throw new Error('index.html: falta infraestructura retail admin '+marker);
+for(const marker of ['rbusinessType','business_type','adminRetailSummary','loadAdminRetailSummary','openRestaurantProfile','loadAdminBusinessProfileMetrics','admin_business_profile_metrics','retail_products','retail_purchases','Restaurantes activos','Negocios activos'])if(!admin.includes(marker))throw new Error('index.html: falta infraestructura retail admin '+marker);
 
-for(const marker of ['retail_online_orders','Pedidos online activos','Ver tienda online','retail_orders','Operaciones totales','Últimos 7 días'])if(!admin.includes(marker))throw new Error('index.html: falta monitoreo de uso retail admin '+marker);
+for(const marker of ['Pedidos online activos','Ver tienda online','retail_orders','Operaciones totales','Últimos 7 días'])if(!admin.includes(marker))throw new Error('index.html: falta monitoreo de uso retail admin '+marker);
 
 for(const removed of ['Ventas totales','Ventas de hoy','Ticket promedio','Ingresos por servicios','Venta neta total','Venta online','Total compras','spentByCurrency'])if(admin.includes(removed))throw new Error('index.html: todavía expone métrica monetaria del negocio '+removed);
 
