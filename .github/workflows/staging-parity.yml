@@ -2,6 +2,12 @@ name: Verify Staging Parity
 
 on:
   workflow_dispatch:
+  push:
+    branches: [staging]
+    paths:
+      - 'supabase/**'
+      - 'scripts/staging-parity.sql'
+      - '.github/workflows/staging-parity.yml'
 
 permissions:
   contents: read
@@ -42,11 +48,33 @@ jobs:
           STG_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
           prod_hash="$(
-            docker run --rm -i               -e PGPASSWORD="$PROD_DB_PASSWORD"               postgres:17               psql                 --host="aws-0-sa-east-1.pooler.supabase.com"                 --port=5432                 --username="postgres.$PROD_PROJECT_REF"                 --dbname=postgres                 --no-align                 --tuples-only                 --set=ON_ERROR_STOP=1               < scripts/staging-parity.sql
+            docker run --rm -i \
+              -e PGPASSWORD="$PROD_DB_PASSWORD" \
+              postgres:17 \
+              psql \
+                --host="aws-0-sa-east-1.pooler.supabase.com" \
+                --port=5432 \
+                --username="postgres.$PROD_PROJECT_REF" \
+                --dbname=postgres \
+                --no-align \
+                --tuples-only \
+                --set=ON_ERROR_STOP=1 \
+              < scripts/staging-parity.sql
           )"
 
           staging_hash="$(
-            docker run --rm -i               -e PGPASSWORD="$STG_DB_PASSWORD"               postgres:17               psql                 --host="aws-0-sa-east-1.pooler.supabase.com"                 --port=5432                 --username="postgres.$STAGING_PROJECT_REF"                 --dbname=postgres                 --no-align                 --tuples-only                 --set=ON_ERROR_STOP=1               < scripts/staging-parity.sql
+            docker run --rm -i \
+              -e PGPASSWORD="$STG_DB_PASSWORD" \
+              postgres:17 \
+              psql \
+                --host="aws-0-sa-east-1.pooler.supabase.com" \
+                --port=5432 \
+                --username="postgres.$STAGING_PROJECT_REF" \
+                --dbname=postgres \
+                --no-align \
+                --tuples-only \
+                --set=ON_ERROR_STOP=1 \
+              < scripts/staging-parity.sql
           )"
 
           prod_hash="$(echo "$prod_hash" | tr -d '[:space:]')"
