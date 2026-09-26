@@ -1,3 +1,4 @@
+# Revalidación explícita del candidato de release después de cerrar Smoke y guardas.
 name: Verify Staging Parity
 
 on:
