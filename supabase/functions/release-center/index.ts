@@ -1,12 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const REPOSITORIES = [
-  { key: "admin", label: "Admin", repo: "jorge2610g/yummy-admin" },
-  { key: "restaurante", label: "Restaurante", repo: "jorge2610g/yummy-restaurante" },
-  { key: "retail", label: "Retail", repo: "jorge2610g/yummy-retail" },
-  { key: "profesionales", label: "Profesionales", repo: "jorge2610g/yummy-profesionales" },
-  { key: "streaming", label: "Streaming", repo: "jorge2610g/yummy-streaming" },
-  { key: "cliente", label: "Cliente", repo: "jorge2610g/mipagina" },
+  { key: "admin", label: "Admin", repo: "jorge2610g/yummy-admin", test_repo: "jorge2610g/yummy-admin-pruebas" },
+  { key: "restaurante", label: "Restaurante", repo: "jorge2610g/yummy-restaurante", test_repo: "jorge2610g/yummy-restaurante-pruebas" },
+  { key: "retail", label: "Retail", repo: "jorge2610g/yummy-retail", test_repo: "jorge2610g/yummy-retail-pruebas" },
+  { key: "profesionales", label: "Profesionales", repo: "jorge2610g/yummy-profesionales", test_repo: "jorge2610g/yummy-profesionales-pruebas" },
+  { key: "streaming", label: "Streaming", repo: "jorge2610g/yummy-streaming", test_repo: "jorge2610g/yummy-streaming-pruebas" },
+  { key: "cliente", label: "Cliente", repo: "jorge2610g/mipagina", test_repo: "jorge2610g/yummy-cliente-pruebas" },
 ];
 
 const GH_API = "https://api.github.com";
@@ -140,11 +140,18 @@ async function inspectAllRepositories() {
 }
 
 async function inspectQuality(item: any) {
-  if (!item?.staging_sha || item.error) return { ...item, quality_ready: false, quality: "unavailable" };
+  if (!item?.staging_sha || item.error) return { ...item, quality_ready: false, quality: "unavailable", quality_url: null };
   const checks = await githubRequest(`/repos/${item.repo}/commits/${item.staging_sha}/check-runs`);
-  const quality = (checks?.check_runs || []).find((check: any) => check?.name === "quality");
+  const quality = latestCheckByName(checks?.check_runs || [], "quality");
   const ok = quality?.status === "completed" && ["success", "neutral", "skipped"].includes(String(quality?.conclusion || ""));
-  return { ...item, quality_ready: ok, quality: quality ? (quality.status === "completed" ? quality.conclusion : quality.status) : "missing" };
+  return {
+    ...item,
+    quality_ready: ok,
+    quality: quality ? (quality.status === "completed" ? quality.conclusion : quality.status) : "missing",
+    quality_url: quality?.details_url || null,
+    quality_started_at: quality?.started_at || null,
+    quality_completed_at: quality?.completed_at || null,
+  };
 }
 
 function latestCheckByName(checks: any[], name: string) {
@@ -231,6 +238,73 @@ async function updateMain(repo: string, sha: string, force = false) {
   });
 }
 
+async function updateStaging(repo: string, sha: string, force = true) {
+  return githubRequest(`/repos/${repo}/git/refs/heads/staging`, {
+    method: "PATCH",
+    body: JSON.stringify({ sha, force }),
+  });
+}
+
+function emergencyBackupRefName() {
+  return `backup/emergency-staging-${new Date().toISOString().replace(/[:.]/g, "-").replace("T", "-").replace("Z", "")}`;
+}
+
+function repositoryByKey(key: string) {
+  return REPOSITORIES.find((item) => item.key === key) || null;
+}
+
+async function dispatchWorkflow(repo: string, workflow: string, ref: string) {
+  await githubRequest(`/repos/${repo}/actions/workflows/${encodeURIComponent(workflow)}/dispatches`, {
+    method: "POST",
+    body: JSON.stringify({ ref }),
+  });
+  return true;
+}
+
+async function latestStableQuality(repo: string) {
+  const data = await githubRequest(`/repos/${repo}/actions/workflows/quality.yml/runs?branch=staging&status=success&per_page=20`);
+  const runs = Array.isArray(data?.workflow_runs) ? data.workflow_runs : [];
+  const run = runs.find((row: any) => row?.head_sha && row?.conclusion === "success") || null;
+  return run ? {
+    sha: run.head_sha,
+    run_id: run.id,
+    url: run.html_url || null,
+    created_at: run.created_at || null,
+    updated_at: run.updated_at || null,
+  } : null;
+}
+
+async function emergencyModuleState(item: any) {
+  const currentSha = await getBranchSha(item.repo, "staging");
+  let stable: any = null;
+  try { stable = await latestStableQuality(item.repo); } catch (_) {}
+  let quality: any = null;
+  try {
+    const base = { ...item, staging_sha: currentSha };
+    quality = await inspectQuality(base);
+  } catch (_) {}
+  return {
+    key: item.key,
+    label: item.label,
+    repo: item.repo,
+    test_repo: item.test_repo,
+    staging_sha: currentSha,
+    quality: quality?.quality || "unavailable",
+    quality_ready: !!quality?.quality_ready,
+    quality_url: quality?.quality_url || null,
+    stable_sha: stable?.sha || null,
+    stable_url: stable?.url || null,
+    stable_at: stable?.updated_at || stable?.created_at || null,
+  };
+}
+
+async function emergencyTargets(key: string) {
+  if (key === "all") return [...REPOSITORIES];
+  const item = repositoryByKey(key);
+  if (!item) throw Object.assign(new Error("Módulo de Pruebas no reconocido."), { status: 400 });
+  return [item];
+}
+
 function releaseBranchDate(branch: string) {
   const match = String(branch || "").match(/^backup\/release-(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})/);
   if (!match) return null;
@@ -252,11 +326,12 @@ async function listReleaseBackups(limit = 10) {
 
 async function handleStatus() {
   let repositories = await inspectAllRepositories();
+  repositories = await inspectAllQuality(repositories);
   repositories = await inspectAllProductionDeployment(repositories);
   return {
     ok: true,
     configuration: configuration(),
-    ready: repositories.every((item) => item.safe && !item.error),
+    ready: repositories.every((item) => item.safe && !item.error && item.quality_ready),
     pending: repositories.filter((item) => item.needs_release).length,
     production_live: repositories.every((item) => item.production_code_synced && item.production_deploy_ready),
     repositories,
@@ -363,6 +438,148 @@ async function handleRelease(body: any, admin: any) {
   return { status: 200, body: { ok: true, released: true, released_by: admin.email, backup_branch: backupBranch, promoted, untouched_staging: true, message: "Código promovido de staging a main. No se modificaron bases de datos ni ramas staging." } };
 }
 
+async function handleEmergencyStatus() {
+  const modules: any[] = [];
+  for (const item of REPOSITORIES) {
+    try { modules.push(await emergencyModuleState(item)); }
+    catch (error) {
+      modules.push({
+        key: item.key,
+        label: item.label,
+        repo: item.repo,
+        test_repo: item.test_repo,
+        quality: "error",
+        quality_ready: false,
+        error: error instanceof Error ? error.message : "No se pudo revisar este módulo.",
+      });
+    }
+  }
+  return {
+    ok: true,
+    environment: "staging",
+    production_untouched: true,
+    modules,
+    all_green: modules.every((item) => item.quality_ready),
+  };
+}
+
+async function handleRetryQuality(body: any) {
+  const key = String(body?.key || "all");
+  const targets = await emergencyTargets(key);
+  const dispatched: any[] = [];
+  for (const item of targets) {
+    await dispatchWorkflow(item.repo, "quality.yml", "staging");
+    dispatched.push({ key: item.key, repo: item.repo, workflow: "quality.yml", ref: "staging" });
+  }
+  return {
+    ok: true,
+    production_untouched: true,
+    dispatched,
+    message: targets.length === 1 ? "Validación de Pruebas reiniciada." : "Validaciones de todos los módulos de Pruebas reiniciadas.",
+  };
+}
+
+async function handleRepublishTests(body: any) {
+  const key = String(body?.key || "all");
+  const targets = await emergencyTargets(key);
+  const dispatched: any[] = [];
+  for (const item of targets) {
+    await dispatchWorkflow(item.test_repo, "deploy-staging-pages.yml", "main");
+    dispatched.push({ key: item.key, repo: item.test_repo, workflow: "deploy-staging-pages.yml", ref: "main" });
+  }
+  return {
+    ok: true,
+    production_untouched: true,
+    dispatched,
+    message: targets.length === 1 ? "Republicación de Pruebas iniciada." : "Republicación de todos los sitios de Pruebas iniciada.",
+  };
+}
+
+async function handleRestoreStableTests(body: any, admin: any) {
+  const key = String(body?.key || "all");
+  const confirmation = String(body?.confirmation || "").trim().toUpperCase();
+  if (confirmation !== "RESTAURAR PRUEBAS") {
+    return { status: 400, body: { error: "Confirmación inválida. Escribe RESTAURAR PRUEBAS." } };
+  }
+  const targets = await emergencyTargets(key);
+  const backupBranch = emergencyBackupRefName();
+  const states: any[] = [];
+
+  for (const item of targets) {
+    const [currentSha, stable] = await Promise.all([
+      getBranchSha(item.repo, "staging"),
+      latestStableQuality(item.repo),
+    ]);
+    if (!currentSha) return { status: 409, body: { error: `No se pudo leer staging de ${item.label}.` } };
+    if (!stable?.sha) return { status: 409, body: { error: `No existe una validación estable anterior para ${item.label}.` } };
+    states.push({ ...item, current_sha: currentSha, stable_sha: stable.sha, stable_url: stable.url });
+  }
+
+  for (const item of states) {
+    try { await createBackup(item.repo, item.current_sha, backupBranch); }
+    catch (error) {
+      return {
+        status: 409,
+        body: {
+          error: `No se pudo crear el respaldo de seguridad de ${item.label}. No se modificó staging.`,
+          detail: error instanceof Error ? error.message : "Error de respaldo",
+        },
+      };
+    }
+  }
+
+  const restored: any[] = [];
+  try {
+    for (const item of states) {
+      if (item.current_sha !== item.stable_sha) await updateStaging(item.repo, item.stable_sha, true);
+      restored.push({
+        key: item.key,
+        repo: item.repo,
+        from: item.current_sha,
+        to: item.stable_sha,
+        changed: item.current_sha !== item.stable_sha,
+      });
+    }
+  } catch (restoreError) {
+    const recovery: any[] = [];
+    for (const item of restored.slice().reverse()) {
+      if (!item.changed) continue;
+      try { await updateStaging(item.repo, item.from, true); recovery.push({ repo: item.repo, ok: true }); }
+      catch (error) { recovery.push({ repo: item.repo, ok: false, error: error instanceof Error ? error.message : "Recuperación falló" }); }
+    }
+    return {
+      status: 500,
+      body: {
+        error: "La restauración de Pruebas falló y se intentó recuperar el staging anterior.",
+        recovery,
+        backup_branch: backupBranch,
+      },
+    };
+  }
+
+  const dispatched: any[] = [];
+  for (const item of states) {
+    try { await dispatchWorkflow(item.repo, "quality.yml", "staging"); dispatched.push({ key: item.key, quality: true }); } catch (_) {}
+    try { await dispatchWorkflow(item.test_repo, "deploy-staging-pages.yml", "main"); } catch (_) {}
+  }
+
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      restored: true,
+      restored_by: admin.email,
+      backup_branch: backupBranch,
+      repositories: restored,
+      dispatched,
+      production_untouched: true,
+      message: targets.length === 1
+        ? "El módulo de Pruebas fue restaurado a su última validación estable."
+        : "Todos los módulos de Pruebas fueron restaurados a su última validación estable.",
+    },
+  };
+}
+
 async function handleRollback(body: any, admin: any) {
   const cfg = configuration();
   if (!cfg.github_token_configured || !cfg.release_enabled) {
@@ -415,6 +632,13 @@ Deno.serve(async (req: Request) => {
     if (action === "status") return response(200, await handleStatus());
     if (action === "dry-run") return response(200, await handleDryRun());
     if (action === "history") return response(200, { ok: true, configuration: configuration(), backups: await listReleaseBackups(10) });
+    if (action === "emergency-status") return response(200, await handleEmergencyStatus());
+    if (action === "retry-quality") return response(200, await handleRetryQuality(body));
+    if (action === "republish-tests") return response(200, await handleRepublishTests(body));
+    if (action === "restore-stable-tests") {
+      const result = await handleRestoreStableTests(body, admin);
+      return response(result.status, result.body);
+    }
     if (action === "release") {
       const result = await handleRelease(body, admin);
       return response(result.status, result.body);
