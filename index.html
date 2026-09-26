@@ -2371,6 +2371,19 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
     <div id="releaseSummary" class="item" style="margin-top:16px"><b>Estado:</b> <span class="mut">Pulsa “Preparar lanzamiento” para hacer un diagnóstico sin modificar nada.</span></div>
     <div id="releaseRepoList" class="list" style="margin-top:12px"></div>
   </div>
+  <div class="card span12" id="releaseEmergencyCard">
+    <div class="row between" style="gap:12px;flex-wrap:wrap">
+      <div><div class="eyebrow">SOLO PRUEBAS</div><h2 style="margin:8px 0 6px">🛟 Modo de emergencia</h2><p class="mut" style="margin:0">Recupera staging desde el celular sin mover <b>main</b> ni tocar datos. Antes de restaurar se crea un respaldo automático.</p></div>
+      <span class="release-emergency-safe">🔒 Producción protegida</span>
+    </div>
+    <div class="release-emergency-toolbar">
+      <button class="ghost" type="button" onclick="retryReleaseQuality('all')">↻ Reintentar validaciones</button>
+      <button class="ghost" type="button" onclick="republishReleaseTests('all')">♻ Republicar Pruebas</button>
+      <button class="ghost release-emergency-restore" type="button" onclick="restoreReleaseStable('all')">🛟 Restaurar todo Pruebas</button>
+    </div>
+    <div class="mut" id="releaseEmergencyStatus" style="margin-top:12px">Consultando última versión estable…</div>
+    <div id="releaseEmergencyList" class="list" style="margin-top:12px"></div>
+  </div>
   <div class="card span12">
     <div class="row between">
       <div><h2 style="margin-bottom:6px">Historial y restauración</h2><p class="mut" style="margin:0">Los respaldos se crean automáticamente antes de cada publicación real.</p></div>
@@ -2394,6 +2407,13 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
 .release-progress-row small{display:block;color:var(--mut);margin-top:3px}.release-progress-row strong{text-align:right;font-size:12px}
 .release-progress-note{margin-top:12px;padding:11px 12px;border-radius:12px;background:var(--ghost);color:var(--mut);font-size:12px}
 @media(max-width:600px){.release-progress-stats{grid-template-columns:1fr}.release-progress-row{grid-template-columns:1fr}.release-progress-row strong{text-align:left}}
+.release-emergency-safe{display:inline-flex;align-items:center;padding:7px 10px;border-radius:999px;background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok);font-size:12px;font-weight:850;border:1px solid color-mix(in srgb,var(--ok) 35%,transparent)}
+.release-emergency-toolbar,.release-emergency-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.release-emergency-actions button{padding:8px 10px;font-size:12px}
+.release-emergency-restore{border-color:color-mix(in srgb,var(--warn) 55%,var(--line))!important}
+.release-emergency-module{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.release-emergency-module-main{min-width:0;flex:1}
+@media(max-width:650px){.release-emergency-toolbar>button{width:100%}.release-emergency-module{display:block}.release-emergency-actions button{flex:1;min-width:130px}}
 </style>
 <div id="releaseConfirmModal" class="admin-form-modal" aria-hidden="true">
   <div class="admin-form-backdrop" onclick="closeReleaseConfirmation()"></div>
@@ -2617,14 +2637,18 @@ function releaseStatusLabel(item){
   if(item.status==="behind")return "Pruebas está detrás";
   return item.status||"Desconocido";
 }
+let releaseLatestRows=[];
 function renderReleaseCenter(data,prepared=false){
   const rows=data?.repositories||[];
+  releaseLatestRows=rows;
   const list=document.getElementById("releaseRepoList");
   if(list)list.innerHTML=rows.map(item=>{
     const icon=item.safe?(item.needs_release?"🟡":"✅"):"⛔";
     const detail=item.error?esc(item.error):"main "+releaseShortSha(item.main_sha)+" → staging "+releaseShortSha(item.staging_sha);
-    const ciText=item.quality?("Calidad "+(item.quality_ready?"✅ GitHub Actions":item.quality==="in_progress"?"⏳ en ejecución":"⛔ "+esc(item.quality))):"Calidad: se verificará al habilitar publicaciones";
-    return '<div class="item"><div class="row between"><div><b>'+icon+" "+esc(item.label)+'</b><div class="mut">'+detail+'</div><div class="mut" style="margin-top:4px;font-size:12px">'+ciText+'</div></div><div style="text-align:right"><b>'+esc(releaseStatusLabel(item))+'</b><div class="mut">'+(item.changed_files||0)+' archivos detectados</div></div></div></div>';
+    const ciText=item.quality?("Calidad "+(item.quality_ready?"✅ GitHub Actions":item.quality==="in_progress"?"⏳ en ejecución":"⛔ "+esc(item.quality))):"Calidad: consultando GitHub Actions";
+    const errorBtn=!item.quality_ready?'<button class="ghost" type="button" onclick="viewReleaseQualityError(\''+esc(item.key)+'\')">Ver error</button>':"";
+    const actions='<div class="release-emergency-actions">'+errorBtn+'<button class="ghost" type="button" onclick="retryReleaseQuality(\''+esc(item.key)+'\')">↻ Reintentar</button><button class="ghost" type="button" onclick="republishReleaseTests(\''+esc(item.key)+'\')">♻ Republicar</button><button class="ghost" type="button" onclick="restoreReleaseStable(\''+esc(item.key)+'\')">🛟 Restaurar estable</button></div>';
+    return '<div class="item"><div class="release-emergency-module"><div class="release-emergency-module-main"><b>'+icon+" "+esc(item.label)+'</b><div class="mut">'+detail+'</div><div class="mut" style="margin-top:4px;font-size:12px">'+ciText+'</div>'+actions+'</div><div style="text-align:right"><b>'+esc(releaseStatusLabel(item))+'</b><div class="mut">'+(item.changed_files||0)+' archivos detectados</div></div></div></div>';
   }).join("")||'<div class="mut">No hay información de repositorios.</div>';
 
   const config=data?.configuration||{};
@@ -2663,6 +2687,54 @@ async function releaseAuthorizedFetch(path,options={}){
   if(!res.ok)throw Object.assign(new Error(body.error||"No se pudo completar la operación."),{payload:body,status:res.status});
   return body;
 }
+function releaseRowByKey(key){return (releaseLatestRows||[]).find(item=>item.key===key)||null}
+function viewReleaseQualityError(key){
+  const item=releaseRowByKey(key);
+  if(item?.quality_url){window.open(item.quality_url,"_blank","noopener");return}
+  toast(item?.quality_error||item?.error||"GitHub todavía no entregó un enlace del error.")
+}
+async function runReleaseEmergencyAction(action,key="all",extra={}){
+  if(!isSuperAdmin)return;
+  const status=document.getElementById("releaseEmergencyStatus");
+  const labels={"retry-quality":"Reintentando validaciones…","republish-tests":"Republicando Pruebas…","restore-stable-tests":"Restaurando Pruebas…"};
+  if(status)status.textContent=labels[action]||"Procesando…";
+  try{
+    const data=await releaseAuthorizedFetch("/api/release-emergency",{method:"POST",body:JSON.stringify({action,key,...extra})});
+    toast(data.message||"Acción completada.");
+    await loadReleaseStatus();
+    await loadEmergencyReleaseState();
+    return data
+  }catch(e){
+    if(status)status.textContent="⛔ "+(e.message||"No se pudo completar la acción.");
+    toast(e.message||"No se pudo completar la acción.");
+    throw e
+  }
+}
+function retryReleaseQuality(key="all"){return runReleaseEmergencyAction("retry-quality",key)}
+function republishReleaseTests(key="all"){return runReleaseEmergencyAction("republish-tests",key)}
+async function restoreReleaseStable(key="all"){
+  const label=key==="all"?"todos los módulos de Pruebas":"este módulo de Pruebas";
+  if(!confirm("¿Restaurar "+label+" a la última validación estable?\n\nSe creará un respaldo de staging antes de cambiar nada. Producción no se tocará."))return;
+  return runReleaseEmergencyAction("restore-stable-tests",key,{confirmation:"RESTAURAR PRUEBAS"})
+}
+async function loadEmergencyReleaseState(){
+  if(!isSuperAdmin)return;
+  const box=document.getElementById("releaseEmergencyList"),status=document.getElementById("releaseEmergencyStatus");
+  try{
+    const data=await releaseAuthorizedFetch("/api/release-emergency",{method:"POST",body:JSON.stringify({action:"emergency-status"})});
+    const modules=data?.modules||[];
+    if(status)status.textContent=data?.all_green?"✅ Todos los módulos tienen una validación estable disponible.":"Modo de emergencia listo. Los módulos en rojo pueden reintentarse, republicarse o restaurarse.";
+    if(box)box.innerHTML=modules.map(item=>{
+      const quality=item.quality_ready?"✅ calidad OK":"⛔ "+esc(item.quality||"sin validar");
+      const stable=item.stable_sha?("Último estable "+releaseShortSha(item.stable_sha)+(item.stable_at?" · "+new Date(item.stable_at).toLocaleString("es-CL"):"")):"Sin versión estable registrada";
+      return '<div class="item"><div class="release-emergency-module"><div class="release-emergency-module-main"><b>'+esc(item.label)+'</b><div class="mut">'+quality+'</div><div class="mut" style="font-size:11px;margin-top:3px">'+esc(stable)+'</div></div><div class="release-emergency-actions" style="margin-top:0"><button class="ghost" type="button" onclick="retryReleaseQuality(\''+esc(item.key)+'\')">↻ Validar</button><button class="ghost" type="button" onclick="republishReleaseTests(\''+esc(item.key)+'\')">♻ Publicar</button><button class="ghost" type="button" '+(item.stable_sha?"":"disabled")+' onclick="restoreReleaseStable(\''+esc(item.key)+'\')">🛟 Restaurar</button></div></div></div>';
+    }).join("")||'<div class="mut">No hay módulos disponibles.</div>';
+  }catch(e){
+    if(status)status.textContent="No se pudo consultar el modo de emergencia: "+(e.message||"error");
+    if(box)box.innerHTML="";
+  }
+}
+
 async function loadReleaseStatus(){
   if(!isSuperAdmin)return;
   const summary=document.getElementById("releaseSummary");
@@ -2672,6 +2744,7 @@ async function loadReleaseStatus(){
     releaseSnapshot=null;
     renderReleaseCenter(data,false);
     loadReleaseHistory();
+    loadEmergencyReleaseState();
   }catch(e){
     releaseSnapshot=null;
     if(summary)summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>"+esc(e.message)+"</span>";
@@ -3891,7 +3964,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.73</footer><script>
+</script><footer class="admin-version">Versión v2.3.74</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
