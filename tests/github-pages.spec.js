@@ -76,15 +76,19 @@ test('RELEASE GATE: Admin Pruebas funciona de extremo a extremo', async ({ page,
     await expect(modal).toBeAttached();
 
     const access360 = page.locator('button,a').filter({ hasText: /360|perfil del negocio|ver perfil/i }).first();
-    if (await access360.count()) {
-      await access360.click();
-      await expect(modal).toBeVisible({ timeout: 10000 });
-      await expect(modal).not.toContainText(/no tiene permiso|no se pudieron cargar las métricas|sin permiso/i);
-    } else {
-      const html = await page.content();
-      expect(html).toMatch(/restaurantProfileModal/);
-      expect(html).toMatch(/admin_business_profile_metrics|business_profile_metrics/i);
-    }
+    await expect(access360).toBeAttached();
+    const onclick = String(await access360.getAttribute('onclick') || '');
+    const match = onclick.match(/openRestaurantProfile\((\d+)\)/);
+    expect(match, 'No se pudo obtener un negocio válido para probar Perfil 360').toBeTruthy();
+    const restaurantId = Number(match[1]);
+
+    await page.evaluate(async (id) => {
+      if (typeof window.openRestaurantProfile !== 'function') throw new Error('openRestaurantProfile no está disponible');
+      await window.openRestaurantProfile(id);
+    }, restaurantId);
+
+    await expect(modal).toBeVisible({ timeout: 10000 });
+    await expect(modal).not.toContainText(/no tiene permiso|no se pudieron cargar las métricas|sin permiso/i);
   });
 
   await test.step('el Centro de lanzamientos responde desde Supabase', async () => {
