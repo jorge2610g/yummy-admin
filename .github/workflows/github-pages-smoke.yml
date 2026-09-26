@@ -19,12 +19,32 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+
+      - name: Esperar a que GitHub Pages publique este commit exacto
+        env:
+          PAGES_TEST_URL: https://jorge2610g.github.io/yummy-admin-pruebas/
+        run: |
+          expected="$GITHUB_SHA"
+          for attempt in $(seq 1 48); do
+            deployed="$(curl -fsS "${PAGES_TEST_URL}.staging-source-sha?attempt=${attempt}&sha=${expected}" 2>/dev/null | tr -d '\r\n' || true)"
+            echo "Commit esperado:   $expected"
+            echo "Commit desplegado: ${deployed:-todavía no disponible}"
+            if [ "$deployed" = "$expected" ]; then
+              echo "OK: GitHub Pages corresponde exactamente al commit que se va a probar."
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "ERROR: GitHub Pages no publicó el commit esperado dentro de la ventana del gate."
+          exit 1
+
       - name: Playwright smoke de Pruebas
         run: npx playwright test tests/github-pages.spec.js --reporter=line
         env:
           PAGES_TEST_URL: https://jorge2610g.github.io/yummy-admin-pruebas/
           ADMIN_TEST_EMAIL: ${{ secrets.ADMIN_TEST_EMAIL }}
           ADMIN_TEST_PASSWORD: ${{ secrets.ADMIN_TEST_PASSWORD }}
+
       - name: Guardar evidencia si falla
         if: failure()
         uses: actions/upload-artifact@v4
