@@ -1,4 +1,4 @@
-const ADMIN_CACHE="yummypro-admin-v2336-menu-link";
+const ADMIN_CACHE="yummypro-admin-v2337-env-guard";
 const ADMIN_OFFLINE="/offline.html";
 const ADMIN_CORE=[ADMIN_OFFLINE,"/manifest.webmanifest","/pwa-icon.svg","/icon-192.png","/icon-512.png","/apple-touch-icon.png"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(ADMIN_CACHE).then(c=>c.addAll(ADMIN_CORE)))});
