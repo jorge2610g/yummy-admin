@@ -19,6 +19,7 @@ jobs:
     env:
       PROD_PROJECT_REF: gulctljitzlwokqydigx
       STAGING_PROJECT_REF: wodqqheeesrelsbacmgx
+      SUPABASE_POOLER_HOST: aws-0-sa-east-1.pooler.supabase.com
 
     steps:
       - name: Checkout staging
@@ -48,35 +49,38 @@ jobs:
           PROD_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
           STG_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
-          prod_hash="$(
-            docker run --rm -i \
-              -e PGPASSWORD="$PROD_DB_PASSWORD" \
-              postgres:17 \
-              psql \
-                --host="aws-0-sa-east-1.pooler.supabase.com" \
-                --port=5432 \
-                --username="postgres.$PROD_PROJECT_REF" \
-                --dbname=postgres \
-                --no-align \
-                --tuples-only \
-                --set=ON_ERROR_STOP=1 \
-              < scripts/staging-parity.sql
-          )"
+          set -euo pipefail
 
-          staging_hash="$(
+          fingerprint() {
+            local ref="$1"
+            local password="$2"
             docker run --rm -i \
-              -e PGPASSWORD="$STG_DB_PASSWORD" \
+              -e PGPASSWORD="$password" \
+              -e PGSSLMODE=require \
+              -e PGCONNECT_TIMEOUT=15 \
               postgres:17 \
               psql \
-                --host="aws-0-sa-east-1.pooler.supabase.com" \
-                --port=5432 \
-                --username="postgres.$STAGING_PROJECT_REF" \
+                --host="$SUPABASE_POOLER_HOST" \
+                --port=6543 \
+                --username="postgres.$ref" \
                 --dbname=postgres \
                 --no-align \
                 --tuples-only \
                 --set=ON_ERROR_STOP=1 \
               < scripts/staging-parity.sql
-          )"
+          }
+
+          echo "Validating Production database access..."
+          prod_hash="$(fingerprint "$PROD_PROJECT_REF" "$PROD_DB_PASSWORD")" || {
+            echo "ERROR: PRODUCTION_DB_PASSWORD or Production pooler connection is invalid."
+            exit 2
+          }
+
+          echo "Validating Staging database access..."
+          staging_hash="$(fingerprint "$STAGING_PROJECT_REF" "$STG_DB_PASSWORD")" || {
+            echo "ERROR: STAGING_DB_PASSWORD or Staging pooler connection is invalid."
+            exit 3
+          }
 
           prod_hash="$(echo "$prod_hash" | tr -d '[:space:]')"
           staging_hash="$(echo "$staging_hash" | tr -d '[:space:]')"
