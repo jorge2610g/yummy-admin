@@ -1,4 +1,5 @@
-# Revalidación explícita del candidato de release después de cerrar Smoke y guardas.
+# Gate de release de Pruebas: compara invariantes con Producción y exige un checkpoint explícito
+# para las diferencias intencionales de RLS/funciones que aún no fueron promovidas.
 name: Verify Staging Parity
 
 on:
@@ -8,6 +9,7 @@ on:
     paths:
       - 'supabase/**'
       - 'scripts/staging-parity.sql'
+      - 'scripts/staging-schema-checkpoint.txt'
       - '.github/workflows/staging-parity.yml'
 
 permissions:
@@ -85,12 +87,38 @@ jobs:
           prod_hash="$(echo "$prod_hash" | tr -d '[:space:]')"
           staging_hash="$(echo "$staging_hash" | tr -d '[:space:]')"
 
-          echo "Production fingerprint: $prod_hash"
-          echo "Staging fingerprint:    $staging_hash"
+          IFS='|' read -r -a prod_parts <<< "$prod_hash"
+          IFS='|' read -r -a staging_parts <<< "$staging_hash"
 
-          if [ "$prod_hash" != "$staging_hash" ]; then
-            echo "ERROR: YummyPro staging database is not functionally identical to production."
-            exit 1
+          if [ "${#prod_parts[@]}" -ne 10 ] || [ "${#staging_parts[@]}" -ne 10 ]; then
+            echo "ERROR: unexpected database fingerprint format."
+            exit 4
           fi
 
-          echo "OK: database structure and runtime permissions match production."
+          # Invariantes que no deben divergir durante pruebas:
+          # columns, triggers, table grants, sequence grants, effective routine grants,
+          # default ACL, extensions and storage buckets. Policies/functions are allowed
+          # to differ only when the full Staging fingerprint matches the committed checkpoint.
+          for idx in 0 3 4 5 6 7 8 9; do
+            if [ "${prod_parts[$idx]}" != "${staging_parts[$idx]}" ]; then
+              echo "ERROR: critical database invariant $idx differs from Production."
+              exit 5
+            fi
+          done
+
+          expected_sha="$(awk -F= '$1=="schema_sha256" {print $2}' scripts/staging-schema-checkpoint.txt | tr -d '[:space:]')"
+          test -n "$expected_sha" || (echo "ERROR: missing schema_sha256 in staging checkpoint." && exit 6)
+
+          current_sha="$(printf '%s' "$staging_hash" | sha256sum | awk '{print $1}')"
+          if [ "$current_sha" != "$expected_sha" ]; then
+            echo "ERROR: untracked Staging database drift detected after the recorded checkpoint."
+            echo "Expected checkpoint SHA: $expected_sha"
+            echo "Current Staging SHA:     $current_sha"
+            exit 7
+          fi
+
+          if [ "$prod_hash" = "$staging_hash" ]; then
+            echo "OK: Staging is fully identical to Production."
+          else
+            echo "OK: critical invariants match Production and intentional Staging RLS/function changes match the recorded checkpoint."
+          fi
