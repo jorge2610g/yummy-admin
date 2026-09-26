@@ -2375,11 +2375,7 @@ const YUMMY_IS_PRODUCTION=location.hostname==="admin.yummypro.online";
 const SB_URL=YUMMY_IS_PRODUCTION?"https://gulctljitzlwokqydigx.supabase.co":"https://wodqqheeesrelsbacmgx.supabase.co";
 const SB_KEY=YUMMY_IS_PRODUCTION?"sb_publishable__moppTxObowifx6rJbW_tw_3GiCkqhG":"sb_publishable_yiuYVYAAwVLtzlTdEM1kUg_s1Z7BiyE";
 const sb=supabase.createClient(SB_URL,SB_KEY);
-function enforceAdminEnvironmentUi(){
- const releaseTab=document.querySelector('[data-tab="release_center"]');
- const releaseSection=document.getElementById("release_center");
- if(YUMMY_IS_PRODUCTION){if(releaseTab)releaseTab.style.display="none";if(releaseSection)releaseSection.classList.remove("active")}
-}
+function enforceAdminEnvironmentUi(){}
 function applyAdminTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("admin_theme",theme);const icon=document.getElementById("adminThemeIcon"),label=document.getElementById("adminThemeLabel");if(icon)icon.textContent=theme==="dark"?"☀":"☾";if(label)label.textContent=theme==="dark"?"Modo claro":"Modo oscuro"}
 function toggleAdminTheme(){applyAdminTheme(document.documentElement.dataset.theme==="light"?"dark":"light")}
 function toggleMobileDashboardDetails(){
