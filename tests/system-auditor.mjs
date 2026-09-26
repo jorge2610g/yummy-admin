@@ -12,10 +12,10 @@ const ENFORCE_AI=String(process.env.AI_AUDIT_ENFORCE||"false").toLowerCase()==="
 
 const panelModules=[
   {key:"admin",label:"Admin",url:"https://jorge2610g.github.io/yummy-admin-pruebas/",auth:"admin"},
-  {key:"restaurante",label:"Restaurante",url:"https://jorge2610g.github.io/yummy-restaurante-pruebas/",auth:"business"},
-  {key:"retail",label:"Retail",url:"https://jorge2610g.github.io/yummy-retail-pruebas/",auth:"business"},
-  {key:"profesionales",label:"Profesionales",url:"https://jorge2610g.github.io/yummy-profesionales-pruebas/",auth:"business"},
-  {key:"streaming",label:"Streaming",url:"https://jorge2610g.github.io/yummy-streaming-pruebas/",auth:"business"}
+  {key:"restaurante",label:"Restaurante",url:"https://jorge2610g.github.io/yummy-restaurante-pruebas/",auth:"restaurant"},
+  {key:"retail",label:"Retail",url:"https://jorge2610g.github.io/yummy-retail-pruebas/",auth:"retail"},
+  {key:"profesionales",label:"Profesionales",url:"https://jorge2610g.github.io/yummy-profesionales-pruebas/",auth:"professional"},
+  {key:"streaming",label:"Streaming",url:"https://jorge2610g.github.io/yummy-streaming-pruebas/",auth:"streaming"}
 ];
 
 const now=()=>new Date().toISOString();
@@ -58,8 +58,14 @@ function publicModules(targets){
 
 async function maybeLogin(page,auth){
   if(!auth)return {attempted:false};
-  const email=auth==="admin"?process.env.ADMIN_TEST_EMAIL:process.env.RESTAURANT_TEST_EMAIL;
-  const password=auth==="admin"?process.env.ADMIN_TEST_PASSWORD:process.env.RESTAURANT_TEST_PASSWORD;
+  const credentials={
+    admin:[process.env.ADMIN_TEST_EMAIL,process.env.ADMIN_TEST_PASSWORD],
+    restaurant:[process.env.RESTAURANT_TEST_EMAIL,process.env.RESTAURANT_TEST_PASSWORD],
+    retail:[process.env.RETAIL_TEST_EMAIL,process.env.RETAIL_TEST_PASSWORD],
+    professional:[process.env.PROFESSIONAL_TEST_EMAIL,process.env.PROFESSIONAL_TEST_PASSWORD],
+    streaming:[process.env.STREAMING_TEST_EMAIL,process.env.STREAMING_TEST_PASSWORD]
+  };
+  const [email,password]=credentials[auth]||[];
   if(!email||!password)return {attempted:false,reason:"credenciales-no-configuradas"};
   const emailInput=page.locator('#email,input[type="email"]').first();
   const passInput=page.locator('#password,input[type="password"]').first();
