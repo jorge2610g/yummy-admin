@@ -6,7 +6,7 @@ const OUT="audit-results";
 const TEST_HOST="jorge2610g.github.io";
 const SUPABASE_URL=process.env.SUPABASE_TEST_URL||"https://wodqqheeesrelsbacmgx.supabase.co";
 const SUPABASE_KEY=process.env.SUPABASE_TEST_KEY||"sb_publishable_yiuYVYAAwVLtzlTdEM1kUg_s1Z7BiyE";
-const GEMINI_MODEL=process.env.GEMINI_MODEL||"gemini-3.8-flash";
+const GEMINI_MODEL=process.env.GEMINI_MODEL||"gemini-3.5-flash";
 const GROQ_MODEL=process.env.GROQ_MODEL||"openai/gpt-oss-20b";
 const ENFORCE_AI=String(process.env.AI_AUDIT_ENFORCE||"false").toLowerCase()==="true";
 
