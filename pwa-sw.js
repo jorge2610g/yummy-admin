@@ -1,4 +1,4 @@
-const ADMIN_CACHE="yummypro-admin-v2338-release-progress";
+const ADMIN_CACHE="yummypro-admin-v2339-prod-release-center-removed";
 const ADMIN_OFFLINE="/offline.html";
 const ADMIN_CORE=[ADMIN_OFFLINE,"/manifest.webmanifest","/pwa-icon.svg","/icon-192.png","/icon-512.png","/apple-touch-icon.png"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(ADMIN_CACHE).then(c=>c.addAll(ADMIN_CORE)))});
