@@ -22,13 +22,13 @@ jobs:
           set -euo pipefail
           branch="${GITHUB_REF_NAME}"
           if [ "$branch" = "staging" ]; then
-            git fetch origin main --depth=1
+            git fetch origin main
             git merge-base --is-ancestor origin/main HEAD || {
               echo "ERROR: staging ya no contiene main. Hay divergencia o staging quedó detrás."
               exit 1
             }
           elif [ "$branch" = "main" ]; then
-            git fetch origin staging --depth=1
+            git fetch origin staging
             git merge-base --is-ancestor HEAD origin/staging || {
               echo "ERROR: main contiene cambios que no existen en staging. Producción fue modificada fuera del flujo de release."
               exit 1
