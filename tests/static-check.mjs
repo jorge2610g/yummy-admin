@@ -20,7 +20,7 @@ const flowMarkers=['flowCredentialsCard','subscriptionFlowApiKey','subscriptionF
 
 for(const marker of ['planAnnualEnabled','planAnnualAmount','planAnnualBonusMonths','planAnnualDays','updateAnnualPlanPreview','annual_enabled','annual_bonus_months'])if(!admin.includes(marker))throw new Error('index.html: falta configuración anual '+marker);
 
-for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.73'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
+for(const marker of ['manifest.webmanifest','adminPwaInstall','installAdminPwa','adminPwaNetwork','adminPwaUpdate','admin-pwa-script-v2320','Versión v2.3.74'])if(!admin.includes(marker))throw new Error('index.html: falta PWA Admin '+marker);
 for(const marker of ['settingsBusinessGroupFilter','changeSettingsBusinessGroup','settingsRestaurantSelect','changeSettingsRestaurant','settingsBusinessBadge','demoApiInheritanceCard','demoApiInheritanceToggle','toggleDemoApiInheritance','set_demo_business_api_inheritance','use_demo_api_defaults','is_demo','QR Bolivia / VeriPagos del demo','Locales reales','Locales demo'])if(!admin.includes(marker))throw new Error('index.html: falta configuración de APIs para demos '+marker);
 for(const marker of ['data-tab="restaurants" title="Negocios"','<span class="nav-label">Negocios</span>','Ver información del negocio'])if(!admin.includes(marker))throw new Error('index.html: falta nomenclatura general de negocios '+marker);
 
@@ -68,3 +68,6 @@ for(const marker of ['id="viewMenuLink" class="hidden"','onclick="openCurrentBus
 for(const marker of ['YUMMY_IS_PRODUCTION','admin.yummypro.online','https://gulctljitzlwokqydigx.supabase.co','https://wodqqheeesrelsbacmgx.supabase.co','enforceAdminEnvironmentUi'])if(!admin.includes(marker))throw new Error('index.html: falta separación segura Pruebas/Producción '+marker);
 
 for(const marker of ['releaseConfirmModal','releaseProgressModal','releaseProgressFill','confirmProductionRelease','production_deploy_ready'])if(!admin.includes(marker))throw new Error('index.html: falta seguimiento visible del release '+marker);
+
+
+for(const marker of ['releaseEmergencyCard','Modo de emergencia','retryReleaseQuality','republishReleaseTests','restoreReleaseStable','loadEmergencyReleaseState','RESTAURAR PRUEBAS','Producción protegida'])if(!admin.includes(marker))throw new Error('index.html: falta modo de emergencia de Pruebas '+marker);
