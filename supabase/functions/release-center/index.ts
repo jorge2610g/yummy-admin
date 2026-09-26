@@ -580,6 +580,57 @@ async function handleRestoreStableTests(body: any, admin: any) {
   };
 }
 
+async function latestAiAuditRun() {
+  const repo = REPOSITORIES.find((item) => item.key === "admin")?.repo || "jorge2610g/yummy-admin";
+  const data = await githubRequest(`/repos/${repo}/actions/workflows/ai-auditor.yml/runs?branch=staging&per_page=1`);
+  const run = Array.isArray(data?.workflow_runs) ? data.workflow_runs[0] : null;
+  if (!run) return null;
+  let artifacts: any[] = [];
+  if (run.id && run.status === "completed") {
+    try {
+      const artifactData = await githubRequest(`/repos/${repo}/actions/runs/${run.id}/artifacts`);
+      artifacts = Array.isArray(artifactData?.artifacts) ? artifactData.artifacts : [];
+    } catch (_) {}
+  }
+  return {
+    id: run.id,
+    status: run.status || "unknown",
+    conclusion: run.conclusion || null,
+    html_url: run.html_url || null,
+    head_sha: run.head_sha || null,
+    event: run.event || null,
+    created_at: run.created_at || null,
+    updated_at: run.updated_at || null,
+    artifact_count: artifacts.length,
+    artifact_names: artifacts.map((item: any) => item?.name).filter(Boolean),
+  };
+}
+
+async function handleAiAuditStatus() {
+  const run = await latestAiAuditRun();
+  return {
+    ok: true,
+    environment: "staging",
+    production_untouched: true,
+    workflow: "ai-auditor.yml",
+    schedule: "hourly",
+    run,
+    message: run ? "Auditor de navegador disponible." : "Todavía no hay una auditoría ejecutada.",
+  };
+}
+
+async function handleAiAuditRun() {
+  const repo = REPOSITORIES.find((item) => item.key === "admin")?.repo || "jorge2610g/yummy-admin";
+  await dispatchWorkflow(repo, "ai-auditor.yml", "staging");
+  return {
+    ok: true,
+    environment: "staging",
+    production_untouched: true,
+    workflow: "ai-auditor.yml",
+    message: "Auditor IA iniciado. Abrirá los módulos reales de Pruebas con Chromium.",
+  };
+}
+
 async function handleRollback(body: any, admin: any) {
   const cfg = configuration();
   if (!cfg.github_token_configured || !cfg.release_enabled) {
@@ -633,6 +684,8 @@ Deno.serve(async (req: Request) => {
     if (action === "dry-run") return response(200, await handleDryRun());
     if (action === "history") return response(200, { ok: true, configuration: configuration(), backups: await listReleaseBackups(10) });
     if (action === "emergency-status") return response(200, await handleEmergencyStatus());
+    if (action === "ai-audit-status") return response(200, await handleAiAuditStatus());
+    if (action === "ai-audit-run") return response(200, await handleAiAuditRun());
     if (action === "retry-quality") return response(200, await handleRetryQuality(body));
     if (action === "republish-tests") return response(200, await handleRepublishTests(body));
     if (action === "restore-stable-tests") {
