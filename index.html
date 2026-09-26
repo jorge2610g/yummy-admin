@@ -2463,9 +2463,15 @@ function adminClientMenuUrl(slug){const url=new URL(YUMMY_CLIENT_MENU_BASE);if(s
 async function openCurrentBusinessMenu(event){
  event?.preventDefault?.();
  const link=document.getElementById("viewMenuLink");
- const rawId=link?.dataset?.restaurantId||currentRestaurantConfig?.id||currentRestaurant;
- const numericId=Number(rawId);
- let r=restaurants.find(x=>Number(x.id)===numericId)||currentRestaurantConfig||null;
+ const scopeId=dashboardRestaurantScope&&dashboardRestaurantScope!=="all"?dashboardRestaurantScope:null;
+ const rawId=link?.dataset?.restaurantId||scopeId||currentRestaurantConfig?.id||currentRestaurant;
+ let numericId=Number(rawId);
+ const directoryRows=Array.isArray(window.adminBusinessRows)?window.adminBusinessRows:[];
+ let r=restaurants.find(x=>Number(x.id)===numericId)
+   ||directoryRows.find(x=>Number(x.id)===numericId)
+   ||(currentRestaurantConfig?.id?currentRestaurantConfig:null)
+   ||null;
+
  if((!r||!r.slug)&&Number.isFinite(numericId)&&numericId>0){
   try{
    const {data,error}=await sb.from("restaurants").select("id,slug").eq("id",numericId).maybeSingle();
@@ -2473,10 +2479,34 @@ async function openCurrentBusinessMenu(event){
    if(data)r={...(r||{}),...data};
   }catch(e){console.error("No se pudo resolver el menú del negocio",e)}
  }
+
+ if(!r){
+  const localCandidates=[...directoryRows,...restaurants].filter((x,i,a)=>x?.id&&a.findIndex(y=>Number(y?.id)===Number(x.id))===i);
+  if(localCandidates.length===1){
+   r=localCandidates[0];
+   numericId=Number(r.id);
+  }
+ }
+
+ if(!r){
+  try{
+   const {data,error}=await sb.from("restaurants").select("id,slug").order("id",{ascending:true}).limit(2);
+   if(error)throw error;
+   if(Array.isArray(data)&&data.length===1){
+    r=data[0];
+    numericId=Number(r.id);
+   }
+  }catch(e){console.error("No se pudo detectar el único negocio disponible",e)}
+ }
+
  const slug=r?.slug||((Number.isFinite(numericId)&&numericId>0)?numericId:null);
  if(!slug){toast("Selecciona un negocio antes de abrir Ver menú");return false}
+ currentRestaurant=Number(r?.id||numericId)||currentRestaurant;
+ if(link){
+  link.dataset.restaurantId=String(r?.id||numericId||"");
+  link.href=adminClientMenuUrl(slug);
+ }
  const target=adminClientMenuUrl(slug);
- if(link)link.href=target;
  window.open(target,"_blank","noopener");
  return false
 }
@@ -3861,7 +3891,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.72</footer><script>
+</script><footer class="admin-version">Versión v2.3.73</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
