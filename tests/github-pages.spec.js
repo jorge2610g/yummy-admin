@@ -75,12 +75,20 @@ test('RELEASE GATE: Admin Pruebas funciona de extremo a extremo', async ({ page,
     const modal = page.locator('#restaurantProfileModal');
     await expect(modal).toBeAttached();
 
-    const access360 = page.locator('button,a').filter({ hasText: /360|perfil del negocio|ver perfil/i }).first();
-    await expect(access360).toBeAttached();
-    const onclick = String(await access360.getAttribute('onclick') || '');
-    const match = onclick.match(/openRestaurantProfile\((\d+)\)/);
-    expect(match, 'No se pudo obtener un negocio válido para probar Perfil 360').toBeTruthy();
-    const restaurantId = Number(match[1]);
+    const restaurantId = await page.locator('button,a')
+      .filter({ hasText: /360|perfil del negocio|ver perfil/i })
+      .evaluateAll((nodes) => {
+        for (const node of nodes) {
+          const onclick = node.getAttribute('onclick') || '';
+          const quoted = onclick.match(/openRestaurantProfile\(\s*['"]([^'"]+)['"]\s*\)/);
+          if (quoted) return quoted[1];
+          const numeric = onclick.match(/openRestaurantProfile\(\s*(\d+)\s*\)/);
+          if (numeric) return numeric[1];
+        }
+        return null;
+      });
+
+    expect(restaurantId, 'No se encontró un negocio real para validar Perfil 360').toBeTruthy();
 
     await page.evaluate(async (id) => {
       if (typeof window.openRestaurantProfile !== 'function') throw new Error('openRestaurantProfile no está disponible');
