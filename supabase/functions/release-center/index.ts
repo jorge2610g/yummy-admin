@@ -147,6 +147,48 @@ async function inspectQuality(item: any) {
   return { ...item, quality_ready: ok, quality: quality ? (quality.status === "completed" ? quality.conclusion : quality.status) : "missing" };
 }
 
+function latestCheckByName(checks: any[], name: string) {
+  return (checks || [])
+    .filter((check: any) => check?.name === name)
+    .sort((a: any, b: any) => String(b?.completed_at || b?.started_at || "").localeCompare(String(a?.completed_at || a?.started_at || "")))[0] || null;
+}
+
+async function inspectProductionDeployment(item: any) {
+  const synced = !!item?.main_sha && !!item?.staging_sha && item.main_sha === item.staging_sha;
+  if (!synced || item.error) {
+    return { ...item, production_code_synced: synced, production_deploy_ready: false, production_deploy: synced ? "checking" : "waiting" };
+  }
+  const checks = await githubRequest(`/repos/${item.repo}/commits/${item.main_sha}/check-runs`);
+  const all = checks?.check_runs || [];
+  const deploy = latestCheckByName(all, "deploy") || latestCheckByName(all, "build") || latestCheckByName(all, "report-build-status");
+  const status = deploy ? (deploy.status === "completed" ? String(deploy.conclusion || "unknown") : String(deploy.status || "unknown")) : "pending";
+  const ready = deploy?.status === "completed" && ["success", "neutral", "skipped"].includes(String(deploy?.conclusion || ""));
+  return {
+    ...item,
+    production_code_synced: true,
+    production_deploy_ready: ready,
+    production_deploy: status,
+    production_deploy_url: deploy?.details_url || null,
+  };
+}
+
+async function inspectAllProductionDeployment(repositories: any[]) {
+  const results: any[] = [];
+  for (const item of repositories) {
+    try { results.push(await inspectProductionDeployment(item)); }
+    catch (error) {
+      results.push({
+        ...item,
+        production_code_synced: item?.main_sha === item?.staging_sha,
+        production_deploy_ready: false,
+        production_deploy: "error",
+        production_deploy_error: error instanceof Error ? error.message : "No se pudo verificar el despliegue de Producción",
+      });
+    }
+  }
+  return results;
+}
+
 async function inspectAllQuality(repositories: any[]) {
   const results: any[] = [];
   for (const item of repositories) {
@@ -209,12 +251,14 @@ async function listReleaseBackups(limit = 10) {
 }
 
 async function handleStatus() {
-  const repositories = await inspectAllRepositories();
+  let repositories = await inspectAllRepositories();
+  repositories = await inspectAllProductionDeployment(repositories);
   return {
     ok: true,
     configuration: configuration(),
     ready: repositories.every((item) => item.safe && !item.error),
     pending: repositories.filter((item) => item.needs_release).length,
+    production_live: repositories.every((item) => item.production_code_synced && item.production_deploy_ready),
     repositories,
   };
 }
