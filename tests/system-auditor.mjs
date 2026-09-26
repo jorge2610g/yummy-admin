@@ -141,10 +141,32 @@ async function geminiAudit(report){
   try{return {provider:"gemini",configured:true,model:GEMINI_MODEL,analysis:JSON.parse(text)}}catch(_){return {provider:"gemini",configured:true,model:GEMINI_MODEL,text}}
 }
 
+function compactGroqReport(report){
+  return {
+    created_at:report.created_at,
+    status:report.status,
+    counts:report.counts,
+    results:(report.results||[]).map(x=>({
+      module:x.module,
+      label:x.label,
+      viewport:x.viewport,
+      status:x.status,
+      finalUrl:x.finalUrl,
+      errors:(x.errors||[]).slice(0,4),
+      warnings:(x.warnings||[]).slice(0,4),
+      consoleErrors:(x.consoleErrors||[]).slice(0,5),
+      httpErrors:(x.httpErrors||[]).slice(0,5),
+      metrics:x.metrics
+    }))
+  };
+}
+
 async function groqAudit(report){
   const key=process.env.GROQ_API_KEY;
   if(!key)return {provider:"groq",configured:false};
-  const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:GROQ_MODEL,temperature:0.1,max_completion_tokens:1800,messages:[{role:"system",content:"Eres un segundo auditor de software. Devuelve solo JSON válido y no inventes evidencia."},{role:"user",content:reportPrompt(report)}]})});
+  const compact=compactGroqReport(report);
+  const prompt="Revisa como segundo auditor este resumen técnico REAL de YummyPro Pruebas. No inventes. Devuelve SOLO JSON válido con {status:'success|warning|failure',summary:'...',findings:[{severity:'critical|warning|info',module:'...',title:'...',evidence:'...',suggestion:'...'}]}. Datos:\n"+JSON.stringify(compact);
+  const res=await fetch("https://api.groq.com/openai/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({model:GROQ_MODEL,temperature:0.1,max_completion_tokens:900,messages:[{role:"system",content:"Eres un segundo auditor de software. Devuelve solo JSON válido y no inventes evidencia."},{role:"user",content:prompt}]})});
   const raw=await res.text();
   if(!res.ok)return {provider:"groq",configured:true,error:"HTTP "+res.status,raw:raw.slice(0,1000)};
   const body=JSON.parse(raw),text=body.choices?.[0]?.message?.content||"";
