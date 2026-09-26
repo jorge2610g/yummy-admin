@@ -73,4 +73,4 @@ for(const marker of ['releaseConfirmModal','releaseProgressModal','releaseProgre
 for(const marker of ['releaseEmergencyCard','Modo de emergencia','retryReleaseQuality','republishReleaseTests','restoreReleaseStable','loadEmergencyReleaseState','RESTAURAR PRUEBAS','Producción protegida'])if(!admin.includes(marker))throw new Error('index.html: falta modo de emergencia de Pruebas '+marker);
 
 
-for(const marker of ['data-tab="ai_auditor"','Auditor IA de Pruebas','loadAiAuditStatus','runAiAuditNow','openAiAuditReport','ai-auditor.yml','Gemini 3.8 Flash','Groq'])if(!admin.includes(marker))throw new Error('index.html: falta Auditor IA de Pruebas '+marker);
+for(const marker of ['data-tab="ai_auditor"','Auditor IA de Pruebas','loadAiAuditStatus','runAiAuditNow','openAiAuditReport','Gemini 3.8 Flash','Groq'])if(!admin.includes(marker))throw new Error('index.html: falta Auditor IA de Pruebas '+marker);
