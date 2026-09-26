@@ -35,13 +35,13 @@ jobs:
       - name: Abrir y auditar todos los módulos de Pruebas
         run: node tests/system-auditor.mjs
         env:
-          ADMIN_TEST_EMAIL: \${{ secrets.ADMIN_TEST_EMAIL }}
-          ADMIN_TEST_PASSWORD: \${{ secrets.ADMIN_TEST_PASSWORD }}
-          RESTAURANT_TEST_EMAIL: \${{ secrets.RESTAURANT_TEST_EMAIL }}
-          RESTAURANT_TEST_PASSWORD: \${{ secrets.RESTAURANT_TEST_PASSWORD }}
-          GEMINI_API_KEY: \${{ secrets.GEMINI_API_KEY }}
-          GROQ_API_KEY: \${{ secrets.GROQ_API_KEY }}
-          GEMINI_MODEL: gemini-3.8-flash
+          ADMIN_TEST_EMAIL: ${{ secrets.ADMIN_TEST_EMAIL }}
+          ADMIN_TEST_PASSWORD: ${{ secrets.ADMIN_TEST_PASSWORD }}
+          RESTAURANT_TEST_EMAIL: ${{ secrets.RESTAURANT_TEST_EMAIL }}
+          RESTAURANT_TEST_PASSWORD: ${{ secrets.RESTAURANT_TEST_PASSWORD }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_MODEL: gemini-3.5-flash
           GROQ_MODEL: openai/gpt-oss-20b
           AI_AUDIT_ENFORCE: "false"
 
@@ -58,7 +58,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: yummypro-ai-audit-\${{ github.run_id }}
+          name: yummypro-ai-audit-${{ github.run_id }}
           path: audit-results
           if-no-files-found: warn
           retention-days: 14
