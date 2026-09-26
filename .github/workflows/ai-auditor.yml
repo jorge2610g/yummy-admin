@@ -16,6 +16,10 @@ permissions:
   contents: read
   actions: read
 
+concurrency:
+  group: yummypro-ai-auditor-staging
+  cancel-in-progress: true
+
 jobs:
   ai-audit:
     name: ai-audit
