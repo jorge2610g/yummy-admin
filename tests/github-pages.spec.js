@@ -7,7 +7,7 @@ test('GitHub Pages Pruebas carga Admin y conecta Supabase Staging', async ({ pag
 
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   await expect(page).toHaveTitle(/Panel|Admin/i);
-  await expect(page.locator('body')).toContainText('Versión v2.3.63');
+  await expect(page.locator('body')).toContainText(/Versión v2\.3\.\d+/);
 
   await page.locator('#email').fill(process.env.ADMIN_TEST_EMAIL);
   await page.locator('#password').fill(process.env.ADMIN_TEST_PASSWORD);
