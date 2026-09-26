@@ -220,3 +220,18 @@ Para una tarea funcional, confirma lo que aplique:
 **Entender primero. Cambiar lo mínimo. Verificar siempre. Proteger los datos.**
 
 Si una solución parece requerir reescribir una gran parte del sistema para corregir un problema pequeño, revisa el enfoque antes de continuar.
+
+
+---
+
+## Regla obligatoria de ambientes y releases
+
+- **No modificar `main` directamente.** Todo trabajo cotidiano se hace en `staging`.
+- Solo el propietario autoriza un cambio a Producción mediante **Lanzar a Producción**.
+- Si una petición no dice explícitamente que se haga release, se interpreta como cambio exclusivo de Pruebas.
+- Mantener separados los datos: Pruebas usa Supabase `wodqqheeesrelsbacmgx`; Producción usa `gulctljitzlwokqydigx`.
+- Solo el hostname oficial de Producción puede usar el backend de Producción; cualquier GitHub Pages de pruebas, localhost o host no reconocido debe usar Staging.
+- Cada cambio visible o funcional debe incrementar la versión de patch como mínimo, actualizar `VERSION` y registrarse en `CHANGELOG_YUMMYPRO.md`.
+- Antes de considerar un cambio listo: `quality` y `smoke` deben estar en verde.
+- Después de un release: verificar SHA, versión, deploy y backend. `main` y `staging` deben coincidir inmediatamente después del release.
+- Consultar `YUMMYPRO_WORKFLOW.md` antes de cambiar arquitectura, despliegues, variables de ambiente o el Centro de lanzamientos.
