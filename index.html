@@ -2187,7 +2187,6 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   <button class="tab admin-only" data-tab="customers" title="Clientes"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span class="nav-label">Clientes</span></button>
   <div class="nav-group-label">SISTEMA</div>
   <button class="tab admin-only" data-tab="push_center" title="Notificaciones Push"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span><span class="nav-label">Notificaciones Push</span></button>
-  <button class="tab admin-only" data-tab="release_center" title="Lanzar a Producción"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c3 2 5 5 5 9l-5 4-5-4c0-4 2-7 5-9Z"/><circle cx="12" cy="8" r="1.5"/><path d="M9 15l-2 4 5-2 5 2-2-4"/></svg></span><span class="nav-label">Lanzar a Producción</span></button>
   <button class="tab" data-tab="settings" title="Configuración"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.2 2.3 2.6.4.8 2.5 2.3 1.2-.7 2.6.7 2.6-2.3 1.2-.8 2.5-2.6.4L12 21l-1.2-2.3-2.6-.4-.8-2.5-2.3-1.2.7-2.6-.7-2.6 2.3-1.2.8-2.5 2.6-.4z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="nav-label">Configuración</span></button>
 </div>
 </aside>
@@ -2351,91 +2350,6 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   </div>
 </div>
 </section>
-<section id="release_center" class="section admin-only">
-<div class="dashboard-hero" style="margin-top:8px">
-  <div><div class="eyebrow">GITHUB + SUPABASE</div><h2>Centro de lanzamientos</h2><p>Promueve exactamente el código probado desde <b>staging</b> hacia <b>main</b>. Backend en <b>Supabase</b> y hosting en <b>GitHub Pages</b>.</p></div>
-  <button class="ghost refresh-btn" type="button" onclick="loadReleaseStatus()">↻ Actualizar estado</button>
-</div>
-<div class="grid">
-  <div class="card span4"><div class="eyebrow">PRUEBAS</div><h3 style="margin:8px 0 4px">staging</h3><div class="mut">Origen del lanzamiento. Esta rama nunca se modifica durante una publicación.</div></div>
-  <div class="card span4"><div class="eyebrow">PRODUCCIÓN</div><h3 style="margin:8px 0 4px">main</h3><div class="mut">Destino del código aprobado. Los datos de Producción permanecen separados.</div></div>
-  <div class="card span4"><div class="eyebrow">SEGURO</div><h3 id="releaseSafetyTitle" style="margin:8px 0 4px">Modo seguro</h3><div class="mut" id="releaseSafetyText">Consultando configuración…</div></div>
-  <div class="card span12">
-    <div class="row between">
-      <div><h2 style="margin-bottom:6px">Versión coordinada</h2><p class="mut" style="margin:0">Admin, Restaurante, Retail, Profesionales, Streaming y Cliente se revisan juntos antes de mover cualquier rama.</p></div>
-      <div class="actions">
-        <button class="ghost" id="prepareReleaseBtn" type="button" onclick="prepareProductionRelease()">✓ Preparar lanzamiento</button>
-        <button class="primary" id="launchReleaseBtn" type="button" onclick="launchProductionRelease()" disabled>🚀 Lanzar a Producción</button>
-      </div>
-    </div>
-    <div id="releaseSummary" class="item" style="margin-top:16px"><b>Estado:</b> <span class="mut">Pulsa “Preparar lanzamiento” para hacer un diagnóstico sin modificar nada.</span></div>
-    <div id="releaseRepoList" class="list" style="margin-top:12px"></div>
-  </div>
-  <div class="card span12">
-    <div class="row between">
-      <div><h2 style="margin-bottom:6px">Historial y restauración</h2><p class="mut" style="margin:0">Los respaldos se crean automáticamente antes de cada publicación real.</p></div>
-      <button class="ghost" type="button" onclick="loadReleaseHistory()">↻ Actualizar historial</button>
-    </div>
-    <div id="releaseHistoryList" class="list" style="margin-top:14px"><div class="mut">Consultando respaldos…</div></div>
-  </div>
-  <div class="card span12">
-    <div class="row" style="align-items:flex-start"><span style="font-size:22px">🛡️</span><div><b>Datos protegidos</b><div class="mut" style="margin-top:4px">Este flujo solo promueve código. No copia usuarios, negocios, pedidos, productos, credenciales ni bases de datos de Pruebas a Producción.</div></div></div>
-  </div>
-</div>
-</section>
-<style id="release-progress-v2367">
-.release-progress-card{width:min(720px,100%)!important}
-.release-progress-bar{height:14px;border-radius:999px;background:var(--ghost);overflow:hidden;border:1px solid var(--line);margin-top:12px}
-.release-progress-fill{height:100%;width:0%;background:var(--a);transition:width .35s ease}
-.release-progress-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
-.release-progress-stat{padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--item)}
-.release-progress-stat span{display:block;color:var(--mut);font-size:12px}.release-progress-stat b{display:block;margin-top:4px;font-size:17px}
-.release-progress-list{display:grid;gap:9px;margin-top:14px}.release-progress-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--item)}
-.release-progress-row small{display:block;color:var(--mut);margin-top:3px}.release-progress-row strong{text-align:right;font-size:12px}
-.release-progress-note{margin-top:12px;padding:11px 12px;border-radius:12px;background:var(--ghost);color:var(--mut);font-size:12px}
-@media(max-width:600px){.release-progress-stats{grid-template-columns:1fr}.release-progress-row{grid-template-columns:1fr}.release-progress-row strong{text-align:left}}
-</style>
-<div id="releaseConfirmModal" class="admin-form-modal" aria-hidden="true">
-  <div class="admin-form-backdrop" onclick="closeReleaseConfirmation()"></div>
-  <div class="card admin-form-card release-progress-card">
-    <div class="row between" style="align-items:flex-start;gap:14px">
-      <div><div class="eyebrow">CONFIRMACIÓN DE RELEASE</div><h2 style="margin:6px 0">Lanzar a Producción</h2><p class="mut" style="margin:0">Se publicará exactamente la versión que acabas de preparar. Pruebas no se modificará.</p></div>
-      <button class="ghost" type="button" onclick="closeReleaseConfirmation()" aria-label="Cerrar">✕</button>
-    </div>
-    <div class="item" style="margin-top:16px">
-      <b id="releaseConfirmCount">6 módulos preparados</b>
-      <div class="mut" style="margin-top:5px">Antes de comenzar se validan nuevamente los SHA y se crean respaldos automáticos.</div>
-    </div>
-    <label style="margin-top:16px">Escribe <b>LANZAR A PRODUCCION</b> para confirmar
-      <input id="releaseConfirmInput" autocomplete="off" autocapitalize="characters" placeholder="LANZAR A PRODUCCION" oninput="updateReleaseConfirmState()">
-    </label>
-    <div class="row" style="justify-content:flex-end;margin-top:16px">
-      <button class="ghost" type="button" onclick="closeReleaseConfirmation()">Cancelar</button>
-      <button class="primary" id="releaseConfirmStartBtn" type="button" onclick="confirmProductionRelease()" disabled>🚀 Iniciar publicación</button>
-    </div>
-  </div>
-</div>
-<div id="releaseProgressModal" class="admin-form-modal" aria-hidden="true">
-  <div class="admin-form-backdrop"></div>
-  <div class="card admin-form-card release-progress-card">
-    <div class="row between" style="align-items:flex-start;gap:14px">
-      <div><div class="eyebrow">PUBLICACIÓN EN CURSO</div><h2 id="releaseProgressTitle" style="margin:6px 0">Preparando Producción…</h2><p id="releaseProgressPhase" class="mut" style="margin:0">Validando versión y creando respaldos.</p></div>
-      <div style="font-size:30px" id="releaseProgressSpinner" aria-hidden="true">⏳</div>
-    </div>
-    <div class="release-progress-bar" aria-label="Progreso del lanzamiento"><div id="releaseProgressFill" class="release-progress-fill"></div></div>
-    <div class="row between" style="margin-top:7px"><b id="releaseProgressPercent">5%</b><span class="mut" id="releaseProgressCounter">0 de 6 módulos</span></div>
-    <div class="release-progress-stats">
-      <div class="release-progress-stat"><span>Tiempo transcurrido</span><b id="releaseProgressElapsed">0 s</b></div>
-      <div class="release-progress-stat"><span>Tiempo restante</span><b id="releaseProgressEta">Calculando…</b></div>
-      <div class="release-progress-stat"><span>Sitios verificados</span><b id="releaseProgressLive">0 / 6</b></div>
-    </div>
-    <div id="releaseProgressList" class="release-progress-list"></div>
-    <div id="releaseProgressNote" class="release-progress-note">No cierres esta ventana mientras se mueve el código. Después verificaremos también el despliegue de GitHub Pages.</div>
-    <div class="row" style="justify-content:flex-end;margin-top:16px">
-      <button class="ghost" id="releaseProgressCloseBtn" type="button" onclick="closeReleaseProgress()" disabled>Cerrar</button>
-    </div>
-  </div>
-</div>
 <section id="settings" class="section"><div class="card"><div id="settingsBusinessSelectorWrap" class="admin-only" style="margin-bottom:18px"><div class="admin-filter-grid"><label>Grupo de locales<select id="settingsBusinessGroupFilter" onchange="changeSettingsBusinessGroup(this.value)"><option value="real">🏪 Locales reales</option><option value="demo">🧪 Locales demo</option></select></label><label>Negocio a configurar<select id="settingsRestaurantSelect" onchange="changeSettingsRestaurant(this.value)"></select></label><div class="item" style="align-self:end"><b id="settingsBusinessBadge">Selecciona un negocio</b><div class="mut" id="settingsBusinessTypeHint">Primero elige el grupo y luego el negocio.</div></div></div></div><h2>Datos del negocio</h2><div class="grid">
 <div class="span4"><label>Nombre</label><input id="sname"></div><div class="span4"><label>WhatsApp</label><input id="swhatsapp"></div><div class="span4"><label>Instagram</label><input id="sinstagram"></div>
 <div class="span12"><label>Dirección</label><input id="saddress"></div><div class="span4"><label>Apertura</label><input id="sopen" type="time"></div><div class="span4"><label>Cierre</label><input id="sclose" type="time"></div><div class="span4"><label>Tiempo retiro</label><input id="spickup"></div><div class="span8"><label>Tiempo delivery</label><input id="sdelivery"></div><div class="span12"><label>Nota delivery</label><input id="sdeliverynote"></div>
@@ -2551,245 +2465,6 @@ async function adminAuthorizedFetch(path,options={}){
  }
  return res
 }
-let releaseSnapshot=null;
-function releaseShortSha(value){return value?String(value).slice(0,8):"—"}
-function releaseStatusLabel(item){
-  if(item.error)return "Error";
-  if(item.status==="identical")return "Sin cambios";
-  if(item.status==="ahead")return item.ahead_by+" cambio"+(item.ahead_by===1?"":"s")+" pendiente"+(item.ahead_by===1?"":"s");
-  if(item.status==="diverged")return "Ramas divergentes";
-  if(item.status==="behind")return "Pruebas está detrás";
-  return item.status||"Desconocido";
-}
-function renderReleaseCenter(data,prepared=false){
-  const rows=data?.repositories||[];
-  const list=document.getElementById("releaseRepoList");
-  if(list)list.innerHTML=rows.map(item=>{
-    const icon=item.safe?(item.needs_release?"🟡":"✅"):"⛔";
-    const detail=item.error?esc(item.error):"main "+releaseShortSha(item.main_sha)+" → staging "+releaseShortSha(item.staging_sha);
-    const ciText=item.quality?("Calidad "+(item.quality_ready?"✅ GitHub Actions":item.quality==="in_progress"?"⏳ en ejecución":"⛔ "+esc(item.quality))):"Calidad: se verificará al habilitar publicaciones";
-    return '<div class="item"><div class="row between"><div><b>'+icon+" "+esc(item.label)+'</b><div class="mut">'+detail+'</div><div class="mut" style="margin-top:4px;font-size:12px">'+ciText+'</div></div><div style="text-align:right"><b>'+esc(releaseStatusLabel(item))+'</b><div class="mut">'+(item.changed_files||0)+' archivos detectados</div></div></div></div>';
-  }).join("")||'<div class="mut">No hay información de repositorios.</div>';
-
-  const config=data?.configuration||{};
-  const enabled=!!config.github_token_configured&&!!config.release_enabled;
-  const safetyTitle=document.getElementById("releaseSafetyTitle");
-  const safetyText=document.getElementById("releaseSafetyText");
-  if(safetyTitle)safetyTitle.textContent=enabled?"Publicación habilitada":"Modo seguro";
-  if(safetyText)safetyText.textContent=enabled?"Backend Supabase · publicar exige diagnóstico y Calidad ✅ en GitHub.":"Backend Supabase ✅ · publicación real bloqueada hasta validar la credencial privada de GitHub y habilitar lanzamientos.";
-
-  const summary=document.getElementById("releaseSummary");
-  if(summary){
-    if(!data?.ready)summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>Lanzamiento bloqueado. Revisa los módulos marcados con error o divergencia.</span>";
-    else if(!data?.pending)summary.innerHTML="<b>Estado:</b> <span style='color:var(--ok)'>Producción ya coincide con Pruebas. No hay cambios pendientes.</span>";
-    else summary.innerHTML="<b>Estado:</b> <span>"+data.pending+" módulo"+(data.pending===1?"":"s")+" con cambios pendientes."+(prepared?" Diagnóstico completado sin modificar ramas.":"")+"</span>";
-  }
-  const launch=document.getElementById("launchReleaseBtn");
-  if(launch){
-    launch.disabled=!(prepared&&data?.ready&&data?.pending>0&&enabled);
-    launch.title=launch.disabled?(enabled?"Primero prepara el lanzamiento.":"Publicación deshabilitada por configuración."):"Lanzar la versión preparada";
-  }
-}
-async function releaseAuthorizedFetch(path,options={}){
-  const actionByPath={"/api/release-status":"status","/api/release-history":"history","/api/release-rollback":"rollback"};
-  let payload={};
-  try{payload=options?.body?JSON.parse(options.body):{}}catch(_){payload={}}
-  if(!payload.action)payload.action=actionByPath[path]||"status";
-  let session=await ensureAdminSession(false);
-  const send=s=>fetch(SB_URL.replace(/\/$/,"")+"/functions/v1/release-center",{
-    method:"POST",
-    headers:{"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+s.access_token},
-    body:JSON.stringify(payload)
-  });
-  let res=await send(session);
-  if(res.status===401){session=await ensureAdminSession(true);res=await send(session)}
-  const raw=await res.text();let body={};try{body=raw?JSON.parse(raw):{}}catch(_){body={error:raw||"Respuesta inválida"}}
-  if(!res.ok)throw Object.assign(new Error(body.error||"No se pudo completar la operación."),{payload:body,status:res.status});
-  return body;
-}
-async function loadReleaseStatus(){
-  if(!isSuperAdmin)return;
-  const summary=document.getElementById("releaseSummary");
-  if(summary)summary.innerHTML="<b>Estado:</b> <span class='mut'>Consultando ramas main y staging…</span>";
-  try{
-    const data=await releaseAuthorizedFetch("/api/release-status",{method:"GET",headers:{}});
-    releaseSnapshot=null;
-    renderReleaseCenter(data,false);
-    loadReleaseHistory();
-  }catch(e){
-    releaseSnapshot=null;
-    if(summary)summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>"+esc(e.message)+"</span>";
-    const launch=document.getElementById("launchReleaseBtn");if(launch)launch.disabled=true;
-  }
-}
-async function prepareProductionRelease(){
-  if(!isSuperAdmin)return;
-  const btn=document.getElementById("prepareReleaseBtn");if(btn){btn.disabled=true;btn.textContent="↻ Revisando…"}
-  try{
-    const dry=await releaseAuthorizedFetch("/api/release-production",{method:"POST",body:JSON.stringify({action:"dry-run"})});
-    const expected={};(dry.repositories||[]).forEach(item=>{expected[item.key]={main_sha:item.main_sha,staging_sha:item.staging_sha}});
-    releaseSnapshot={expected,configuration:dry.configuration||{},repositories:dry.repositories||[],pending:dry.pending||0,ready:dry.ready!==false};
-    renderReleaseCenter({configuration:dry.configuration||{},repositories:dry.repositories,pending:dry.pending,ready:dry.ready!==false},true);
-    toast(dry.message||"Diagnóstico completado. No se modificó ninguna rama.");
-  }catch(e){
-    releaseSnapshot=null;
-    if(e.payload?.repositories)renderReleaseCenter({repositories:e.payload.repositories,ready:false,pending:0,configuration:{}},false);
-    toast(e.message||"No se pudo preparar el lanzamiento.");
-  }finally{if(btn){btn.disabled=false;btn.textContent="✓ Preparar lanzamiento"}}
-}
-let releaseProgressInFlight=false,releaseProgressStartedAt=0,releaseProgressElapsedTimer=null,releaseProgressPollTimer=null,releaseProgressExpected=null,releaseProgressPrepared=null;
-const releaseSleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-function releaseFormatSeconds(ms){const total=Math.max(0,Math.floor(ms/1000));if(total<60)return total+" s";const m=Math.floor(total/60),s=total%60;return m+" min "+String(s).padStart(2,"0")+" s"}
-function openReleaseUiModal(id){const el=document.getElementById(id);if(el){el.classList.add("open");el.setAttribute("aria-hidden","false")}}
-function closeReleaseUiModal(id){const el=document.getElementById(id);if(el){el.classList.remove("open");el.setAttribute("aria-hidden","true")}}
-function closeReleaseConfirmation(){closeReleaseUiModal("releaseConfirmModal")}
-function closeReleaseProgress(){if(releaseProgressInFlight)return;closeReleaseUiModal("releaseProgressModal")}
-function updateReleaseConfirmState(){
-  const input=document.getElementById("releaseConfirmInput"),btn=document.getElementById("releaseConfirmStartBtn");
-  if(btn)btn.disabled=String(input?.value||"").trim().toUpperCase()!=="LANZAR A PRODUCCION";
-}
-function launchProductionRelease(){
-  if(!isSuperAdmin||!releaseSnapshot)return;
-  const input=document.getElementById("releaseConfirmInput"),count=document.getElementById("releaseConfirmCount");
-  if(input)input.value="";
-  if(count)count.textContent=(releaseSnapshot.repositories||[]).filter(item=>item.needs_release).length+" módulos preparados";
-  updateReleaseConfirmState();
-  openReleaseUiModal("releaseConfirmModal");
-  setTimeout(()=>input?.focus(),120);
-}
-function renderReleaseProgress(data){
-  const rows=data?.repositories||[];
-  const preparedRows=releaseProgressPrepared?.repositories||[];
-  const byKey=new Map(rows.map(item=>[item.key,item]));
-  const total=Math.max(1,preparedRows.filter(item=>item.needs_release).length||preparedRows.length||6);
-  const tracked=preparedRows.filter(item=>item.needs_release);
-  let moved=0,live=0;
-  const list=document.getElementById("releaseProgressList");
-  if(list)list.innerHTML=tracked.map(item=>{
-    const current=byKey.get(item.key)||{};
-    const expected=releaseProgressExpected?.[item.key]||{};
-    const codeDone=!!expected.staging_sha&&current.main_sha===expected.staging_sha;
-    const siteDone=codeDone&&!!current.production_deploy_ready;
-    if(codeDone)moved++;if(siteDone)live++;
-    const icon=siteDone?"✅":codeDone?"🔵":"⏳";
-    const state=siteDone?"En Producción":codeDone?(current.production_deploy==="failure"||current.production_deploy==="error"?"Despliegue con error":"Código publicado · desplegando"):"Pendiente";
-    const detail=siteDone?"GitHub Pages verificado":codeDone?"main "+releaseShortSha(current.main_sha)+" · "+esc(current.production_deploy||"verificando"):"Esperando promoción a main";
-    return '<div class="release-progress-row"><div><b>'+icon+" "+esc(item.label)+'</b><small>'+detail+'</small></div><strong>'+esc(state)+'</strong></div>';
-  }).join("");
-  const elapsed=Date.now()-releaseProgressStartedAt;
-  const progress=Math.min(99,Math.max(5,Math.round(8+(moved/total)*62+(live/total)*30)));
-  const fill=document.getElementById("releaseProgressFill"),pct=document.getElementById("releaseProgressPercent"),counter=document.getElementById("releaseProgressCounter"),liveEl=document.getElementById("releaseProgressLive"),phase=document.getElementById("releaseProgressPhase"),eta=document.getElementById("releaseProgressEta");
-  if(fill)fill.style.width=progress+"%";if(pct)pct.textContent=progress+"%";if(counter)counter.textContent=moved+" de "+total+" módulos";if(liveEl)liveEl.textContent=live+" / "+total;
-  if(phase){
-    if(moved===0)phase.textContent="Validando SHA y creando respaldos automáticos…";
-    else if(moved<total)phase.textContent="Promoviendo código aprobado de staging a main…";
-    else if(live<total)phase.textContent="Código sincronizado. Verificando despliegues de GitHub Pages…";
-    else phase.textContent="Código y sitios de Producción verificados.";
-  }
-  if(eta){
-    if(live===total)eta.textContent="0 s";
-    else if(moved>0&&moved<total){const perModule=elapsed/moved;eta.textContent="≈ "+releaseFormatSeconds(perModule*(total-moved));}
-    else if(moved===total)eta.textContent="Esperando Pages…";
-    else eta.textContent="Calculando…";
-  }
-  return {total,moved,live,allCode:moved===total,allLive:live===total};
-}
-async function pollReleaseProgress(){
-  try{
-    const data=await releaseAuthorizedFetch("/api/release-status",{method:"GET",headers:{}});
-    return {data,state:renderReleaseProgress(data)};
-  }catch(_){return null}
-}
-async function confirmProductionRelease(){
-  if(releaseProgressInFlight||!releaseSnapshot)return;
-  const confirmation=String(document.getElementById("releaseConfirmInput")?.value||"").trim();
-  if(confirmation.toUpperCase()!=="LANZAR A PRODUCCION"){toast("Escribe la confirmación completa.");return}
-  releaseProgressInFlight=true;
-  releaseProgressStartedAt=Date.now();
-  releaseProgressExpected=JSON.parse(JSON.stringify(releaseSnapshot.expected||{}));
-  releaseProgressPrepared=JSON.parse(JSON.stringify(releaseSnapshot));
-  closeReleaseConfirmation();
-  openReleaseUiModal("releaseProgressModal");
-  const closeBtn=document.getElementById("releaseProgressCloseBtn"),title=document.getElementById("releaseProgressTitle"),spinner=document.getElementById("releaseProgressSpinner"),note=document.getElementById("releaseProgressNote"),btn=document.getElementById("launchReleaseBtn");
-  if(closeBtn)closeBtn.disabled=true;if(title)title.textContent="Preparando Producción…";if(spinner)spinner.textContent="⏳";if(note)note.textContent="No cierres esta ventana mientras se mueve el código. Después verificaremos también el despliegue de GitHub Pages.";
-  if(btn){btn.disabled=true;btn.textContent="🚀 Publicando…"}
-  const initialRows=(releaseProgressPrepared.repositories||[]).map(item=>({...item,main_sha:releaseProgressExpected?.[item.key]?.main_sha,production_deploy_ready:false,production_deploy:"waiting"}));
-  renderReleaseProgress({repositories:initialRows});
-  const elapsedEl=document.getElementById("releaseProgressElapsed");
-  clearInterval(releaseProgressElapsedTimer);
-  releaseProgressElapsedTimer=setInterval(()=>{if(elapsedEl)elapsedEl.textContent=releaseFormatSeconds(Date.now()-releaseProgressStartedAt)},1000);
-  clearInterval(releaseProgressPollTimer);
-  releaseProgressPollTimer=setInterval(()=>{pollReleaseProgress()},4000);
-  let releaseSucceeded=false;
-  try{
-    const result=await releaseAuthorizedFetch("/api/release-production",{method:"POST",body:JSON.stringify({action:"release",confirmation,expected:releaseProgressExpected})});
-    releaseSucceeded=!!result?.ok;
-    if(title)title.textContent="Código publicado · verificando sitios…";
-    let finalState=null;
-    const deadline=Date.now()+90000;
-    while(Date.now()<deadline){
-      const polled=await pollReleaseProgress();
-      if(polled?.state){finalState=polled.state;if(finalState.allLive)break}
-      await releaseSleep(5000);
-    }
-    if(finalState?.allLive){
-      const fill=document.getElementById("releaseProgressFill"),pct=document.getElementById("releaseProgressPercent");
-      if(fill)fill.style.width="100%";if(pct)pct.textContent="100%";
-      if(title)title.textContent="✅ Producción actualizada";
-      if(spinner)spinner.textContent="✅";
-      if(note)note.textContent="Los módulos quedaron sincronizados y los despliegues de Producción fueron verificados.";
-    }else{
-      if(title)title.textContent="✅ Código actualizado";
-      if(spinner)spinner.textContent="🔄";
-      if(note)note.textContent="main ya fue actualizado. GitHub Pages todavía puede estar terminando sus despliegues; el monitor horario seguirá verificándolo.";
-    }
-    releaseSnapshot=null;
-    toast(result.message||"Lanzamiento completado.");
-    await loadReleaseHistory();
-  }catch(e){
-    if(title)title.textContent="⛔ Lanzamiento detenido";
-    if(spinner)spinner.textContent="⛔";
-    if(note)note.textContent=e.message||"El lanzamiento no pudo completarse. Producción no se dará por válida hasta volver a preparar el release.";
-    toast(e.message||"El lanzamiento no pudo completarse.");
-  }finally{
-    releaseProgressInFlight=false;
-    clearInterval(releaseProgressElapsedTimer);clearInterval(releaseProgressPollTimer);
-    releaseProgressElapsedTimer=null;releaseProgressPollTimer=null;
-    if(elapsedEl)elapsedEl.textContent=releaseFormatSeconds(Date.now()-releaseProgressStartedAt);
-    if(closeBtn)closeBtn.disabled=false;
-    if(btn)btn.textContent="🚀 Lanzar a Producción";
-    await loadReleaseStatus();
-    if(releaseSucceeded)await loadReleaseHistory();
-  }
-}
-
-async function loadReleaseHistory(){
-  if(!isSuperAdmin)return;
-  const list=document.getElementById("releaseHistoryList");if(list)list.innerHTML='<div class="mut">Consultando respaldos…</div>';
-  try{
-    const data=await releaseAuthorizedFetch("/api/release-history",{method:"GET",headers:{}});
-    const backups=data?.backups||[],config=data?.configuration||{};
-    const enabled=!!config.github_token_configured&&!!config.release_enabled;
-    if(!list)return;
-    if(!backups.length){list.innerHTML='<div class="item"><b>Sin respaldos todavía</b><div class="mut">El primer respaldo aparecerá aquí cuando hagas una publicación real a Producción.</div></div>';return}
-    list.innerHTML=backups.map(item=>{
-      const when=item.created_at?new Date(item.created_at).toLocaleString("es-CL"):"Fecha no disponible";
-      return '<div class="item"><div class="row between"><div><b>Respaldo de Producción</b><div class="mut">'+esc(when)+' · '+releaseShortSha(item.admin_sha)+'</div><div class="mut" style="font-size:11px;margin-top:3px">'+esc(item.branch)+'</div></div><button class="ghost" type="button" '+(enabled?'':'disabled title="Restauración deshabilitada mientras el modo seguro siga activo"')+' onclick="restoreProductionBackup(\''+String(item.branch).replace(/'/g,"\\'")+'\')">↩ Restaurar</button></div></div>';
-    }).join("");
-  }catch(e){if(list)list.innerHTML='<div class="item"><b style="color:var(--bad)">No se pudo cargar el historial</b><div class="mut">'+esc(e.message)+'</div></div>'}
-}
-async function restoreProductionBackup(branch){
-  if(!isSuperAdmin||!branch)return;
-  const confirmation=prompt('Vas a restaurar Producción a un respaldo anterior.\nPruebas no se modificarán.\n\nEscribe exactamente:\nRESTAURAR PRODUCCION');
-  if(confirmation===null)return;
-  if(String(confirmation).trim().toUpperCase()!=="RESTAURAR PRODUCCION"){toast("Restauración cancelada.");return}
-  try{
-    const result=await releaseAuthorizedFetch("/api/release-rollback",{method:"POST",body:JSON.stringify({backup_branch:branch,confirmation})});
-    toast(result.message||"Producción restaurada.");
-    await Promise.all([loadReleaseStatus(),loadReleaseHistory()]);
-  }catch(e){toast(e.message||"No se pudo restaurar Producción.")}
-}
-
 async function login(){
   const msg=document.getElementById("loginMsg"), emailEl=document.getElementById("email"), passEl=document.getElementById("password");
   msg.textContent="Ingresando...";
@@ -2984,7 +2659,7 @@ async function enter(user){
   }catch(e){msg.textContent=e.message||"No se pudo abrir el panel."}
 }
 async function restoreSession(){try{const {data,error}=await sb.auth.getSession();if(error)throw error;if(data.session){await enter(data.session.user)}else{document.getElementById("login").classList.remove("hidden")}}catch(e){document.getElementById("login").classList.remove("hidden");document.getElementById("loginMsg").textContent=e.message||"No se pudo validar la sesión."}finally{document.body.classList.remove("auth-loading")}}restoreSession();
-document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{const tabName=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));const activity=document.getElementById("adminAuthenticatedActivity");if(activity)activity.classList.toggle("hidden",tabName!=="dashboard");b.classList.add("active");document.getElementById(tabName)?.classList.add("active");window.refreshAdminPwaInstall?.();closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){const refreshId=++dashboardRefreshSequence;scheduleAdminDeferredDashboard(refreshId);renderBusinessStatus(dashboardRestaurantScope==="all"?null:(currentRestaurantConfig||restaurants.find(r=>Number(r.id)===Number(currentRestaurant))))}else if(b.dataset.tab==="orders"){await loadOrders()}else if(b.dataset.tab==="customers"){await loadAdminCustomers()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}else if(b.dataset.tab==="release_center"){await loadReleaseStatus()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=async()=>{const tabName=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));const activity=document.getElementById("adminAuthenticatedActivity");if(activity)activity.classList.toggle("hidden",tabName!=="dashboard");b.classList.add("active");document.getElementById(tabName)?.classList.add("active");window.refreshAdminPwaInstall?.();closeAdminSideMenu?.();if(!currentRestaurant&&restaurants.length)currentRestaurant=restaurants[0].id;try{if(b.dataset.tab==="dashboard"){const refreshId=++dashboardRefreshSequence;scheduleAdminDeferredDashboard(refreshId);renderBusinessStatus(dashboardRestaurantScope==="all"?null:(currentRestaurantConfig||restaurants.find(r=>Number(r.id)===Number(currentRestaurant))))}else if(b.dataset.tab==="orders"){await loadOrders()}else if(b.dataset.tab==="customers"){await loadAdminCustomers()}else if(b.dataset.tab==="products"){await loadProducts()}else if(b.dataset.tab==="categories"){await loadCategories()}else if(b.dataset.tab==="subscriptions"){await loadSubscriptionPlans()}else if(b.dataset.tab==="users"){await loadStaff()}else if(b.dataset.tab==="settings"){await loadSettings()}renderRestaurantContent()}catch(e){console.error("Error cargando sección",b.dataset.tab,e);toast("No se pudo actualizar esta sección")}});
 let dashboardRefreshSequence=0;
 function setDashboardLoading(loading){
  const btn=document.getElementById("refreshDashboardBtn");
@@ -3822,7 +3497,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.67</footer><script>
+</script><footer class="admin-version">Versión v2.3.68</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -4533,8 +4208,7 @@ function adminPwaStandalone(){return window.matchMedia?.("(display-mode: standal
 function adminPwaIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(/macintosh/i.test(navigator.userAgent)&&navigator.maxTouchPoints>1)}
 function refreshAdminPwaInstall(){
  const btn=document.getElementById("adminPwaInstall");if(!btn)return;
- const releaseCenterOpen=document.getElementById("release_center")?.classList.contains("active")===true;
- btn.classList.toggle("show",!releaseCenterOpen&&!adminPwaStandalone()&&(!!adminPwaPrompt||adminPwaIOS()));
+ btn.classList.toggle("show",!adminPwaStandalone()&&(!!adminPwaPrompt||adminPwaIOS()));
 }
 async function installAdminPwa(){
  if(adminPwaStandalone())return;
