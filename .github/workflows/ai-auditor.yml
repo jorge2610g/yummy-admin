@@ -1,0 +1,64 @@
+name: Auditor IA de Pruebas
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
+  push:
+    branches: [staging]
+    paths:
+      - "tests/system-auditor.mjs"
+      - ".github/workflows/ai-auditor.yml"
+      - "index.html"
+      - "VERSION"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  ai-audit:
+    name: ai-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Abrir y auditar todos los módulos de Pruebas
+        run: node tests/system-auditor.mjs
+        env:
+          ADMIN_TEST_EMAIL: \${{ secrets.ADMIN_TEST_EMAIL }}
+          ADMIN_TEST_PASSWORD: \${{ secrets.ADMIN_TEST_PASSWORD }}
+          RESTAURANT_TEST_EMAIL: \${{ secrets.RESTAURANT_TEST_EMAIL }}
+          RESTAURANT_TEST_PASSWORD: \${{ secrets.RESTAURANT_TEST_PASSWORD }}
+          GEMINI_API_KEY: \${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: \${{ secrets.GROQ_API_KEY }}
+          GEMINI_MODEL: gemini-3.8-flash
+          GROQ_MODEL: openai/gpt-oss-20b
+          AI_AUDIT_ENFORCE: "false"
+
+      - name: Publicar resumen en GitHub Actions
+        if: always()
+        run: |
+          if [ -f audit-results/README.md ]; then
+            cat audit-results/README.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "El auditor no llegó a generar el informe." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Guardar capturas e informe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: yummypro-ai-audit-\${{ github.run_id }}
+          path: audit-results
+          if-no-files-found: warn
+          retention-days: 14
