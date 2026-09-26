@@ -24,7 +24,7 @@ jobs:
         env:
           PAGES_TEST_URL: https://jorge2610g.github.io/yummy-admin-pruebas/
           ADMIN_TEST_EMAIL: ${{ secrets.ADMIN_TEST_EMAIL }}
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_TEST_PASSWORD }}
+          ADMIN_TEST_PASSWORD: ${{ secrets.ADMIN_TEST_PASSWORD }}
       - name: Guardar evidencia si falla
         if: failure()
         uses: actions/upload-artifact@v4
