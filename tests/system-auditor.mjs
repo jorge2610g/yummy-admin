@@ -80,7 +80,7 @@ async function auditPage(browser,module,viewportName,viewport){
   page.on("pageerror",e=>consoleErrors.push(String(e.message||e)));
   page.on("console",m=>{if(m.type()==="error")consoleErrors.push(m.text())});
   page.on("requestfailed",req=>requestFailures.push({url:req.url(),error:req.failure()?.errorText||"falló"}));
-  page.on("response",res=>{try{const u=new URL(res.url());if(u.origin===new URL(module.url).origin&&res.status()>=400)httpErrors.push({status:res.status(),url:res.url()})}catch(_){}});
+  page.on("response",res=>{try{const u=new URL(res.url());if(res.status()>=400)httpErrors.push({status:res.status(),url:u.origin+u.pathname})}catch(_){}});
   let response=null,navigationError=null;
   try{response=await page.goto(module.url,{waitUntil:"domcontentloaded",timeout:25000});await page.waitForTimeout(2200)}
   catch(error){navigationError=String(error?.message||error)}
@@ -107,15 +107,20 @@ async function auditPage(browser,module,viewportName,viewport){
   if((metrics.textLength||0)<40)errors.push("Pantalla posiblemente vacía: poco texto visible");
   if((metrics.bodyChildren||0)<1)errors.push("Pantalla vacía: body sin contenido");
   if((metrics.scrollWidth||0)>(metrics.innerWidth||0)+16)warnings.push("Desbordamiento horizontal detectado");
-  if(consoleErrors.length)errors.push("Errores JavaScript/consola: "+consoleErrors.length);
+  const missingAuth=!!module.auth&&!login.attempted&&login.reason==="credenciales-no-configuradas";
+  const effectiveConsoleErrors=consoleErrors.filter(message=>!(missingAuth&&/\b401\b|unauthorized/i.test(message)));
+  if(missingAuth)warnings.push("Área autenticada no recorrida: faltan credenciales de prueba en GitHub Secrets");
+  if(effectiveConsoleErrors.length)errors.push("Errores JavaScript/consola: "+effectiveConsoleErrors.length);
   const seriousHttp=httpErrors.filter(x=>x.status>=500);
-  if(seriousHttp.length)errors.push("Respuestas 5xx del sitio: "+seriousHttp.length);
+  if(seriousHttp.length)errors.push("Respuestas 5xx: "+seriousHttp.length+" ("+seriousHttp.slice(0,3).map(x=>x.url).join(", ")+")");
+  const unauthorized=httpErrors.filter(x=>x.status===401);
+  if(unauthorized.length&&!missingAuth)errors.push("Respuestas 401 inesperadas: "+unauthorized.length+" ("+unauthorized.slice(0,3).map(x=>x.url).join(", ")+")");
   if(requestFailures.filter(x=>{try{return new URL(x.url).hostname===TEST_HOST}catch(_){return false}}).length)warnings.push("Recursos del sitio fallaron al cargar");
   if(module.expectSelector&&!metrics.selectorVisible)warnings.push("Selector de rubros no visible en este menú de Pruebas");
   const screenshot=path.join(OUT,"screenshots",slugify(module.key+"-"+viewportName)+".png");
   try{await page.screenshot({path:screenshot,fullPage:true})}catch(_){}
   await context.close();
-  return {module:module.key,label:module.label,viewport:viewportName,url:module.url,finalUrl,status:errors.length?"failure":warnings.length?"warning":"success",errors,warnings,consoleErrors:consoleErrors.slice(0,20),httpErrors:httpErrors.slice(0,20),requestFailures:requestFailures.slice(0,20),login,metrics,screenshot};
+  return {module:module.key,label:module.label,viewport:viewportName,url:module.url,finalUrl,status:errors.length?"failure":warnings.length?"warning":"success",errors,warnings,consoleErrors:consoleErrors.slice(0,20),httpErrors:httpErrors.slice(0,30),requestFailures:requestFailures.slice(0,20),login,metrics,screenshot};
 }
 
 function reportPrompt(report){
