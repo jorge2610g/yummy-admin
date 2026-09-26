@@ -11,6 +11,7 @@ on:
       - ".github/workflows/ai-auditor.yml"
       - "index.html"
       - "VERSION"
+      - ".ai-audit-trigger"
 
 permissions:
   contents: read
