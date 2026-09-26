@@ -25,10 +25,6 @@ create index if not exists restaurant_orders_customer_created_idx
   on public.restaurant_orders (customer_id, created_at desc)
   where customer_id is not null;
 
-create index if not exists retail_online_orders_customer_created_idx
-  on public.retail_online_orders (customer_id, created_at desc)
-  where customer_id is not null;
-
 create index if not exists professional_appointments_customer_created_idx
   on public.professional_appointments (customer_id, created_at desc)
   where customer_id is not null;
@@ -42,9 +38,6 @@ create index if not exists restaurant_inventory_items_restaurant_active_idx
 
 create index if not exists restaurant_promotions_restaurant_created_idx
   on public.restaurant_promotions (restaurant_id, created_at desc);
-
-create index if not exists restaurant_reviews_restaurant_created_idx
-  on public.restaurant_reviews (restaurant_id, created_at desc);
 
 -- Add a leading btree index for each FK that still lacks one.
 do $$
@@ -100,8 +93,12 @@ begin
     from pg_policies
     where schemaname='public'
       and (
-        coalesce(qual,'') ~ 'auth\\.(uid|role|jwt)\\(\\)'
-        or coalesce(with_check,'') ~ 'auth\\.(uid|role|jwt)\\(\\)'
+        position('auth.uid()' in coalesce(qual,''))>0
+        or position('auth.uid()' in coalesce(with_check,''))>0
+        or position('auth.role()' in coalesce(qual,''))>0
+        or position('auth.role()' in coalesce(with_check,''))>0
+        or position('auth.jwt()' in coalesce(qual,''))>0
+        or position('auth.jwt()' in coalesce(with_check,''))>0
       )
   loop
     q := p.qual;
