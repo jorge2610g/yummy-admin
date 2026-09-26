@@ -1,7 +1,16 @@
+# Gate de release de Pruebas: compara invariantes con Producción y exige un checkpoint explícito
+# para las diferencias intencionales de RLS/funciones que aún no fueron promovidas.
 name: Verify Staging Parity
 
 on:
   workflow_dispatch:
+  push:
+    branches: [staging]
+    paths:
+      - 'supabase/**'
+      - 'scripts/staging-parity.sql'
+      - 'scripts/staging-schema-checkpoint.txt'
+      - '.github/workflows/staging-parity.yml'
 
 permissions:
   contents: read
@@ -12,6 +21,7 @@ jobs:
     env:
       PROD_PROJECT_REF: gulctljitzlwokqydigx
       STAGING_PROJECT_REF: wodqqheeesrelsbacmgx
+      SUPABASE_POOLER_HOST: aws-0-sa-east-1.pooler.supabase.com
 
     steps:
       - name: Checkout staging
@@ -41,23 +51,74 @@ jobs:
           PROD_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
           STG_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
-          prod_hash="$(
-            docker run --rm -i               -e PGPASSWORD="$PROD_DB_PASSWORD"               postgres:17               psql                 --host="aws-0-sa-east-1.pooler.supabase.com"                 --port=5432                 --username="postgres.$PROD_PROJECT_REF"                 --dbname=postgres                 --no-align                 --tuples-only                 --set=ON_ERROR_STOP=1               < scripts/staging-parity.sql
-          )"
+          set -euo pipefail
 
-          staging_hash="$(
-            docker run --rm -i               -e PGPASSWORD="$STG_DB_PASSWORD"               postgres:17               psql                 --host="aws-0-sa-east-1.pooler.supabase.com"                 --port=5432                 --username="postgres.$STAGING_PROJECT_REF"                 --dbname=postgres                 --no-align                 --tuples-only                 --set=ON_ERROR_STOP=1               < scripts/staging-parity.sql
-          )"
+          fingerprint() {
+            local ref="$1"
+            local password="$2"
+            docker run --rm -i \
+              -e PGPASSWORD="$password" \
+              -e PGSSLMODE=require \
+              -e PGCONNECT_TIMEOUT=15 \
+              postgres:17 \
+              psql \
+                --host="$SUPABASE_POOLER_HOST" \
+                --port=6543 \
+                --username="postgres.$ref" \
+                --dbname=postgres \
+                --no-align \
+                --tuples-only \
+                --set=ON_ERROR_STOP=1 \
+              < scripts/staging-parity.sql
+          }
+
+          echo "Validating Production database access..."
+          prod_hash="$(fingerprint "$PROD_PROJECT_REF" "$PROD_DB_PASSWORD")" || {
+            echo "ERROR: PRODUCTION_DB_PASSWORD or Production pooler connection is invalid."
+            exit 2
+          }
+
+          echo "Validating Staging database access..."
+          staging_hash="$(fingerprint "$STAGING_PROJECT_REF" "$STG_DB_PASSWORD")" || {
+            echo "ERROR: STAGING_DB_PASSWORD or Staging pooler connection is invalid."
+            exit 3
+          }
 
           prod_hash="$(echo "$prod_hash" | tr -d '[:space:]')"
           staging_hash="$(echo "$staging_hash" | tr -d '[:space:]')"
 
-          echo "Production fingerprint: $prod_hash"
-          echo "Staging fingerprint:    $staging_hash"
+          IFS='|' read -r -a prod_parts <<< "$prod_hash"
+          IFS='|' read -r -a staging_parts <<< "$staging_hash"
 
-          if [ "$prod_hash" != "$staging_hash" ]; then
-            echo "ERROR: YummyPro staging database is not functionally identical to production."
-            exit 1
+          if [ "${#prod_parts[@]}" -ne 10 ] || [ "${#staging_parts[@]}" -ne 10 ]; then
+            echo "ERROR: unexpected database fingerprint format."
+            exit 4
           fi
 
-          echo "OK: database structure and runtime permissions match production."
+          # Invariantes que no deben divergir durante pruebas:
+          # columns, triggers, table grants, sequence grants, effective routine grants,
+          # default ACL, extensions and storage buckets. Policies/functions are allowed
+          # to differ only when the full Staging fingerprint matches the committed checkpoint.
+          for idx in 0 3 4 5 6 7 8 9; do
+            if [ "${prod_parts[$idx]}" != "${staging_parts[$idx]}" ]; then
+              echo "ERROR: critical database invariant $idx differs from Production."
+              exit 5
+            fi
+          done
+
+          expected_sha="$(awk -F= '$1=="schema_sha256" {print $2}' scripts/staging-schema-checkpoint.txt | tr -d '[:space:]')"
+          test -n "$expected_sha" || (echo "ERROR: missing schema_sha256 in staging checkpoint." && exit 6)
+
+          current_sha="$(printf '%s' "$staging_hash" | sha256sum | awk '{print $1}')"
+          if [ "$current_sha" != "$expected_sha" ]; then
+            echo "ERROR: untracked Staging database drift detected after the recorded checkpoint."
+            echo "Expected checkpoint SHA: $expected_sha"
+            echo "Current Staging SHA:     $current_sha"
+            exit 7
+          fi
+
+          if [ "$prod_hash" = "$staging_hash" ]; then
+            echo "OK: Staging is fully identical to Production."
+          else
+            echo "OK: critical invariants match Production and intentional Staging RLS/function changes match the recorded checkpoint."
+          fi

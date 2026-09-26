@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
+<script>document.documentElement.dataset.yummyEnv=(location.hostname.toLowerCase().replace(/^www\\./,"")==="admin.yummypro.online")?"production":"staging";</script>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#07111f">
 <meta name="mobile-web-app-capable" content="yes">
@@ -14,6 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#07111f;--bg2:#0c1b2f;--card:#0e1d30;--field:#071525;--item:#0a192a;--ghost:#16273b;--pill:#17304a;--txt:#f6f8fb;--mut:#9fb0c5;--line:#203550;--a:#ffb703;--ok:#2dd4bf;--bad:#fb7185;--shadow:#0004}
+html[data-yummy-env="production"] .staging-only{display:none!important}
 html[data-theme="light"]{--bg:#f4f7fb;--bg2:#e9eef6;--card:#fff;--field:#fff;--item:#f8fafc;--ghost:#eef2f7;--pill:#e7edf5;--txt:#172033;--mut:#5f6f82;--line:#d6deea;--shadow:#23324a18}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:linear-gradient(135deg,var(--bg),var(--bg2));color:var(--txt);min-height:100vh}
 button,input,textarea,select{font:inherit}.hidden{display:none!important}.wrap{max-width:1280px;margin:auto;padding:24px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 18px 50px var(--shadow)}
@@ -2187,8 +2189,8 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   <button class="tab admin-only" data-tab="customers" title="Clientes"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span class="nav-label">Clientes</span></button>
   <div class="nav-group-label">SISTEMA</div>
   <button class="tab admin-only" data-tab="push_center" title="Notificaciones Push"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span><span class="nav-label">Notificaciones Push</span></button>
-  <button class="tab admin-only" data-tab="ai_auditor" title="Auditor IA" onclick="setTimeout(loadAiAuditStatus,0)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="3"/><path d="M9 10h.01M15 10h.01M8 15h8M12 2v3M2 12h2M20 12h2"/></svg></span><span class="nav-label">Auditor IA</span></button>
-  <button class="tab admin-only" data-tab="release_center" title="Lanzar a Producción"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c3 2 5 5 5 9l-5 4-5-4c0-4 2-7 5-9Z"/><circle cx="12" cy="8" r="1.5"/><path d="M9 15l-2 4 5-2 5 2-2-4"/></svg></span><span class="nav-label">Lanzar a Producción</span></button>
+  <button class="tab admin-only staging-only" data-tab="ai_auditor" title="Auditor IA" onclick="setTimeout(loadAiAuditStatus,0)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="3"/><path d="M9 10h.01M15 10h.01M8 15h8M12 2v3M2 12h2M20 12h2"/></svg></span><span class="nav-label">Auditor IA</span></button>
+  <button class="tab admin-only staging-only" data-tab="release_center" title="Lanzar a Producción"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c3 2 5 5 5 9l-5 4-5-4c0-4 2-7 5-9Z"/><circle cx="12" cy="8" r="1.5"/><path d="M9 15l-2 4 5-2 5 2-2-4"/></svg></span><span class="nav-label">Lanzar a Producción</span></button>
   <button class="tab" data-tab="settings" title="Configuración"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.2 2.3 2.6.4.8 2.5 2.3 1.2-.7 2.6.7 2.6-2.3 1.2-.8 2.5-2.6.4L12 21l-1.2-2.3-2.6-.4-.8-2.5-2.3-1.2.7-2.6-.7-2.6 2.3-1.2.8-2.5 2.6-.4z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="nav-label">Configuración</span></button>
 </div>
 </aside>
@@ -2352,7 +2354,7 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   </div>
 </div>
 </section>
-<section id="ai_auditor" class="section admin-only">
+<section id="ai_auditor" class="section admin-only staging-only">
 <div class="dashboard-hero" style="margin-top:8px">
   <div><div class="eyebrow">PLAYWRIGHT + IA</div><h2>🤖 Auditor IA de Pruebas</h2><p>Abre los módulos reales con Chromium, revisa móvil y escritorio, captura errores de consola/red y guarda evidencia visual.</p></div>
   <button class="primary refresh-btn" id="aiAuditRunBtn" type="button" onclick="runAiAuditNow()">▶ Auditar ahora</button>
@@ -2389,7 +2391,7 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   </div>
 </div>
 </section>
-<section id="release_center" class="section admin-only">
+<section id="release_center" class="section admin-only staging-only">
 <div class="dashboard-hero" style="margin-top:8px">
   <div><div class="eyebrow">GITHUB + SUPABASE</div><h2>Centro de lanzamientos</h2><p>Promueve exactamente el código probado desde <b>staging</b> hacia <b>main</b>. Backend en <b>Supabase</b> y hosting en <b>GitHub Pages</b>.</p></div>
   <button class="ghost refresh-btn" type="button" onclick="loadReleaseStatus()">↻ Actualizar estado</button>
@@ -2511,11 +2513,12 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
 <div class="span4"><label>Latitud del restaurante</label><input id="slat" type="number" step="any" placeholder="-20.2"></div>
 <div class="span4"><label>Longitud del restaurante</label><input id="slng" type="number" step="any" placeholder="-70.1"></div>
 <div class="span8"><label>Zonas por distancia</label><textarea id="sdeliveryzones" rows="4" placeholder="2=1500&#10;5=2500&#10;8=3500"></textarea><p class="mut">Una zona por línea: distancia máxima en km = precio. Ej.: 2=1500 significa hasta 2 km cuesta $1.500.</p></div>
-<div class="span12"><h3 style="margin-bottom:6px">Estado del local</h3><p class="mut" id="manualOpenStatusText">Usando horario predeterminado.</p><div class="row"><button class="primary" onclick="setManualOpenStatus('open')">🟢 Forzar abierto</button><button class="danger" onclick="setManualOpenStatus('closed')">🔴 Forzar cerrado</button><button class="ghost" onclick="setManualOpenStatus(null)">🕒 Volver al horario predeterminado</button></div></div><div class="span12"><button class="primary" onclick="saveSettings()">Guardar configuración</button></div><div class="span12" id="settingsAdminPaymentTestModeCard"><hr style="border-color:var(--border);margin:22px 0"><div class="item"><div class="row between" style="gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="min-width:0;flex:1"><h3 style="margin:0">Credenciales del administrador para pruebas</h3><p class="mut" id="settingsAdminPaymentTestModeStatus" style="margin:6px 0 0">Cargando estado…</p></div><label style="display:flex;align-items:center;gap:8px;margin:0"><input id="settingsAdminPaymentTestModeToggle" type="checkbox" style="width:auto" onchange="toggleSettingsAdminPaymentTestMode(this)"> Usar credenciales del administrador</label></div><div class="mut" style="font-size:11px;margin-top:8px">Solo el administrador general puede cambiar este interruptor. Al desactivarlo se restauran las credenciales propias que tenía el negocio.</div></div></div><div class="span12" id="demoApiInheritanceCard" hidden><div class="item"><div class="row between" style="gap:12px;flex-wrap:wrap"><div><h3 style="margin:0">QR Bolivia / VeriPagos del demo</h3><p class="mut" id="demoApiInheritanceText" style="margin:6px 0 0">Hereda únicamente la configuración global de VeriPagos para demos de Bolivia. No modifica Mercado Pago.</p></div><label style="display:flex;align-items:center;gap:8px;margin:0"><input id="demoApiInheritanceToggle" type="checkbox" style="width:auto" onchange="toggleDemoApiInheritance(this.checked)"> Usar VeriPagos global</label></div><div id="demoApiProvidersStatus" class="mut" style="margin-top:10px"></div></div></div><div class="span12" id="restaurantMpSettings"><hr style="border-color:var(--border);margin:22px 0"><h3>Mercado Pago del negocio</h3><p class="mut" id="restaurantMpHelp">Credenciales propias del negocio. Si activas el interruptor superior, estas quedan guardadas y se usan temporalmente las del administrador.</p><label>Public Key</label><input id="restaurantMpPublicKey" placeholder="APP_USR-..."><label>Access Token</label><input id="restaurantMpAccessToken" type="password" autocomplete="new-password" placeholder="APP_USR-..."><p class="mut">El Access Token se guarda de forma privada y no volverá a mostrarse.</p><div class="row" style="margin-top:12px;flex-wrap:wrap"><button type="button" class="primary" id="saveRestaurantMpBtn">Guardar credenciales</button><button type="button" class="ghost" id="verifyRestaurantMpBtn">Verificar mis credenciales</button></div><div id="restaurantMpStatus" class="mut" style="margin-top:10px"></div></div></div></div></section>
+<div class="span12"><h3 style="margin-bottom:6px">Estado del local</h3><p class="mut" id="manualOpenStatusText">Usando horario predeterminado.</p><div class="row"><button class="primary" onclick="setManualOpenStatus('open')">🟢 Forzar abierto</button><button class="danger" onclick="setManualOpenStatus('closed')">🔴 Forzar cerrado</button><button class="ghost" onclick="setManualOpenStatus(null)">🕒 Volver al horario predeterminado</button></div></div><div class="span12"><button class="primary" onclick="saveSettings()">Guardar configuración</button></div><div class="span12 staging-only" id="settingsAdminPaymentTestModeCard"><hr style="border-color:var(--border);margin:22px 0"><div class="item"><div class="row between" style="gap:12px;align-items:flex-start;flex-wrap:wrap"><div style="min-width:0;flex:1"><h3 style="margin:0">Credenciales del administrador para pruebas</h3><p class="mut" id="settingsAdminPaymentTestModeStatus" style="margin:6px 0 0">Cargando estado…</p></div><label style="display:flex;align-items:center;gap:8px;margin:0"><input id="settingsAdminPaymentTestModeToggle" type="checkbox" style="width:auto" onchange="toggleSettingsAdminPaymentTestMode(this)"> Usar credenciales del administrador</label></div><div class="mut" style="font-size:11px;margin-top:8px">Solo el administrador general puede cambiar este interruptor. Al desactivarlo se restauran las credenciales propias que tenía el negocio.</div></div></div><div class="span12 staging-only" id="demoApiInheritanceCard" hidden><div class="item"><div class="row between" style="gap:12px;flex-wrap:wrap"><div><h3 style="margin:0">QR Bolivia / VeriPagos del demo</h3><p class="mut" id="demoApiInheritanceText" style="margin:6px 0 0">Hereda únicamente la configuración global de VeriPagos para demos de Bolivia. No modifica Mercado Pago.</p></div><label style="display:flex;align-items:center;gap:8px;margin:0"><input id="demoApiInheritanceToggle" type="checkbox" style="width:auto" onchange="toggleDemoApiInheritance(this.checked)"> Usar VeriPagos global</label></div><div id="demoApiProvidersStatus" class="mut" style="margin-top:10px"></div></div></div><div class="span12" id="restaurantMpSettings"><hr style="border-color:var(--border);margin:22px 0"><h3>Mercado Pago del negocio</h3><p class="mut" id="restaurantMpHelp">Credenciales propias del negocio. Si activas el interruptor superior, estas quedan guardadas y se usan temporalmente las del administrador.</p><label>Public Key</label><input id="restaurantMpPublicKey" placeholder="APP_USR-..."><label>Access Token</label><input id="restaurantMpAccessToken" type="password" autocomplete="new-password" placeholder="APP_USR-..."><p class="mut">El Access Token se guarda de forma privada y no volverá a mostrarse.</p><div class="row" style="margin-top:12px;flex-wrap:wrap"><button type="button" class="primary" id="saveRestaurantMpBtn">Guardar credenciales</button><button type="button" class="ghost" id="verifyRestaurantMpBtn">Verificar mis credenciales</button></div><div id="restaurantMpStatus" class="mut" style="margin-top:10px"></div></div></div></div></section>
 </div><div id="toast" class="toast"></div>
 
 <script>
-const YUMMY_IS_PRODUCTION=location.hostname==="admin.yummypro.online";
+const YUMMY_RUNTIME_HOST=location.hostname.toLowerCase().replace(/^www\\./,"");
+const YUMMY_IS_PRODUCTION=YUMMY_RUNTIME_HOST==="admin.yummypro.online";
 const YUMMY_CLIENT_MENU_BASE=YUMMY_IS_PRODUCTION?"https://menu.yummypro.online/":"https://jorge2610g.github.io/yummy-cliente-pruebas/";
 function adminClientMenuUrl(slug){const url=new URL(YUMMY_CLIENT_MENU_BASE);if(slug!=null&&String(slug).trim())url.searchParams.set("r",String(slug).trim());return url.toString()}
 async function openCurrentBusinessMenu(event){
@@ -2572,16 +2575,12 @@ const SB_URL=YUMMY_IS_PRODUCTION?"https://gulctljitzlwokqydigx.supabase.co":"htt
 const SB_KEY=YUMMY_IS_PRODUCTION?"sb_publishable__moppTxObowifx6rJbW_tw_3GiCkqhG":"sb_publishable_yiuYVYAAwVLtzlTdEM1kUg_s1Z7BiyE";
 const sb=supabase.createClient(SB_URL,SB_KEY);
 function enforceAdminEnvironmentUi(){
- const releaseTab=document.querySelector('[data-tab="release_center"]');
- const releaseSection=document.getElementById("release_center");
- const auditorTab=document.querySelector('[data-tab="ai_auditor"]');
- const auditorSection=document.getElementById("ai_auditor");
- if(YUMMY_IS_PRODUCTION){
-  if(releaseTab)releaseTab.style.display="none";
-  if(releaseSection)releaseSection.classList.remove("active");
-  if(auditorTab)auditorTab.style.display="none";
-  if(auditorSection)auditorSection.classList.remove("active");
- }
+ if(!YUMMY_IS_PRODUCTION)return;
+ document.querySelectorAll(".staging-only").forEach(el=>{
+  el.style.setProperty("display","none","important");
+  el.classList.remove("active");
+  el.setAttribute("aria-hidden","true");
+ });
 }
 function applyAdminTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("admin_theme",theme);const icon=document.getElementById("adminThemeIcon"),label=document.getElementById("adminThemeLabel");if(icon)icon.textContent=theme==="dark"?"☀":"☾";if(label)label.textContent=theme==="dark"?"Modo claro":"Modo oscuro"}
 function toggleAdminTheme(){applyAdminTheme(document.documentElement.dataset.theme==="light"?"dark":"light")}
@@ -3380,7 +3379,7 @@ function viewRestaurant(id){const r=restaurants.find(x=>Number(x.id)===Number(id
   }
 
   const businessType=String(r.business_type||"restaurant").toLowerCase();
-  const stagingRuntime=location.hostname==="jorge2610g.github.io"&&location.pathname.startsWith("/yummy-admin-pruebas/");
+  const stagingRuntime=!YUMMY_IS_PRODUCTION;
   const panelBase=businessType==="streaming"
     ?(stagingRuntime?"https://jorge2610g.github.io/yummy-streaming-pruebas":"https://streaming.yummypro.online")
     :businessType==="professional"
@@ -4063,7 +4062,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.77</footer><script>
+</script><footer class="admin-version">Versión v2.3.78</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
