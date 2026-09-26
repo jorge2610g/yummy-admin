@@ -13,7 +13,7 @@ Actualizado: 2026-09-25/26
 
 | Módulo | Producción (`main`) | Pruebas (`staging`) |
 | --- | --- | --- |
-| Admin | v2.3.64 | v2.3.66 |
+| Admin | v2.3.64 | v2.3.67 |
 | Restaurante | v2.5.72 | v2.5.73 |
 | Retail | v2.5.66 | v2.5.67 |
 | Profesionales | v2.5.66 | v2.5.67 |
@@ -53,3 +53,7 @@ Antes de liberar:
 4. Revisar las versiones de esta tabla.
 5. El propietario decide si pulsa **Lanzar a Producción**.
 6. Tras el release, el monitor horario verificará que `main = staging`, que las versiones coincidan y que cada dominio use su Supabase correcto.
+
+## Mejora pendiente incluida en Admin v2.3.67
+
+El Centro de Lanzamientos ahora muestra un seguimiento visible del release: confirmación dentro del panel, progreso por módulo, porcentaje, tiempo transcurrido, estimación restante y verificación posterior de GitHub Pages. Esto evita que un lanzamiento parezca congelado mientras el backend trabaja.
