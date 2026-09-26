@@ -1,0 +1,60 @@
+name: Guardar separación Pruebas-Producción
+
+on:
+  push:
+    branches: [main, staging]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  environment-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verificar relación entre ramas
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="${GITHUB_REF_NAME}"
+          if [ "$branch" = "staging" ]; then
+            git fetch origin main --depth=1
+            git merge-base --is-ancestor origin/main HEAD || {
+              echo "ERROR: staging ya no contiene main. Hay divergencia o staging quedó detrás."
+              exit 1
+            }
+          elif [ "$branch" = "main" ]; then
+            git fetch origin staging --depth=1
+            git merge-base --is-ancestor HEAD origin/staging || {
+              echo "ERROR: main contiene cambios que no existen en staging. Producción fue modificada fuera del flujo de release."
+              exit 1
+            }
+          fi
+
+      - name: Verificar control de versión
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s VERSION || {
+            echo "ERROR: falta el archivo VERSION."
+            exit 1
+          }
+          echo "Versión: $(cat VERSION)"
+
+      - name: Verificar separación de Supabase
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -R --include='*.html' -q 'wodqqheeesrelsbacmgx' . || {
+            echo "ERROR: el código HTML no contiene configuración de Supabase Staging."
+            exit 1
+          }
+          grep -R --include='*.html' -q 'gulctljitzlwokqydigx' . || {
+            echo "ERROR: el código HTML no contiene configuración de Supabase Producción."
+            exit 1
+          }
+          echo "OK: existen configuraciones separadas para ambos ambientes."
