@@ -2187,6 +2187,7 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   <button class="tab admin-only" data-tab="customers" title="Clientes"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span><span class="nav-label">Clientes</span></button>
   <div class="nav-group-label">SISTEMA</div>
   <button class="tab admin-only" data-tab="push_center" title="Notificaciones Push"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg></span><span class="nav-label">Notificaciones Push</span></button>
+  <button class="tab admin-only" data-tab="ai_auditor" title="Auditor IA" onclick="setTimeout(loadAiAuditStatus,0)"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="3"/><path d="M9 10h.01M15 10h.01M8 15h8M12 2v3M2 12h2M20 12h2"/></svg></span><span class="nav-label">Auditor IA</span></button>
   <button class="tab admin-only" data-tab="release_center" title="Lanzar a Producción"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c3 2 5 5 5 9l-5 4-5-4c0-4 2-7 5-9Z"/><circle cx="12" cy="8" r="1.5"/><path d="M9 15l-2 4 5-2 5 2-2-4"/></svg></span><span class="nav-label">Lanzar a Producción</span></button>
   <button class="tab" data-tab="settings" title="Configuración"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.2 2.3 2.6.4.8 2.5 2.3 1.2-.7 2.6.7 2.6-2.3 1.2-.8 2.5-2.6.4L12 21l-1.2-2.3-2.6-.4-.8-2.5-2.3-1.2.7-2.6-.7-2.6 2.3-1.2.8-2.5 2.6-.4z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="nav-label">Configuración</span></button>
 </div>
@@ -2348,6 +2349,43 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   <div class="card span12">
     <div class="module-head"><div><span class="eyebrow">HISTORIAL</span><h2>Campañas recientes</h2><p class="mut">Registro de envíos, alcance y errores.</p></div><button class="ghost" type="button" onclick="loadAdminPushHistory()">Actualizar historial</button></div>
     <div id="pushCampaignHistory" class="list" style="margin-top:14px"><p class="mut">Sin campañas cargadas.</p></div>
+  </div>
+</div>
+</section>
+<section id="ai_auditor" class="section admin-only">
+<div class="dashboard-hero" style="margin-top:8px">
+  <div><div class="eyebrow">PLAYWRIGHT + IA</div><h2>🤖 Auditor IA de Pruebas</h2><p>Abre los módulos reales con Chromium, revisa móvil y escritorio, captura errores de consola/red y guarda evidencia visual.</p></div>
+  <button class="primary refresh-btn" id="aiAuditRunBtn" type="button" onclick="runAiAuditNow()">▶ Auditar ahora</button>
+</div>
+<div class="grid">
+  <div class="card span4"><div class="eyebrow">ESTADO</div><h3 id="aiAuditState" style="margin:8px 0 4px">Sin consultar</h3><div class="mut" id="aiAuditStateDetail">Pulsa actualizar o inicia una auditoría.</div></div>
+  <div class="card span4"><div class="eyebrow">FRECUENCIA</div><h3 style="margin:8px 0 4px">Cada hora</h3><div class="mut">También se puede ejecutar manualmente cuando quieras.</div></div>
+  <div class="card span4"><div class="eyebrow">ENTORNO</div><h3 style="margin:8px 0 4px">Solo Pruebas</h3><div class="mut">No abre ni modifica Producción.</div></div>
+
+  <div class="card span12">
+    <div class="row between" style="gap:12px;flex-wrap:wrap">
+      <div><h2 style="margin-bottom:6px">Última auditoría</h2><p class="mut" style="margin:0">Admin, Restaurante, Retail, Profesionales, Streaming y menús públicos.</p></div>
+      <div class="actions">
+        <button class="ghost" type="button" onclick="loadAiAuditStatus()">↻ Actualizar</button>
+        <button class="ghost" id="aiAuditReportBtn" type="button" onclick="openAiAuditReport()" disabled>📋 Ver ejecución e informe</button>
+      </div>
+    </div>
+    <div id="aiAuditSummary" class="item" style="margin-top:16px"><span class="mut">Todavía no se consultó GitHub Actions.</span></div>
+    <div id="aiAuditModules" class="list" style="margin-top:12px"></div>
+  </div>
+
+  <div class="card span12">
+    <div class="row" style="align-items:flex-start;gap:12px">
+      <span style="font-size:24px">🧠</span>
+      <div><b>Análisis con modelos de IA</b><div class="mut" style="margin-top:5px">El workflow está preparado para <b>Gemini 3.8 Flash</b> (capturas + datos técnicos) y <b>Groq</b> como segundo auditor textual. Las claves se guardan únicamente como Secrets de GitHub; nunca en el código ni en el navegador.</div></div>
+    </div>
+  </div>
+
+  <div class="card span12">
+    <div class="row" style="align-items:flex-start;gap:12px">
+      <span style="font-size:24px">🔎</span>
+      <div><b>Qué detecta automáticamente</b><div class="mut" style="margin-top:5px">Pantallas vacías, JavaScript roto, HTTP 5xx, recursos fallidos, redirecciones fuera de Pruebas, desbordamiento horizontal, fallos de login y desaparición del selector de rubros. Guarda capturas de escritorio y móvil durante 14 días.</div></div>
+    </div>
   </div>
 </div>
 </section>
@@ -2536,7 +2574,14 @@ const sb=supabase.createClient(SB_URL,SB_KEY);
 function enforceAdminEnvironmentUi(){
  const releaseTab=document.querySelector('[data-tab="release_center"]');
  const releaseSection=document.getElementById("release_center");
- if(YUMMY_IS_PRODUCTION){if(releaseTab)releaseTab.style.display="none";if(releaseSection)releaseSection.classList.remove("active")}
+ const auditorTab=document.querySelector('[data-tab="ai_auditor"]');
+ const auditorSection=document.getElementById("ai_auditor");
+ if(YUMMY_IS_PRODUCTION){
+  if(releaseTab)releaseTab.style.display="none";
+  if(releaseSection)releaseSection.classList.remove("active");
+  if(auditorTab)auditorTab.style.display="none";
+  if(auditorSection)auditorSection.classList.remove("active");
+ }
 }
 function applyAdminTheme(theme){document.documentElement.dataset.theme=theme;localStorage.setItem("admin_theme",theme);const icon=document.getElementById("adminThemeIcon"),label=document.getElementById("adminThemeLabel");if(icon)icon.textContent=theme==="dark"?"☀":"☾";if(label)label.textContent=theme==="dark"?"Modo claro":"Modo oscuro"}
 function toggleAdminTheme(){applyAdminTheme(document.documentElement.dataset.theme==="light"?"dark":"light")}
@@ -2687,6 +2732,60 @@ async function releaseAuthorizedFetch(path,options={}){
   if(!res.ok)throw Object.assign(new Error(body.error||"No se pudo completar la operación."),{payload:body,status:res.status});
   return body;
 }
+let aiAuditLatestRun=null,aiAuditPollTimer=null;
+function aiAuditLabel(run){
+ if(!run)return {icon:"⚪",title:"Sin auditorías",detail:"Todavía no existe una ejecución."};
+ if(run.status!=="completed")return {icon:"⏳",title:"Auditoría en ejecución",detail:"Chromium está recorriendo los módulos de Pruebas."};
+ if(run.conclusion==="success")return {icon:"✅",title:"Auditoría correcta",detail:"El navegador no detectó fallos críticos."};
+ if(run.conclusion==="failure")return {icon:"⛔",title:"Auditoría con fallos",detail:"Se detectó al menos un fallo crítico en una navegación real."};
+ return {icon:"⚠️",title:"Auditoría "+(run.conclusion||"finalizada"),detail:"Revisa el informe de GitHub Actions."}
+}
+function renderAiAuditStatus(data){
+ const run=data?.run||null;aiAuditLatestRun=run;
+ const state=aiAuditLabel(run),title=document.getElementById("aiAuditState"),detail=document.getElementById("aiAuditStateDetail"),summary=document.getElementById("aiAuditSummary"),report=document.getElementById("aiAuditReportBtn");
+ if(title)title.textContent=state.icon+" "+state.title;
+ if(detail)detail.textContent=state.detail;
+ if(report)report.disabled=!run?.html_url;
+ if(summary){
+  if(!run)summary.innerHTML='<b>Estado:</b> <span class="mut">Sin ejecuciones todavía.</span>';
+  else{
+   const when=run.updated_at?new Date(run.updated_at).toLocaleString("es-CL"):"Fecha no disponible";
+   summary.innerHTML='<b>'+state.icon+" "+esc(state.title)+'</b><div class="mut" style="margin-top:5px">'+esc(when)+' · staging '+releaseShortSha(run.head_sha)+'</div><div class="mut" style="margin-top:4px">Capturas/informe: '+Number(run.artifact_count||0)+' artefacto(s) guardado(s).</div>';
+  }
+ }
+ const modules=document.getElementById("aiAuditModules");
+ if(modules)modules.innerHTML='<div class="item"><b>Recorridos del auditor</b><div class="mut" style="margin-top:5px">Admin · Restaurante · Retail · Profesionales · Streaming · Cliente Restaurante · Cliente Retail · Cliente Profesionales · Catálogo Streaming</div></div>';
+ if(run?.status!=="completed"&&run){
+  clearTimeout(aiAuditPollTimer);
+  aiAuditPollTimer=setTimeout(loadAiAuditStatus,6000);
+ }
+}
+async function loadAiAuditStatus(){
+ if(!isSuperAdmin||YUMMY_IS_PRODUCTION)return;
+ try{
+  const data=await releaseAuthorizedFetch("/api/ai-audit",{method:"POST",body:JSON.stringify({action:"ai-audit-status"})});
+  renderAiAuditStatus(data)
+ }catch(e){
+  const title=document.getElementById("aiAuditState"),detail=document.getElementById("aiAuditStateDetail");
+  if(title)title.textContent="⛔ No disponible";
+  if(detail)detail.textContent=e.message||"No se pudo consultar el auditor.";
+ }
+}
+async function runAiAuditNow(){
+ if(!isSuperAdmin||YUMMY_IS_PRODUCTION)return;
+ const btn=document.getElementById("aiAuditRunBtn");
+ if(btn){btn.disabled=true;btn.textContent="⏳ Iniciando…"}
+ try{
+  const data=await releaseAuthorizedFetch("/api/ai-audit",{method:"POST",body:JSON.stringify({action:"ai-audit-run"})});
+  toast(data.message||"Auditor IA iniciado.");
+  setTimeout(loadAiAuditStatus,2500)
+ }catch(e){toast(e.message||"No se pudo iniciar el auditor IA.")}
+ finally{if(btn){btn.disabled=false;btn.textContent="▶ Auditar ahora"}}
+}
+function openAiAuditReport(){
+ if(aiAuditLatestRun?.html_url)window.open(aiAuditLatestRun.html_url,"_blank","noopener")
+}
+
 function releaseRowByKey(key){return (releaseLatestRows||[]).find(item=>item.key===key)||null}
 function viewReleaseQualityError(key){
   const item=releaseRowByKey(key);
@@ -3964,7 +4063,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.74</footer><script>
+</script><footer class="admin-version">Versión v2.3.75</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
