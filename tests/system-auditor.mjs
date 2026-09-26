@@ -12,10 +12,10 @@ const ENFORCE_AI=String(process.env.AI_AUDIT_ENFORCE||"false").toLowerCase()==="
 
 const panelModules=[
   {key:"admin",label:"Admin",url:"https://jorge2610g.github.io/yummy-admin-pruebas/",auth:"admin"},
-  {key:"restaurante",label:"Restaurante",url:"https://jorge2610g.github.io/yummy-restaurante-pruebas/",auth:"restaurant"},
-  {key:"retail",label:"Retail",url:"https://jorge2610g.github.io/yummy-retail-pruebas/",auth:"retail"},
-  {key:"profesionales",label:"Profesionales",url:"https://jorge2610g.github.io/yummy-profesionales-pruebas/",auth:"professional"},
-  {key:"streaming",label:"Streaming",url:"https://jorge2610g.github.io/yummy-streaming-pruebas/",auth:"streaming"}
+  {key:"restaurante",label:"Restaurante",url:"https://jorge2610g.github.io/yummy-restaurante-pruebas/panel/",auth:"restaurant"},
+  {key:"retail",label:"Retail",url:"https://jorge2610g.github.io/yummy-retail-pruebas/panel/",auth:"retail"},
+  {key:"profesionales",label:"Profesionales",url:"https://jorge2610g.github.io/yummy-profesionales-pruebas/panel/",auth:"professional"},
+  {key:"streaming",label:"Streaming",url:"https://jorge2610g.github.io/yummy-streaming-pruebas/panel/",auth:"streaming"}
 ];
 
 const now=()=>new Date().toISOString();
@@ -67,8 +67,8 @@ async function maybeLogin(page,auth){
   };
   const [email,password]=credentials[auth]||[];
   if(!email||!password)return {attempted:false,reason:"credenciales-no-configuradas"};
-  const emailInput=page.locator('#email,input[type="email"]').first();
-  const passInput=page.locator('#password,input[type="password"]').first();
+  const emailInput=page.locator('#email:visible,#lEmail:visible,input[type="email"]:visible').first();
+  const passInput=page.locator('#password:visible,#lPass:visible,input[type="password"]:visible').first();
   if(!(await emailInput.count())||!(await passInput.count()))return {attempted:false,reason:"formulario-no-visible"};
   try{
     await emailInput.fill(email);await passInput.fill(password);
@@ -114,8 +114,12 @@ async function auditPage(browser,module,viewportName,viewport){
   if((metrics.bodyChildren||0)<1)errors.push("Pantalla vacía: body sin contenido");
   if((metrics.scrollWidth||0)>(metrics.innerWidth||0)+16)warnings.push("Desbordamiento horizontal detectado");
   const missingAuth=!!module.auth&&!login.attempted&&login.reason==="credenciales-no-configuradas";
+  const missingLoginForm=!!module.auth&&!login.attempted&&login.reason==="formulario-no-visible";
+  const failedLogin=!!module.auth&&login.attempted&&login.success===false;
   const effectiveConsoleErrors=consoleErrors.filter(message=>!(missingAuth&&/\b401\b|unauthorized/i.test(message)));
   if(missingAuth)warnings.push("Área autenticada no recorrida: faltan credenciales de prueba en GitHub Secrets");
+  if(missingLoginForm)errors.push("Formulario de inicio de sesión no disponible");
+  if(failedLogin)errors.push("Inicio de sesión automático falló"+(login.error?": "+String(login.error).split("\n")[0]:""));
   if(effectiveConsoleErrors.length)errors.push("Errores JavaScript/consola: "+effectiveConsoleErrors.length);
   const seriousHttp=httpErrors.filter(x=>x.status>=500);
   if(seriousHttp.length)errors.push("Respuestas 5xx: "+seriousHttp.length+" ("+seriousHttp.slice(0,3).map(x=>x.url).join(", ")+")");
