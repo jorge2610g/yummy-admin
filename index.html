@@ -7,9 +7,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="YummyPro Admin">
-<link rel="manifest" href="/manifest.webmanifest?v=2320">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" sizes="192x192" href="/icon-192.png" type="image/png">
+<link rel="manifest" href="./manifest.webmanifest?v=2320">
+<link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
+<link rel="icon" sizes="192x192" href="./icon-192.png" type="image/png">
 <title>Panel Administrativo</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -4063,7 +4063,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.75</footer><script>
+</script><footer class="admin-version">Versión v2.3.76</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
@@ -4141,7 +4141,7 @@ async function registerAdminPush(requestPermission=false){
  if(Notification.permission!=="granted"){adminPushDeviceStatus(Notification.permission==="denied"?"Permiso bloqueado en el navegador.":"Permiso todavía no concedido.");return false}
  try{
   const {data:{user}}=await sb.auth.getUser();if(!user)throw new Error("Sesión vencida");
-  const registration=await navigator.serviceWorker.register("/pwa-sw.js");
+  const registration=await navigator.serviceWorker.register("./pwa-sw.js");
   let subscription=await registration.pushManager.getSubscription();
   if(subscription){
    try{
@@ -4829,10 +4829,10 @@ window.addEventListener("appinstalled",()=>{adminPwaPrompt=null;refreshAdminPwaI
 window.addEventListener("offline",updateAdminPwaNetwork);window.addEventListener("online",updateAdminPwaNetwork);
 window.addEventListener("DOMContentLoaded",async()=>{
  updateAdminPwaNetwork();
- try{if("serviceWorker" in navigator){const reg=await navigator.serviceWorker.register("/pwa-sw.js");await reg.update().catch(()=>{});watchAdminPwa(reg)}}catch(e){console.error("PWA Admin",e)}
+ try{if("serviceWorker" in navigator){const reg=await navigator.serviceWorker.register("./pwa-sw.js");await reg.update().catch(()=>{});watchAdminPwa(reg)}}catch(e){console.error("PWA Admin",e)}
  refreshAdminPwaInstall();
 });
 </script>
 
-<script src="/admin-streaming-access.js?v=1002"></script>
+<script src="./admin-streaming-access.js?v=1002"></script>
 </body></html>
