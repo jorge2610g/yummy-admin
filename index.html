@@ -2941,7 +2941,7 @@ async function confirmProductionRelease(){
   if(closeBtn)closeBtn.disabled=true;
   if(title)title.textContent="Preparando Producción…";
   if(spinner)spinner.textContent="⏳";
-  if(note)note.textContent="Creando respaldos y entregando la publicación a GitHub. Después podrás cerrar esta ventana sin detener el proceso.";
+  if(note)note.textContent="Creando respaldos e iniciando la publicación en segundo plano. Después podrás cerrar esta ventana sin detener el proceso.";
   if(btn){btn.disabled=true;btn.textContent="🚀 Publicando…"}
   const initialRows=(releaseProgressPrepared.repositories||[]).map(item=>({...item,main_sha:releaseProgressExpected?.[item.key]?.main_sha,production_deploy_ready:false,production_deploy:"waiting"}));
   renderReleaseProgress({repositories:initialRows});
@@ -2956,9 +2956,9 @@ async function confirmProductionRelease(){
     releaseAccepted=!!result?.ok;
     if(!releaseAccepted)throw new Error(result?.error||"GitHub no aceptó el lanzamiento.");
 
-    if(title)title.textContent="🟡 Publicación en GitHub";
+    if(title)title.textContent="🟡 Publicación en segundo plano";
     if(spinner)spinner.textContent="🔄";
-    if(note)note.textContent="GitHub ya recibió el lanzamiento y seguirá procesándolo aunque cierres esta ventana o se corte tu conexión.";
+    if(note)note.textContent="Supabase ya inició la coordinación con GitHub y seguirá procesándola aunque cierres esta ventana o se corte tu conexión.";
     if(closeBtn)closeBtn.disabled=false;
 
     // El navegador ya no controla el release: solo consulta el estado.
@@ -2985,10 +2985,10 @@ async function confirmProductionRelease(){
       toast("Lanzamiento completado.");
       await loadReleaseHistory();
     }else{
-      if(title)title.textContent="🟡 Publicación continúa en GitHub";
+      if(title)title.textContent="🟡 Publicación continúa en segundo plano";
       if(spinner)spinner.textContent="🔄";
-      if(note)note.textContent="El tiempo de espera del panel terminó, pero el lanzamiento NO se detuvo. GitHub seguirá validando y fusionando en segundo plano; puedes cerrar esta ventana y volver después.";
-      toast(result.message||"Publicación iniciada en GitHub.");
+      if(note)note.textContent="El tiempo de espera del panel terminó, pero el lanzamiento NO se detuvo. Supabase y GitHub seguirán validando y fusionando en segundo plano; puedes cerrar esta ventana y volver después.";
+      toast(result.message||"Publicación iniciada en segundo plano.");
     }
   }catch(e){
     if(!releaseAccepted){
@@ -2997,10 +2997,10 @@ async function confirmProductionRelease(){
       if(note)note.textContent=e.message||"GitHub no aceptó el lanzamiento. Producción no se dará por modificada.";
       toast(e.message||"No se pudo iniciar el lanzamiento.");
     }else{
-      if(title)title.textContent="🟡 Publicación continúa en GitHub";
+      if(title)title.textContent="🟡 Publicación continúa en segundo plano";
       if(spinner)spinner.textContent="🔄";
-      if(note)note.textContent="Se perdió la consulta del progreso, pero GitHub ya había aceptado el lanzamiento y continuará en segundo plano.";
-      toast("La publicación sigue en GitHub; solo se perdió el seguimiento del panel.");
+      if(note)note.textContent="Se perdió la consulta del progreso, pero la publicación ya había sido iniciada y continuará en segundo plano.";
+      toast("La publicación sigue en segundo plano; solo se perdió el seguimiento del panel.");
     }
   }finally{
     releaseProgressInFlight=false;
@@ -4086,7 +4086,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.79</footer><script>
+</script><footer class="admin-version">Versión v2.3.80</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
