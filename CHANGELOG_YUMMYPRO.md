@@ -3,6 +3,7 @@
 - Landing, Cliente y Restaurante conservan la telemetría pública necesaria para diagnóstico.
 - El contexto `admin` ahora exige una sesión válida de administrador general, evitando que llamadas anónimas o usuarios no administradores falsifiquen eventos del panel.
 - Se verificó en transacción que `anon` es rechazado para contexto Admin y continúa pudiendo registrar telemetría pública normal.
+- Se corrigió el gate de paridad: ahora permite diferencias intencionales de columnas, policies, funciones, triggers y permisos RPC únicamente cuando el fingerprint completo de Staging coincide con el checkpoint aprobado; los invariantes de infraestructura siguen bloqueados.
 - Producción no fue modificada.
 
 ## 2.3.88 — 2026-09-27
