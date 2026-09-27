@@ -10,6 +10,7 @@ const REPOSITORIES = [
 ];
 
 const GH_API = "https://api.github.com";
+const REQUIRED_STAGING_CHECKS = ["quality", "smoke", "environment-guard"];
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -188,15 +189,26 @@ async function inspectAllRepositories() {
 async function inspectQuality(item: any) {
   if (!item?.staging_sha || item.error) return { ...item, quality_ready: false, quality: "unavailable", quality_url: null };
   const checks = await githubRequest(`/repos/${item.repo}/commits/${item.staging_sha}/check-runs`);
-  const quality = latestCheckByName(checks?.check_runs || [], "quality");
-  const ok = quality?.status === "completed" && ["success", "neutral", "skipped"].includes(String(quality?.conclusion || ""));
+  const allChecks = checks?.check_runs || [];
+  const requiredChecks = REQUIRED_STAGING_CHECKS.map((name) => {
+    const check = latestCheckByName(allChecks, name);
+    return {
+      name,
+      status: check?.status || "missing",
+      conclusion: check?.conclusion || null,
+      url: check?.details_url || null,
+      ready: check?.status === "completed" && check?.conclusion === "success",
+    };
+  });
+  const quality = requiredChecks.find((check) => check.name === "quality");
+  const ok = requiredChecks.every((check) => check.ready);
   return {
     ...item,
     quality_ready: ok,
-    quality: quality ? (quality.status === "completed" ? quality.conclusion : quality.status) : "missing",
-    quality_url: quality?.details_url || null,
-    quality_started_at: quality?.started_at || null,
-    quality_completed_at: quality?.completed_at || null,
+    quality: ok ? "success" : "failure",
+    quality_url: quality?.url || null,
+    required_checks: requiredChecks,
+    failed_checks: requiredChecks.filter((check) => !check.ready).map((check) => check.name),
   };
 }
 
@@ -215,7 +227,7 @@ async function inspectProductionDeployment(item: any) {
   const all = checks?.check_runs || [];
   const deploy = latestCheckByName(all, "deploy") || latestCheckByName(all, "build") || latestCheckByName(all, "report-build-status");
   const status = deploy ? (deploy.status === "completed" ? String(deploy.conclusion || "unknown") : String(deploy.status || "unknown")) : "pending";
-  const ready = deploy?.status === "completed" && ["success", "neutral", "skipped"].includes(String(deploy?.conclusion || ""));
+  const ready = deploy?.status === "completed" && deploy?.conclusion === "success";
   return {
     ...item,
     production_code_synced: true,
@@ -483,12 +495,14 @@ async function inspectAiAuditGate(repositories: any[]) {
   const sameAdminSha = !!run && !!adminRepo?.staging_sha && String(run.head_sha || "") === String(adminRepo.staging_sha || "");
   const completed = run?.status === "completed";
   const passed = run?.conclusion === "success";
+  const hasEvidence = Number(run?.artifact_count || 0) > 0;
   const fresh = !!runUpdatedAt && runUpdatedAt >= latestChangeAt;
-  const ready = !!run && completed && passed && sameAdminSha && fresh;
+  const ready = !!run && completed && passed && hasEvidence && sameAdminSha && fresh;
   return {
     ready,
     run,
     same_admin_sha: sameAdminSha,
+    has_evidence: hasEvidence,
     fresh,
     latest_change_at: latestChangeAt ? new Date(latestChangeAt).toISOString() : null,
     source_times: sourceTimes,
@@ -500,7 +514,9 @@ async function inspectAiAuditGate(repositories: any[]) {
           ? "El Auditor IA todavía está ejecutándose."
           : !passed
             ? "El Auditor IA detectó fallos visuales o funcionales."
-            : !sameAdminSha
+            : !hasEvidence
+              ? "El Auditor IA terminó sin guardar capturas ni informe verificable."
+              : !sameAdminSha
               ? "El Auditor IA no corresponde al SHA actual de Admin Pruebas."
               : !fresh
                 ? "El Auditor IA es anterior a uno o más cambios actuales de Pruebas."

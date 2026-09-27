@@ -9,7 +9,9 @@ Este módulo prepara un flujo controlado para promover código desde `staging` (
 - Nunca se escribe sobre `staging`.
 - Nunca se copian usuarios, pedidos, productos ni ningún dato de Supabase.
 - Antes de publicar se vuelve a leer el SHA actual de `main` y `staging` de todos los repositorios.
-- Solo se permite un avance fast-forward (`main` debe ser ancestro de `staging`). Si hay divergencia, se bloquea el release.
+- Solo se permite que `main` sea ancestro de `staging`. Si hay divergencia, se bloquea el release y la promoción se realiza mediante un PR protegido con merge controlado.
+- Cada SHA de `staging` debe tener `quality`, `smoke` y `environment-guard` concluidos con `success`; estados omitidos, neutrales, cancelados, pendientes o ausentes bloquean el release.
+- El Auditor IA debe corresponder a los SHA actuales y conservar capturas/informe como evidencia.
 - Antes de mover cualquier `main`, se crea una rama de respaldo con el SHA anterior en todos los repositorios.
 - Si una promoción falla a mitad, se intenta restaurar cada `main` que ya fue actualizado.
 
@@ -37,7 +39,7 @@ Mientras `YUMMY_RELEASE_ENABLED` no sea `true`, el Centro de lanzamientos funcio
 
 1. Abrir **Centro de lanzamientos** desde Admin.
 2. Pulsar **Preparar lanzamiento**.
-3. Revisar que todos los módulos aparezcan listos y que no exista divergencia.
+3. Revisar que todos los módulos tengan `quality`, `smoke`, `environment-guard` y Auditor IA en verde y que no exista divergencia.
 4. El sistema conserva los SHA observados para detectar cambios de último segundo.
 5. Pulsar **Lanzar a Producción** y escribir `LANZAR A PRODUCCION`.
 6. Se crean respaldos y luego se promueven solo los repositorios con cambios.

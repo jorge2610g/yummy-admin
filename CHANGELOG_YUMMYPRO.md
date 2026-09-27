@@ -1,3 +1,13 @@
+## 2.3.83 — 2026-09-27
+- Se corrigió un error de sintaxis en el botón **Ver auditoría** que impedía ejecutar el JavaScript principal: el login y el panel quedaban ocultos y generaban errores secundarios de Streaming y filtros.
+- La validación estática ahora compila todos los scripts inline de `index.html` y `admin-streaming-access.js`; un error de sintaxis vuelve a bloquear `quality` antes de publicarse.
+- El Centro de Lanzamientos ahora exige por cada módulo `quality`, `smoke` y `environment-guard` con conclusión estricta `success`; ya no acepta controles omitidos, neutrales o faltantes.
+- El Auditor IA solo habilita un release si además de terminar correctamente guardó evidencia verificable (capturas/informe).
+- Se alineó el nombre visible del modelo con el configurado realmente en GitHub Actions: Gemini 3.5 Flash.
+- Se fijó Supabase JS en la versión 2.117.2 con verificación SRI para evitar que una actualización futura del CDN cambie Producción sin pasar por Pruebas.
+- Se actualizó el estado operativo documentado de los seis módulos y se dejó constancia de que Admin Pruebas no está listo para release hasta que `quality`, `smoke` y el Auditor IA vuelvan a verde.
+- Producción no fue modificada.
+
 ## 2.3.82 — 2026-09-26
 - El Auditor IA ahora funciona como auditor visual + funcional + técnico de Pruebas.
 - Recorre secciones autenticadas, móvil y escritorio, compara modo claro/oscuro, detecta controles cortados o tapados y guarda capturas de carga para detectar destellos de marca.

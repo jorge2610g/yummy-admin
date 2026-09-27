@@ -1,6 +1,6 @@
 # Estado de releases YummyPro
 
-Actualizado: 2026-09-25/26
+Actualizado: 2026-09-27
 
 ## Regla operativa
 
@@ -13,19 +13,22 @@ Actualizado: 2026-09-25/26
 
 | Módulo | Producción (`main`) | Pruebas (`staging`) |
 | --- | --- | --- |
-| Admin | v2.3.64 | v2.3.67 |
-| Restaurante | v2.5.72 | v2.5.73 |
-| Retail | v2.5.66 | v2.5.67 |
-| Profesionales | v2.5.66 | v2.5.67 |
-| Streaming | v1.2.7 | v1.2.8 |
-| Cliente | v1.6.53 | v1.6.54 |
+| Admin | v2.3.81 | v2.3.83 |
+| Restaurante | v2.5.75 | v2.5.75 |
+| Retail | v2.5.69 | v2.5.69 |
+| Profesionales | v2.5.69 | v2.5.69 |
+| Streaming | v1.2.10 | v1.2.13 |
+| Cliente | v1.6.63 | v1.6.63 |
 
 ## Estado de calidad de Pruebas
 
-Los seis módulos tienen:
-- `environment-guard` en verde.
-- `quality` en verde.
-- `smoke` en verde.
+Estado observado para el último commit de Admin Pruebas antes de v2.3.83:
+- `environment-guard`: verde.
+- `quality`: rojo.
+- `smoke`: rojo.
+- `Auditor IA`: rojo.
+
+La causa principal confirmada fue un error de sintaxis en `index.html` que detenía el JavaScript principal y dejaba ocultos tanto el login como el panel. La corrección está en v2.3.83 y debe volver a ejecutar todos los gates. Hasta que los tres controles estén verdes, **Admin no está listo para Producción**.
 
 ## Separación de ambientes
 
@@ -36,13 +39,9 @@ La versión preparada en `staging` selecciona el backend según el hostname:
 - dominios oficiales `*.yummypro.online` correspondientes → Producción;
 - GitHub Pages de Pruebas, localhost y hosts no reconocidos → Staging.
 
-## Anomalía detectada tras el primer release
+## Incidentes históricos cerrados
 
-La primera promoción `staging → main` copió correctamente el código, pero ese código todavía tenía el endpoint de Supabase Staging fijo. Como resultado, la versión que quedó en `main` conserva actualmente la referencia de Staging.
-
-**No se corrigió `main` directamente**, respetando la regla de no tocar Producción.
-
-La corrección ya está implementada y probada en `staging`. Llegará a Producción únicamente cuando el propietario autorice el próximo release.
+El primer release dejó temporalmente el endpoint de Supabase Staging fijo en el código promovido. La selección por hostname ya forma parte de las versiones actuales. Los controles deben seguir verificándola en cada release para impedir una regresión.
 
 ## Próximo release
 
@@ -54,6 +53,6 @@ Antes de liberar:
 5. El propietario decide si pulsa **Lanzar a Producción**.
 6. Tras el release, el monitor horario verificará que `main = staging`, que las versiones coincidan y que cada dominio use su Supabase correcto.
 
-## Mejora pendiente incluida en Admin v2.3.67
+## Regla de decisión
 
-El Centro de Lanzamientos ahora muestra un seguimiento visible del release: confirmación dentro del panel, progreso por módulo, porcentaje, tiempo transcurrido, estimación restante y verificación posterior de GitHub Pages. Esto evita que un lanzamiento parezca congelado mientras el backend trabaja.
+No usar **Lanzar a Producción** si cualquier módulo tiene `quality`, `smoke`, paridad, auditoría visual o despliegue del SHA esperado en rojo, cancelado, pendiente o desactualizado.

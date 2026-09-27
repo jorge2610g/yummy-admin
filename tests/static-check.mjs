@@ -1,4 +1,5 @@
 import {readFileSync} from 'node:fs';
+import {Script} from 'node:vm';
 for(const file of ['index.html','panel.html','panel/index.html']){
   const html=readFileSync(file,'utf8');
   if(!/<!doctype html>/i.test(html)||!/<\/html>/i.test(html))throw new Error(`${file}: HTML incompleto`);
@@ -15,6 +16,14 @@ for(const file of ['index.html','panel.html','panel/index.html']){
 }
 
 const admin=readFileSync('index.html','utf8');for(const marker of ['currencyDigits','minimumFractionDigits:shown','maximumFractionDigits:shown','restaurantMoney(value,rid)'])if(!admin.includes(marker))throw new Error('index.html: falta formato monetario adaptable '+marker);
+for(const marker of ['@supabase/supabase-js@2.117.2','integrity="sha384-','crossorigin="anonymous"'])if(!admin.includes(marker))throw new Error('index.html: dependencia Supabase sin versión/integridad fija '+marker);
+
+for(const [index,match] of [...admin.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].entries()){
+  if(/\bsrc\s*=|\btype\s*=\s*["'](?:application\/(?:json|ld\+json)|importmap)["']/i.test(match[1]))continue;
+  try{new Script(match[2],{filename:`index.html:inline-script-${index+1}`})}
+  catch(error){throw new Error(`index.html: JavaScript inválido en script inline ${index+1}: ${error.message}`)}
+}
+new Script(readFileSync('admin-streaming-access.js','utf8'),{filename:'admin-streaming-access.js'});
 
 const flowMarkers=['flowCredentialsCard','subscriptionFlowApiKey','subscriptionFlowSecretKey','subscriptionFlowEnvironment','loadSubscriptionFlowSettings','saveSubscriptionFlowSettings','subscription-flow-settings'];for(const marker of flowMarkers)if(!admin.includes(marker))throw new Error('index.html: falta configuración Flow '+marker);
 
@@ -71,11 +80,14 @@ for(const marker of ['YUMMY_IS_PRODUCTION','admin.yummypro.online','https://gulc
 
 for(const marker of ['releaseConfirmModal','releaseProgressModal','releaseProgressFill','confirmProductionRelease','production_deploy_ready'])if(!admin.includes(marker))throw new Error('index.html: falta seguimiento visible del release '+marker);
 
+const releaseBackend=readFileSync('supabase/functions/release-center/index.ts','utf8');
+for(const marker of ['REQUIRED_STAGING_CHECKS = ["quality", "smoke", "environment-guard"]','required_checks: requiredChecks','failed_checks: requiredChecks','check?.conclusion === "success"','has_evidence: hasEvidence'])if(!releaseBackend.includes(marker))throw new Error('release-center: falta gate vinculante '+marker);
+
 
 for(const marker of ['releaseEmergencyCard','Modo de emergencia','retryReleaseQuality','republishReleaseTests','restoreReleaseStable','loadEmergencyReleaseState','RESTAURAR PRUEBAS','Producción protegida'])if(!admin.includes(marker))throw new Error('index.html: falta modo de emergencia de Pruebas '+marker);
 
 
-for(const marker of ['data-tab="ai_auditor"','Auditor IA de Pruebas','loadAiAuditStatus','runAiAuditNow','openAiAuditReport','Gemini 3.8 Flash','Groq'])if(!admin.includes(marker))throw new Error('index.html: falta Auditor IA de Pruebas '+marker);
+for(const marker of ['data-tab="ai_auditor"','Auditor IA de Pruebas','loadAiAuditStatus','runAiAuditNow','openAiAuditReport','Gemini 3.5 Flash','Groq'])if(!admin.includes(marker))throw new Error('index.html: falta Auditor IA de Pruebas '+marker);
 
 for(const marker of ['./admin-streaming-access.js?v=1002','./manifest.webmanifest?v=2320','navigator.serviceWorker.register("./pwa-sw.js")'])if(!admin.includes(marker))throw new Error('index.html: falta ruta PWA segura para GitHub Pages '+marker);
 
