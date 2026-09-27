@@ -168,11 +168,12 @@ async function inspectVisualLayout(page,theme){
       return s.display!=="none"&&s.visibility!=="hidden"&&Number(s.opacity||1)>0.02&&r.width>0&&r.height>0;
     };
     const rgb=value=>{
-      const m=String(value||"").match(/rgba?\(([\d.]+)[ ,]+([\d.]+)[ ,]+([\d.]+)/i);
-      return m?[Number(m[1]),Number(m[2]),Number(m[3])]:null;
+      const m=String(value||"").match(/rgba?\(([\d.]+)[ ,]+([\d.]+)[ ,]+([\d.]+)(?:[ ,/]+([\d.]+))?\)/i);
+      return m?[Number(m[1]),Number(m[2]),Number(m[3]),m[4]===undefined?1:Number(m[4])]:null;
     };
     const lum=value=>{
       const v=rgb(value);if(!v)return null;
+      if(v[3]<0.15)return null;
       return .2126*v[0]+.7152*v[1]+.0722*v[2];
     };
     const selector="button,a[href],input,select,textarea,[role=button]";
