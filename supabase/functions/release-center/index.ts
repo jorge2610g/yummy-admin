@@ -104,6 +104,35 @@ async function getBranchSha(repo: string, branch: string) {
   return data?.object?.sha || null;
 }
 
+async function probePullRequestWrite(repo: string) {
+  const res = await fetch(`${GH_API}/repos/${repo}/pulls`, {
+    method: "POST",
+    headers: { ...githubHeaders(true), "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: "permission-check",
+      head: "main",
+      base: "main",
+      body: "Comprobación segura de permiso; esta solicitud no puede crear un PR porque origen y destino son iguales.",
+    }),
+  });
+  const raw = await res.text();
+  let data: any = null;
+  try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = { message: raw || "" }; }
+
+  // GitHub devuelve 422 cuando el token SÍ tiene permiso pero el PR es inválido
+  // porque main -> main no tiene cambios. No se crea ningún PR.
+  if (res.status === 422) return { ok: true, status: res.status, message: data?.message || "validation_failed" };
+  if (res.ok) return { ok: true, status: res.status, message: data?.message || "ok" };
+
+  const message = String(data?.message || `GitHub respondió ${res.status}`);
+  return {
+    ok: false,
+    status: res.status,
+    message,
+    missing_pull_requests_write: res.status === 403 && /personal access token|resource not accessible/i.test(message),
+  };
+}
+
 async function getCommitTreeSha(repo: string, sha: string) {
   if (!sha) return null;
   const data = await githubRequest(`/repos/${repo}/git/commits/${sha}`);
@@ -439,7 +468,25 @@ async function handleDryRun() {
   const qualityBlocked = cfg.release_enabled && cfg.github_token_configured
     ? repositories.filter((item) => !item.quality_ready)
     : [];
-  const ready = unsafe.length === 0 && qualityBlocked.length === 0;
+
+  const missingPullRequestWrite: any[] = [];
+  if (!unsafe.length && !qualityBlocked.length && cfg.release_enabled && cfg.github_token_configured) {
+    for (const item of repositories.filter((row) => row.needs_release)) {
+      const probe = await probePullRequestWrite(item.repo);
+      if (!probe.ok) {
+        missingPullRequestWrite.push({
+          key: item.key,
+          label: item.label,
+          repo: item.repo,
+          status: probe.status,
+          message: probe.message,
+          missing_pull_requests_write: !!probe.missing_pull_requests_write,
+        });
+      }
+    }
+  }
+
+  const ready = unsafe.length === 0 && qualityBlocked.length === 0 && missingPullRequestWrite.length === 0;
   return {
     ok: ready,
     mode: "dry-run",
@@ -447,11 +494,13 @@ async function handleDryRun() {
     ready,
     pending: repositories.filter((item) => item.needs_release).length,
     repositories,
-    release_prerequisites_ready: true,
-    release_prerequisites_error: null,
+    release_prerequisites_ready: missingPullRequestWrite.length === 0,
+    missing_pull_request_write: missingPullRequestWrite,
     message: ready
-      ? "Diagnóstico correcto. El lanzamiento puede ejecutarse en segundo plano desde Supabase sin depender del navegador."
-      : "El lanzamiento no está listo todavía.",
+      ? "Diagnóstico correcto. GitHub tiene permisos suficientes para crear y fusionar los PR protegidos."
+      : missingPullRequestWrite.length
+        ? "Falta el permiso Pull requests: Read and write en el token privado de GitHub usado por el Centro de lanzamientos."
+        : "El lanzamiento no está listo todavía.",
   };
 }
 
@@ -541,6 +590,32 @@ async function handleRelease(body: any, admin: any) {
 
   const changed = repositories.filter((item) => item.needs_release);
   if (!changed.length) return { status: 200, body: { ok: true, released: false, message: "No había cambios pendientes.", repositories } };
+
+  const permissionFailures: any[] = [];
+  for (const item of changed) {
+    const probe = await probePullRequestWrite(item.repo);
+    if (!probe.ok) {
+      permissionFailures.push({
+        key: item.key,
+        label: item.label,
+        repo: item.repo,
+        status: probe.status,
+        message: probe.message,
+        missing_pull_requests_write: !!probe.missing_pull_requests_write,
+      });
+    }
+  }
+  if (permissionFailures.length) {
+    return {
+      status: 403,
+      body: {
+        error: "GitHub bloqueó la publicación porque el token del Centro de lanzamientos no tiene permiso para crear Pull Requests. Añade Pull requests: Read and write al YUMMY_RELEASE_GITHUB_TOKEN y vuelve a Preparar lanzamiento.",
+        permission: "pull_requests_write",
+        repositories: permissionFailures,
+        production_untouched: true,
+      },
+    };
+  }
 
   const backupBranch = backupRefName();
   for (const item of repositories) await createBackup(item.repo, item.main_sha, backupBranch);
