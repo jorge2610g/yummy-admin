@@ -485,16 +485,31 @@ async function handleDryRun() {
   const qualityBlocked = cfg.release_enabled && cfg.github_token_configured
     ? repositories.filter((item) => !item.quality_ready)
     : [];
+
+  let autoMergeError: string | null = null;
+  if (!unsafe.length && !qualityBlocked.length && cfg.release_enabled && cfg.github_token_configured) {
+    try {
+      for (const item of repositories.filter((row) => row.needs_release)) {
+        await ensureRepositoryAutoMerge(item.repo);
+      }
+    } catch (error) {
+      autoMergeError = error instanceof Error ? error.message : "No se pudo preparar el auto-merge de GitHub.";
+    }
+  }
+
+  const ready = unsafe.length === 0 && qualityBlocked.length === 0 && !autoMergeError;
   return {
-    ok: unsafe.length === 0 && qualityBlocked.length === 0,
+    ok: ready,
     mode: "dry-run",
     configuration: cfg,
-    ready: unsafe.length === 0 && qualityBlocked.length === 0,
+    ready,
     pending: repositories.filter((item) => item.needs_release).length,
     repositories,
-    message: unsafe.length || qualityBlocked.length
-      ? "El lanzamiento no está listo todavía."
-      : "Diagnóstico correcto. No se modificó ninguna rama.",
+    release_prerequisites_ready: !autoMergeError,
+    release_prerequisites_error: autoMergeError,
+    message: !ready
+      ? (autoMergeError ? "El lanzamiento está listo en código, pero GitHub no pudo habilitar el auto-merge." : "El lanzamiento no está listo todavía.")
+      : "Diagnóstico correcto. GitHub quedó preparado para continuar el lanzamiento en segundo plano; no se modificó ninguna rama.",
   };
 }
 
