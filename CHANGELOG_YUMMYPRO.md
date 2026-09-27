@@ -1,3 +1,12 @@
+## 2.3.87 — 2026-09-27
+- Primera ola de endurecimiento de seguridad en Supabase Staging.
+- Se eliminó ejecución anónima de RPC administrativos, de caja, POS y funciones internas/trigger que no deben exponerse por PostgREST.
+- Los avisos de funciones SECURITY DEFINER ejecutables por anon bajaron de 56 a 30; los de usuarios autenticados bajaron de 110 a 96.
+- Se fijó el search_path de normalize_module_array, eliminando el aviso de search_path mutable.
+- Se corrigió una fuga entre ambientes: las notificaciones de email de Pruebas ya no apuntan directamente al Edge Function de Producción.
+- Se añadió private.runtime_config para resolver endpoints específicos por ambiente sin hardcodearlos en migraciones compartidas.
+- Producción no fue modificada.
+
 ## 2.3.86 — 2026-09-27
 - El auditor reintenta hasta 3 veces una navegación que devuelva 5xx o falle transitoriamente antes de declarar el módulo roto.
 - Si un 5xx se repite, sigue siendo bloqueante; solo se descarta la evidencia del intento transitorio que luego carga correctamente.
