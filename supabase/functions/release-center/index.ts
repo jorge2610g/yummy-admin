@@ -458,6 +458,56 @@ async function handleStatus() {
   };
 }
 
+async function getCommitTimestamp(repo: string, sha: string) {
+  if (!repo || !sha) return null;
+  const data = await githubRequest(`/repos/${repo}/commits/${sha}`);
+  return data?.commit?.committer?.date || data?.commit?.author?.date || null;
+}
+
+async function inspectAiAuditGate(repositories: any[]) {
+  const run = await latestAiAuditRun();
+  const adminRepo = repositories.find((item) => item.key === "admin");
+  let latestChangeAt = 0;
+  const sourceTimes: any[] = [];
+  for (const item of repositories) {
+    try {
+      const iso = await getCommitTimestamp(item.repo, item.staging_sha);
+      const ms = iso ? new Date(iso).getTime() : 0;
+      if (ms > latestChangeAt) latestChangeAt = ms;
+      sourceTimes.push({ key: item.key, repo: item.repo, staging_sha: item.staging_sha, committed_at: iso });
+    } catch (_) {
+      sourceTimes.push({ key: item.key, repo: item.repo, staging_sha: item.staging_sha, committed_at: null });
+    }
+  }
+  const runUpdatedAt = run?.updated_at ? new Date(run.updated_at).getTime() : 0;
+  const sameAdminSha = !!run && !!adminRepo?.staging_sha && String(run.head_sha || "") === String(adminRepo.staging_sha || "");
+  const completed = run?.status === "completed";
+  const passed = run?.conclusion === "success";
+  const fresh = !!runUpdatedAt && runUpdatedAt >= latestChangeAt;
+  const ready = !!run && completed && passed && sameAdminSha && fresh;
+  return {
+    ready,
+    run,
+    same_admin_sha: sameAdminSha,
+    fresh,
+    latest_change_at: latestChangeAt ? new Date(latestChangeAt).toISOString() : null,
+    source_times: sourceTimes,
+    message: ready
+      ? "Auditor visual/funcional aprobado para los SHA actuales de Pruebas."
+      : !run
+        ? "Todavía no existe una auditoría visual/funcional."
+        : !completed
+          ? "El Auditor IA todavía está ejecutándose."
+          : !passed
+            ? "El Auditor IA detectó fallos visuales o funcionales."
+            : !sameAdminSha
+              ? "El Auditor IA no corresponde al SHA actual de Admin Pruebas."
+              : !fresh
+                ? "El Auditor IA es anterior a uno o más cambios actuales de Pruebas."
+                : "El Auditor IA no está listo.",
+  };
+}
+
 async function handleDryRun() {
   const cfg = configuration();
   let repositories = await inspectAllRepositories();
@@ -468,6 +518,7 @@ async function handleDryRun() {
   const qualityBlocked = cfg.release_enabled && cfg.github_token_configured
     ? repositories.filter((item) => !item.quality_ready)
     : [];
+  const pending = repositories.filter((item) => item.needs_release).length;
 
   const missingPullRequestWrite: any[] = [];
   if (!unsafe.length && !qualityBlocked.length && cfg.release_enabled && cfg.github_token_configured) {
@@ -486,21 +537,32 @@ async function handleDryRun() {
     }
   }
 
-  const ready = unsafe.length === 0 && qualityBlocked.length === 0 && missingPullRequestWrite.length === 0;
+  const auditGate = pending > 0
+    ? await inspectAiAuditGate(repositories)
+    : { ready: true, run: await latestAiAuditRun(), message: "No hay cambios pendientes de lanzamiento." };
+
+  const ready = unsafe.length === 0
+    && qualityBlocked.length === 0
+    && missingPullRequestWrite.length === 0
+    && !!auditGate.ready;
+
   return {
     ok: ready,
     mode: "dry-run",
     configuration: cfg,
     ready,
-    pending: repositories.filter((item) => item.needs_release).length,
+    pending,
     repositories,
-    release_prerequisites_ready: missingPullRequestWrite.length === 0,
+    audit_gate: auditGate,
+    release_prerequisites_ready: missingPullRequestWrite.length === 0 && !!auditGate.ready,
     missing_pull_request_write: missingPullRequestWrite,
     message: ready
-      ? "Diagnóstico correcto. GitHub tiene permisos suficientes para crear y fusionar los PR protegidos."
+      ? "Diagnóstico correcto. Calidad, permisos y Auditor Visual/Funcional están en verde."
       : missingPullRequestWrite.length
         ? "Falta el permiso Pull requests: Read and write en el token privado de GitHub usado por el Centro de lanzamientos."
-        : "El lanzamiento no está listo todavía.",
+        : !auditGate.ready
+          ? auditGate.message
+          : "El lanzamiento no está listo todavía.",
   };
 }
 
@@ -550,6 +612,18 @@ async function handleRelease(body: any, admin: any) {
   repositories = await inspectAllQuality(repositories);
   const unhealthy = repositories.filter((item) => !item.quality_ready);
   if (unhealthy.length) return { status: 409, body: { error: "El lanzamiento está bloqueado porque Calidad no está en verde para todos los módulos.", repositories } };
+
+  const auditGate = await inspectAiAuditGate(repositories);
+  if (!auditGate.ready) {
+    return {
+      status: 409,
+      body: {
+        error: "El lanzamiento está bloqueado por el Auditor Visual/Funcional: " + auditGate.message,
+        audit_gate: auditGate,
+        production_untouched: true,
+      },
+    };
+  }
 
   if (String(body?.confirmation || "").trim().toUpperCase() !== "LANZAR A PRODUCCION") {
     return { status: 400, body: { error: "Confirmación inválida." } };
