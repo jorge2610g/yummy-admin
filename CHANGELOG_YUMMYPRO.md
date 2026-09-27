@@ -1,3 +1,11 @@
+## 2.3.82 — 2026-09-26
+- El Auditor IA ahora funciona como auditor visual + funcional + técnico de Pruebas.
+- Recorre secciones autenticadas, móvil y escritorio, compara modo claro/oscuro, detecta controles cortados o tapados y guarda capturas de carga para detectar destellos de marca.
+- Añade reglas de nicho para Streaming (contenido de restaurante/delivery visible se considera fallo).
+- Verifica que GitHub Pages corresponda exactamente al SHA actual de staging antes de auditar.
+- El Centro de Lanzamientos bloquea Producción si la auditoría no pasó o quedó desactualizada frente a cambios más recientes.
+- Producción no fue modificada.
+
 ## 2.3.81 — 2026-09-26
 - El Centro de lanzamientos comprueba el permiso Pull requests: Read and write antes de crear respaldos o tocar Producción.
 - Si el token de GitHub carece de ese permiso, Preparar lanzamiento muestra el permiso exacto faltante y bloquea la publicación de forma segura.
