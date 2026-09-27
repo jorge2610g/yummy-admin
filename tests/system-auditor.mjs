@@ -84,8 +84,9 @@ async function maybeLogin(page,auth,moduleUrl){
       const target=new URL(moduleUrl);
       target.hash=new URLSearchParams({yummy_access:session.access_token,yummy_refresh:session.refresh_token}).toString();
       await page.goto(target.toString(),{waitUntil:"domcontentloaded",timeout:25000});
-      await page.waitForTimeout(2600);
-      const appVisible=await page.locator("#app").first().isVisible().catch(()=>false);
+      const app=page.locator("#app").first();
+      let appVisible=false;
+      try{await app.waitFor({state:"visible",timeout:12000});appVisible=true}catch(_){appVisible=await app.isVisible().catch(()=>false)}
       return {attempted:true,success:appVisible,method:"supabase-handoff",finalUrl:page.url(),error:appVisible?null:"El panel no quedó visible después del handoff autenticado"};
     }catch(error){return {attempted:true,success:false,method:"supabase-handoff",error:String(error?.message||error)}}
   }
