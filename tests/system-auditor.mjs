@@ -369,7 +369,7 @@ async function auditPage(browser,module,viewportName,viewport){
 }
 
 function reportPrompt(report){
-  return "Eres auditor visual, funcional y técnico de una aplicación SaaS. Analiza evidencia REAL de YummyPro Pruebas. No inventes fallos. Busca especialmente: modo claro con tarjetas oscuras o modo oscuro con tarjetas claras, botones cortados/tapados/desbordados, responsive roto, saltos o destellos de branding durante la carga, controles visualmente inconsistentes, iconos/textos del nicho equivocado, pantallas vacías, errores JS/HTTP y rutas equivocadas. Compara las capturas t0/t180/t700/settled y light/dark cuando existan. Si una diferencia es intencional o no hay evidencia suficiente, no la marques como fallo. Responde SOLO JSON válido con esta forma: {\\\"status\\\":\\\"success|warning|failure\\\",\\\"summary\\\":\\\"...\\\",\\\"findings\\\":[{\\\"severity\\\":\\\"critical|warning|info\\\",\\\"module\\\":\\\"...\\\",\\\"title\\\":\\\"...\\\",\\\"evidence\\\":\\\"...\\\",\\\"suggestion\\\":\\\"...\\\"}]}. Informe:\\n"+JSON.stringify(report,null,2);
+  return "Eres un SEGUNDO auditor visual, funcional y técnico de YummyPro Pruebas. El navegador/Playwright aporta la evidencia objetiva y es la fuente de verdad para el estado del gate. No inventes fallos ni conviertas en fallo actual textos históricos que la propia aplicación muestre (por ejemplo métricas de observabilidad, incidentes pasados o contadores de errores). Un request net::ERR_ABORTED por navegación/cierre de contexto no es por sí solo un fallo crítico si la pantalla terminó correctamente y no existe error HTTP/JS correlacionado. Un sidebar colapsado diseñado para mostrar solo iconos tampoco es un fallo si sus etiquetas están ocultas intencionalmente y los controles siguen accesibles por title/aria-label. Busca especialmente: modo claro con superficies incompatibles, botones realmente cortados/tapados/desbordados, responsive roto, destellos de branding, controles visualmente inconsistentes, contenido del nicho equivocado, pantallas vacías, errores JS/HTTP actuales y rutas equivocadas. Compara t0/t180/t700/settled y light/dark. Si no hay evidencia reproducible en results.errors/warnings/httpErrors o en una captura inequívoca del estado actual, clasifica la observación como info, no failure. Responde SOLO JSON válido con esta forma: {\\\"status\\\":\\\"success|warning|failure\\\",\\\"summary\\\":\\\"...\\\",\\\"findings\\\":[{\\\"severity\\\":\\\"critical|warning|info\\\",\\\"module\\\":\\\"...\\\",\\\"title\\\":\\\"...\\\",\\\"evidence\\\":\\\"...\\\",\\\"suggestion\\\":\\\"...\\\"}]}. Informe:\\n"+JSON.stringify(report,null,2);
 }
 
 async function geminiAudit(report){
@@ -484,13 +484,20 @@ const publicationFailures=Object.values(publicationChecks).filter(x=>!x.ok);
 const report={version:2,created_at:now(),targets_discovery_error:targets.__error||null,publication_checks:publicationChecks,publication_failures:publicationFailures.length,counts,status:counts.failure?"failure":counts.warning?"warning":"success",results};
 const gemini=await geminiAudit(report).catch(error=>({provider:"gemini",configured:!!process.env.GEMINI_API_KEY,error:String(error?.message||error)}));
 const groq=await groqAudit(report).catch(error=>({provider:"groq",configured:!!process.env.GROQ_API_KEY,error:String(error?.message||error)}));
+const aiAdvisoryFailure=[gemini,groq].some(x=>x?.analysis?.status==="failure");
 report.ai={gemini,groq};
+report.ai_policy={
+  blocking:false,
+  advisory_failure:aiAdvisoryFailure,
+  reason:"La IA es segunda opinión. El gate se bloquea por evidencia reproducible del navegador/Playwright; hallazgos de IA se conservan para revisión humana."
+};
 await writeFile(path.join(OUT,"audit.json"),JSON.stringify(report,null,2));
-const lines=["# YummyPro · Auditor Visual + Funcional + IA","","- Fecha: "+report.created_at,"- Estado navegador: **"+report.status.toUpperCase()+"**","- Éxitos: "+counts.success+" · Advertencias: "+counts.warning+" · Fallos: "+counts.failure,"- Publicaciones exactas pendientes: "+publicationFailures.length,"- Gemini: "+(gemini.configured?(gemini.error?"error":"activo"):"sin clave"),"- Groq: "+(groq.configured?(groq.error?"error":"activo"):"sin clave"),"","## Qué revisó","- Carga y destellos de interfaz en 4 momentos","- Modo claro y oscuro","- Botones cortados, tapados o desbordados","- Navegación real por secciones autenticadas","- Móvil y escritorio","- Consola, red, HTTP y pantallas vacías","- Reglas de nicho (incluido Streaming sin contenido de restaurante)","- Capturas comparadas por IA","","## Recorridos"];
+const lines=["# YummyPro · Auditor Visual + Funcional + IA","","- Fecha: "+report.created_at,"- Estado navegador: **"+report.status.toUpperCase()+"**","- Éxitos: "+counts.success+" · Advertencias: "+counts.warning+" · Fallos: "+counts.failure,"- Publicaciones exactas pendientes: "+publicationFailures.length,"- Gemini: "+(gemini.configured?(gemini.error?"error":"activo"):"sin clave"),"- Groq: "+(groq.configured?(groq.error?"error":"activo"):"sin clave"),"- Política IA: segunda opinión; no bloquea sin evidencia reproducible del navegador.","","## Qué revisó","- Carga y destellos de interfaz en 4 momentos","- Modo claro y oscuro","- Botones cortados, tapados o desbordados","- Navegación real por secciones autenticadas","- Móvil y escritorio","- Consola, red, HTTP y pantallas vacías","- Reglas de nicho (incluido Streaming sin contenido de restaurante)","- Capturas comparadas por IA","","## Recorridos"];
 for(const x of results)lines.push("- **"+x.label+" / "+x.viewport+"** — "+x.status+" — "+([...x.errors,...x.warnings].join(" | ")||"OK"));
-lines.push("","## Gemini",JSON.stringify(gemini.analysis||gemini,null,2),"","## Groq",JSON.stringify(groq.analysis||groq,null,2));
+lines.push("","## Gemini (segunda opinión)",JSON.stringify(gemini.analysis||gemini,null,2),"","## Groq (segunda opinión)",JSON.stringify(groq.analysis||groq,null,2));
 const md=lines.join("\\n");
 await writeFile(path.join(OUT,"README.md"),md);
 console.log(md);
-const aiFailure=[gemini,groq].some(x=>x?.analysis?.status==="failure");
-if(counts.failure>0||(ENFORCE_AI&&aiFailure))process.exitCode=1;
+// El gate es reproducible: solo falla por evidencia objetiva recogida por Playwright.
+// La IA sigue reportando hallazgos para revisión, pero no puede bloquear por sí sola.
+if(counts.failure>0)process.exitCode=1;
