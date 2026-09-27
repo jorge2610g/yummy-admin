@@ -270,14 +270,43 @@ async function auditPage(browser,module,viewportName,viewport){
   page.on("requestfailed",req=>requestFailures.push({url:req.url(),error:req.failure()?.errorText||"falló"}));
   page.on("response",res=>{try{const u=new URL(res.url());if(res.status()>=400)httpErrors.push({status:res.status(),url:u.origin+u.pathname})}catch(_){}});
   let response=null,navigationError=null;
+  const navigationAttempts=[];
+  for(let attempt=1;attempt<=3;attempt++){
+    const consoleStart=consoleErrors.length,httpStart=httpErrors.length,requestStart=requestFailures.length;
+    try{
+      response=await page.goto(module.url,{waitUntil:"domcontentloaded",timeout:25000});
+      const status=response?.status?.()||0;
+      navigationAttempts.push({attempt,status});
+      if(status>=500&&attempt<3){
+        // GitHub Pages puede devolver un 5xx transitorio durante propagación. Si el siguiente
+        // intento carga bien, descartamos únicamente la evidencia de ese intento fallido.
+        consoleErrors.splice(consoleStart);
+        httpErrors.splice(httpStart);
+        requestFailures.splice(requestStart);
+        await page.waitForTimeout(900*attempt);
+        continue;
+      }
+      navigationError=null;
+      break;
+    }catch(error){
+      navigationError=String(error?.message||error);
+      navigationAttempts.push({attempt,error:navigationError});
+      if(attempt<3){
+        consoleErrors.splice(consoleStart);
+        httpErrors.splice(httpStart);
+        requestFailures.splice(requestStart);
+        await page.waitForTimeout(900*attempt);
+        continue;
+      }
+    }
+  }
 
-  try{
-    response=await page.goto(module.url,{waitUntil:"domcontentloaded",timeout:25000});
+  if(!navigationError&&response&&response.status()<500){
     frames.push(await captureAuditFrame(page,module,viewportName,"t0"));
     await page.waitForTimeout(180);frames.push(await captureAuditFrame(page,module,viewportName,"t180"));
     await page.waitForTimeout(520);frames.push(await captureAuditFrame(page,module,viewportName,"t700"));
     await page.waitForTimeout(900);frames.push(await captureAuditFrame(page,module,viewportName,"settled"));
-  }catch(error){navigationError=String(error?.message||error)}
+  }
 
   const login=await maybeLogin(page,module.auth,module.url);
   await page.waitForTimeout(900);
@@ -364,7 +393,7 @@ async function auditPage(browser,module,viewportName,viewport){
     status:errors.length?"failure":warnings.length?"warning":"success",
     errors,warnings,consoleErrors:consoleErrors.slice(0,20),httpErrors:httpErrors.slice(0,30),
     requestFailures:requestFailures.slice(0,20),login,metrics,screenshot,
-    frames,themeResults,navigation
+    frames,themeResults,navigation,navigationAttempts
   };
 }
 
