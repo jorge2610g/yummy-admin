@@ -391,6 +391,8 @@ async function geminiAudit(report){
 }
 
 function compactGroqReport(report){
+  const shorten=value=>String(value??"").replace(/\s+/g," ").slice(0,240);
+  const briefList=(items,limit=3)=>(items||[]).slice(0,limit).map(shorten);
   return {
     created_at:report.created_at,
     status:report.status,
@@ -401,11 +403,17 @@ function compactGroqReport(report){
       viewport:x.viewport,
       status:x.status,
       finalUrl:x.finalUrl,
-      errors:(x.errors||[]).slice(0,4),
-      warnings:(x.warnings||[]).slice(0,4),
-      consoleErrors:(x.consoleErrors||[]).slice(0,5),
-      httpErrors:(x.httpErrors||[]).slice(0,5),
-      metrics:x.metrics
+      errors:briefList(x.errors),
+      warnings:briefList(x.warnings),
+      consoleErrors:briefList(x.consoleErrors,2),
+      httpErrors:briefList(x.httpErrors,2),
+      metrics:{
+        bodyText:shorten(x.metrics?.bodyText),
+        buttons:x.metrics?.buttons,
+        visibleButtons:x.metrics?.visibleButtons,
+        overflow:x.metrics?.overflow,
+        blank:x.metrics?.blank
+      }
     }))
   };
 }
