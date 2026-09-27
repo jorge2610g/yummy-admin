@@ -179,12 +179,24 @@ async function inspectVisualLayout(page,theme){
     const selector="button,a[href],input,select,textarea,[role=button]";
     const interactive=[...document.querySelectorAll(selector)].filter(visible);
     const clipped=[],covered=[],tiny=[];
+    const insideIntentionalScroller=el=>{
+      let p=el.parentElement;
+      while(p&&p!==document.body){
+        const ps=getComputedStyle(p);
+        const horizontal=(ps.overflowX==="auto"||ps.overflowX==="scroll")&&p.scrollWidth>p.clientWidth+5;
+        const vertical=(ps.overflowY==="auto"||ps.overflowY==="scroll")&&p.scrollHeight>p.clientHeight+5;
+        if(horizontal||vertical)return true;
+        p=p.parentElement;
+      }
+      return false;
+    };
     for(const el of interactive){
       const r=el.getBoundingClientRect();
       if(r.bottom<0||r.top>innerHeight||r.right<0||r.left>innerWidth)continue;
       const name=(el.getAttribute("aria-label")||el.getAttribute("title")||el.innerText||el.value||el.tagName).replace(/\s+/g," ").trim().slice(0,90);
-      if(r.left<-2||r.right>innerWidth+2)clipped.push({name,left:Math.round(r.left),right:Math.round(r.right),viewport:innerWidth});
-      if((el.scrollWidth>el.clientWidth+5||el.scrollHeight>el.clientHeight+5)&&r.width>30&&r.height>20)clipped.push({name,overflow:true,client:[el.clientWidth,el.clientHeight],scroll:[el.scrollWidth,el.scrollHeight]});
+      const intentionalScroll=insideIntentionalScroller(el);
+      if(!intentionalScroll&&(r.left<-2||r.right>innerWidth+2))clipped.push({name,left:Math.round(r.left),right:Math.round(r.right),viewport:innerWidth});
+      if(!intentionalScroll&&(el.scrollWidth>el.clientWidth+5||el.scrollHeight>el.clientHeight+5)&&r.width>30&&r.height>20)clipped.push({name,overflow:true,client:[el.clientWidth,el.clientHeight],scroll:[el.scrollWidth,el.scrollHeight]});
       if(r.width<24||r.height<24)tiny.push({name,size:[Math.round(r.width),Math.round(r.height)]});
       const x=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),y=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));
       const top=document.elementFromPoint(x,y);
