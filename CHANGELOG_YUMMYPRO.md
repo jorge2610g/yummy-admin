@@ -1,3 +1,10 @@
+## 2.3.85 — 2026-09-27
+- El Auditor IA mantiene Gemini y Groq como segunda opinión, pero una valoración subjetiva de IA ya no puede bloquear por sí sola un release.
+- El gate sigue siendo estricto con evidencia reproducible de Playwright: pantallas, temas, destellos, desbordes, solapamientos, login, JavaScript, HTTP, rutas y publicación exacta de staging.
+- Se afinó el prompt para no confundir telemetría histórica o requests abortados por navegación con un fallo actual si la experiencia terminó correctamente.
+- Los hallazgos de IA continúan guardándose completos en el informe para revisión humana.
+- Producción no fue modificada.
+
 ## 2.3.84 — 2026-09-27
 - El Auditor Visual distingue carruseles, pestañas y listas con desplazamiento intencional de un desbordamiento real.
 - Se eliminan falsos positivos en tabs y catálogos horizontales sin relajar la detección de controles realmente cortados.
