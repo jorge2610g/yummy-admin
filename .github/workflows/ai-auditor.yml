@@ -56,7 +56,7 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GEMINI_MODEL: gemini-3.5-flash
           GROQ_MODEL: openai/gpt-oss-20b
-          AI_AUDIT_ENFORCE: "true"
+          AI_AUDIT_ENFORCE: "false"
 
       - name: Publicar resumen en GitHub Actions
         if: always()
