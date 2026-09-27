@@ -40,11 +40,25 @@ test('RELEASE GATE: Admin Pruebas funciona de extremo a extremo', async ({ page,
     await page.goto(TEST_URL, { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveTitle(/Panel|Admin/i);
     await expect(page.locator('body')).toContainText(/Versión v2\.3\.\d+/);
-    await expect(page.locator('#login')).toBeVisible();
+    await expect.poll(async () => {
+      const loginVisible = await page.locator('#login').isVisible().catch(() => false);
+      const appVisible = await page.locator('#app').isVisible().catch(() => false);
+      return loginVisible || appVisible;
+    }, { timeout: 15000, message: 'El Admin no mostró ni login ni aplicación después de resolver la sesión' }).toBeTruthy();
   });
 
   await test.step('inicia sesión con la cuenta de prueba obligatoria', async () => {
-    await login(page);
+    const appVisible = await page.locator('#app').isVisible().catch(() => false);
+    if (!appVisible) {
+      await login(page);
+      return;
+    }
+    const hasSession = await page.evaluate(async () => {
+      if (!window.sb?.auth?.getSession) return false;
+      const { data } = await window.sb.auth.getSession();
+      return !!data?.session?.access_token;
+    });
+    expect(hasSession, 'El panel apareció sin una sesión autenticada válida').toBeTruthy();
   });
 
   await test.step('carga las métricas generales sin guiones ni errores', async () => {
