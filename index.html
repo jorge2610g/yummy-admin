@@ -2938,7 +2938,10 @@ async function confirmProductionRelease(){
   closeReleaseConfirmation();
   openReleaseUiModal("releaseProgressModal");
   const closeBtn=document.getElementById("releaseProgressCloseBtn"),title=document.getElementById("releaseProgressTitle"),spinner=document.getElementById("releaseProgressSpinner"),note=document.getElementById("releaseProgressNote"),btn=document.getElementById("launchReleaseBtn");
-  if(closeBtn)closeBtn.disabled=true;if(title)title.textContent="Preparando Producción…";if(spinner)spinner.textContent="⏳";if(note)note.textContent="No cierres esta ventana mientras se mueve el código. Después verificaremos también el despliegue de GitHub Pages.";
+  if(closeBtn)closeBtn.disabled=true;
+  if(title)title.textContent="Preparando Producción…";
+  if(spinner)spinner.textContent="⏳";
+  if(note)note.textContent="Creando respaldos y entregando la publicación a GitHub. Después podrás cerrar esta ventana sin detener el proceso.";
   if(btn){btn.disabled=true;btn.textContent="🚀 Publicando…"}
   const initialRows=(releaseProgressPrepared.repositories||[]).map(item=>({...item,main_sha:releaseProgressExpected?.[item.key]?.main_sha,production_deploy_ready:false,production_deploy:"waiting"}));
   renderReleaseProgress({repositories:initialRows});
@@ -2946,38 +2949,59 @@ async function confirmProductionRelease(){
   clearInterval(releaseProgressElapsedTimer);
   releaseProgressElapsedTimer=setInterval(()=>{if(elapsedEl)elapsedEl.textContent=releaseFormatSeconds(Date.now()-releaseProgressStartedAt)},1000);
   clearInterval(releaseProgressPollTimer);
-  releaseProgressPollTimer=setInterval(()=>{pollReleaseProgress()},4000);
-  let releaseSucceeded=false;
+
+  let releaseAccepted=false;
   try{
     const result=await releaseAuthorizedFetch("/api/release-production",{method:"POST",body:JSON.stringify({action:"release",confirmation,expected:releaseProgressExpected})});
-    releaseSucceeded=!!result?.ok;
-    if(title)title.textContent="Código publicado · verificando sitios…";
+    releaseAccepted=!!result?.ok;
+    if(!releaseAccepted)throw new Error(result?.error||"GitHub no aceptó el lanzamiento.");
+
+    if(title)title.textContent="🟡 Publicación en GitHub";
+    if(spinner)spinner.textContent="🔄";
+    if(note)note.textContent="GitHub ya recibió el lanzamiento y seguirá procesándolo aunque cierres esta ventana o se corte tu conexión.";
+    if(closeBtn)closeBtn.disabled=false;
+
+    // El navegador ya no controla el release: solo consulta el estado.
+    // Si tarda más, no lo marcamos como fallido porque GitHub continúa en segundo plano.
     let finalState=null;
-    const deadline=Date.now()+90000;
+    const deadline=Date.now()+15*60*1000;
     while(Date.now()<deadline){
       const polled=await pollReleaseProgress();
-      if(polled?.state){finalState=polled.state;if(finalState.allLive)break}
+      if(polled?.state){
+        finalState=polled.state;
+        if(finalState.allLive)break;
+      }
       await releaseSleep(5000);
     }
+
     if(finalState?.allLive){
       const fill=document.getElementById("releaseProgressFill"),pct=document.getElementById("releaseProgressPercent");
-      if(fill)fill.style.width="100%";if(pct)pct.textContent="100%";
+      if(fill)fill.style.width="100%";
+      if(pct)pct.textContent="100%";
       if(title)title.textContent="✅ Producción actualizada";
       if(spinner)spinner.textContent="✅";
-      if(note)note.textContent="Los módulos quedaron sincronizados y los despliegues de Producción fueron verificados.";
+      if(note)note.textContent="Los módulos quedaron publicados y los sitios de Producción fueron verificados.";
+      releaseSnapshot=null;
+      toast("Lanzamiento completado.");
+      await loadReleaseHistory();
     }else{
-      if(title)title.textContent="✅ Código actualizado";
+      if(title)title.textContent="🟡 Publicación continúa en GitHub";
       if(spinner)spinner.textContent="🔄";
-      if(note)note.textContent="main ya fue actualizado. GitHub Pages todavía puede estar terminando sus despliegues; el monitor horario seguirá verificándolo.";
+      if(note)note.textContent="El tiempo de espera del panel terminó, pero el lanzamiento NO se detuvo. GitHub seguirá validando y fusionando en segundo plano; puedes cerrar esta ventana y volver después.";
+      toast(result.message||"Publicación iniciada en GitHub.");
     }
-    releaseSnapshot=null;
-    toast(result.message||"Lanzamiento completado.");
-    await loadReleaseHistory();
   }catch(e){
-    if(title)title.textContent="⛔ Lanzamiento detenido";
-    if(spinner)spinner.textContent="⛔";
-    if(note)note.textContent=e.message||"El lanzamiento no pudo completarse. Producción no se dará por válida hasta volver a preparar el release.";
-    toast(e.message||"El lanzamiento no pudo completarse.");
+    if(!releaseAccepted){
+      if(title)title.textContent="⛔ No se pudo iniciar";
+      if(spinner)spinner.textContent="⛔";
+      if(note)note.textContent=e.message||"GitHub no aceptó el lanzamiento. Producción no se dará por modificada.";
+      toast(e.message||"No se pudo iniciar el lanzamiento.");
+    }else{
+      if(title)title.textContent="🟡 Publicación continúa en GitHub";
+      if(spinner)spinner.textContent="🔄";
+      if(note)note.textContent="Se perdió la consulta del progreso, pero GitHub ya había aceptado el lanzamiento y continuará en segundo plano.";
+      toast("La publicación sigue en GitHub; solo se perdió el seguimiento del panel.");
+    }
   }finally{
     releaseProgressInFlight=false;
     clearInterval(releaseProgressElapsedTimer);clearInterval(releaseProgressPollTimer);
@@ -2986,7 +3010,7 @@ async function confirmProductionRelease(){
     if(closeBtn)closeBtn.disabled=false;
     if(btn)btn.textContent="🚀 Lanzar a Producción";
     await loadReleaseStatus();
-    if(releaseSucceeded)await loadReleaseHistory();
+    if(releaseAccepted)await loadReleaseHistory();
   }
 }
 
