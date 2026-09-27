@@ -110,52 +110,6 @@ async function getCommitTreeSha(repo: string, sha: string) {
   return data?.tree?.sha || null;
 }
 
-async function githubGraphql(query: string, variables: Record<string, unknown>) {
-  const res = await fetch("https://api.github.com/graphql", {
-    method: "POST",
-    headers: { ...githubHeaders(true), "Content-Type": "application/json" },
-    body: JSON.stringify({ query, variables }),
-  });
-  const raw = await res.text();
-  let data: any = null;
-  try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = { message: raw || "Respuesta inválida de GitHub GraphQL" }; }
-  if (!res.ok || data?.errors?.length) {
-    const message = data?.errors?.map((item: any) => item?.message).filter(Boolean).join(" · ") || data?.message || `GitHub GraphQL respondió ${res.status}`;
-    const error: any = new Error(message);
-    error.status = res.status;
-    error.data = data;
-    throw error;
-  }
-  return data?.data || null;
-}
-
-async function ensureRepositoryAutoMerge(repo: string) {
-  const current = await githubRequest(`/repos/${repo}`);
-  if (current?.allow_auto_merge) return true;
-  const updated = await githubRequest(`/repos/${repo}`, {
-    method: "PATCH",
-    body: JSON.stringify({ allow_auto_merge: true }),
-  });
-  if (!updated?.allow_auto_merge) {
-    throw Object.assign(new Error(`No se pudo habilitar auto-merge en ${repo}.`), { status: 409 });
-  }
-  return true;
-}
-
-async function enablePromotionAutoMerge(pr: any) {
-  const pullRequestId = String(pr?.node_id || "");
-  if (!pullRequestId) throw Object.assign(new Error("GitHub no devolvió el identificador GraphQL del PR."), { status: 409 });
-  const data = await githubGraphql(
-    `mutation EnableReleaseAutoMerge($pullRequestId: ID!) {
-      enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: MERGE }) {
-        pullRequest { number autoMergeRequest { enabledAt } }
-      }
-    }`,
-    { pullRequestId },
-  );
-  return data?.enablePullRequestAutoMerge?.pullRequest || null;
-}
-
 async function inspectRepository(item: any) {
   const comparison = await compareBranches(item.repo);
   const status = String(comparison?.status || "unknown");
@@ -485,19 +439,7 @@ async function handleDryRun() {
   const qualityBlocked = cfg.release_enabled && cfg.github_token_configured
     ? repositories.filter((item) => !item.quality_ready)
     : [];
-
-  let autoMergeError: string | null = null;
-  if (!unsafe.length && !qualityBlocked.length && cfg.release_enabled && cfg.github_token_configured) {
-    try {
-      for (const item of repositories.filter((row) => row.needs_release)) {
-        await ensureRepositoryAutoMerge(item.repo);
-      }
-    } catch (error) {
-      autoMergeError = error instanceof Error ? error.message : "No se pudo preparar el auto-merge de GitHub.";
-    }
-  }
-
-  const ready = unsafe.length === 0 && qualityBlocked.length === 0 && !autoMergeError;
+  const ready = unsafe.length === 0 && qualityBlocked.length === 0;
   return {
     ok: ready,
     mode: "dry-run",
@@ -505,12 +447,45 @@ async function handleDryRun() {
     ready,
     pending: repositories.filter((item) => item.needs_release).length,
     repositories,
-    release_prerequisites_ready: !autoMergeError,
-    release_prerequisites_error: autoMergeError,
-    message: !ready
-      ? (autoMergeError ? "El lanzamiento está listo en código, pero GitHub no pudo habilitar el auto-merge." : "El lanzamiento no está listo todavía.")
-      : "Diagnóstico correcto. GitHub quedó preparado para continuar el lanzamiento en segundo plano; no se modificó ninguna rama.",
+    release_prerequisites_ready: true,
+    release_prerequisites_error: null,
+    message: ready
+      ? "Diagnóstico correcto. El lanzamiento puede ejecutarse en segundo plano desde Supabase sin depender del navegador."
+      : "El lanzamiento no está listo todavía.",
   };
+}
+
+async function runReleaseInBackground(changed: any[], promotionPulls: any[]) {
+  const results = await Promise.allSettled(changed.map(async (item) => {
+    const pull = promotionPulls.find((row) => row.key === item.key);
+    if (!pull?.number) throw new Error(`No existe PR de lanzamiento para ${item.label}.`);
+
+    const merged = await waitForPromotionMerge(item.repo, pull.number, item.staging_sha, 120000);
+    const mergeSha = String(merged?.sha || "");
+    if (!mergeSha) throw new Error(`GitHub no devolvió el commit de merge para ${item.label}.`);
+
+    const mainSha = await getBranchSha(item.repo, "main");
+    if (mainSha !== mergeSha) throw new Error(`main de ${item.label} no coincide con el merge recién creado.`);
+
+    // Realinea staging al commit de merge sin alterar el árbol probado.
+    await updateStaging(item.repo, mergeSha, false);
+    const stagingSha = await getBranchSha(item.repo, "staging");
+    if (stagingSha !== mergeSha) throw new Error(`No se pudo alinear staging después del merge de ${item.label}.`);
+
+    console.log("release-background-complete", { key: item.key, repo: item.repo, merge_sha: mergeSha, pull_request: pull.number });
+    return { key: item.key, repo: item.repo, merge_sha: mergeSha, pull_request: pull.number };
+  }));
+
+  for (const [index, result] of results.entries()) {
+    if (result.status === "rejected") {
+      const item = changed[index];
+      console.error("release-background-error", {
+        key: item?.key,
+        repo: item?.repo,
+        error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+      });
+    }
+  }
 }
 
 async function handleRelease(body: any, admin: any) {
@@ -567,20 +542,6 @@ async function handleRelease(body: any, admin: any) {
   const changed = repositories.filter((item) => item.needs_release);
   if (!changed.length) return { status: 200, body: { ok: true, released: false, message: "No había cambios pendientes.", repositories } };
 
-  // Antes de crear PRs, deja preparado GitHub para que complete el release por su cuenta
-  // aunque el administrador cierre el navegador o la red móvil se corte.
-  try {
-    for (const item of changed) await ensureRepositoryAutoMerge(item.repo);
-  } catch (error) {
-    return {
-      status: 409,
-      body: {
-        error: "No se pudo preparar GitHub para el lanzamiento automático. Producción no fue modificada.",
-        detail: error instanceof Error ? error.message : "Error habilitando auto-merge",
-      },
-    };
-  }
-
   const backupBranch = backupRefName();
   for (const item of repositories) await createBackup(item.repo, item.main_sha, backupBranch);
 
@@ -588,27 +549,28 @@ async function handleRelease(body: any, admin: any) {
   try {
     for (const item of changed) {
       const pr = await ensurePromotionPr(item.repo, item.staging_sha, backupBranch);
-      await enablePromotionAutoMerge(pr);
       promotionPulls.push({
         key: item.key,
         repo: item.repo,
         number: Number(pr?.number),
         url: pr?.html_url || null,
         head_sha: item.staging_sha,
-        auto_merge: true,
       });
     }
   } catch (error) {
     return {
       status: 500,
       body: {
-        error: "GitHub recibió parte de la preparación, pero no se pudo activar el auto-merge en todos los módulos. Revisa el estado antes de volver a intentar.",
-        detail: error instanceof Error ? error.message : "No se pudieron preparar los PR protegidos de lanzamiento.",
+        error: error instanceof Error ? error.message : "No se pudieron preparar los PR protegidos de lanzamiento.",
         backup_branch: backupBranch,
         promotion_pulls: promotionPulls,
       },
     };
   }
+
+  // El trabajo pesado continúa fuera de la petición HTTP.
+  // Cerrar el navegador ya no cancela ni convierte el release en un falso error.
+  EdgeRuntime.waitUntil(runReleaseInBackground(changed, promotionPulls));
 
   return {
     status: 202,
@@ -620,7 +582,7 @@ async function handleRelease(body: any, admin: any) {
       backup_branch: backupBranch,
       promotion_pulls: promotionPulls,
       background: true,
-      message: "Publicación iniciada. GitHub continuará validando y fusionando los módulos aunque cierres esta ventana; el panel solo consulta el progreso.",
+      message: "Publicación iniciada. Supabase continuará coordinando GitHub en segundo plano aunque cierres esta ventana.",
     },
   };
 }
