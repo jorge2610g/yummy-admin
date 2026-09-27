@@ -1,3 +1,8 @@
+## 2.3.80 — 2026-09-26
+- El release ya no depende de habilitar Auto-Merge en la configuración del repositorio.
+- Supabase ejecuta la promoción en segundo plano con EdgeRuntime.waitUntil y devuelve el control al navegador inmediatamente.
+- Cerrar el navegador o perder la conexión ya no detiene el lanzamiento.
+
 ## 2.3.79 — 2026-09-26
 - El lanzamiento a Producción se entrega a GitHub con auto-merge y continúa aunque se cierre el navegador.
 - El panel ya no interpreta un timeout de seguimiento como “Lanzamiento detenido”.
