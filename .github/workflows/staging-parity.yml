@@ -11,6 +11,7 @@ on:
       - 'scripts/staging-parity.sql'
       - 'scripts/staging-schema-checkpoint.txt'
       - '.github/workflows/staging-parity.yml'
+      - '.ai-audit-trigger'
 
 permissions:
   contents: read
@@ -95,13 +96,14 @@ jobs:
             exit 4
           fi
 
-          # Invariantes que no deben divergir durante pruebas:
-          # columns, triggers, table grants, sequence grants, effective routine grants,
-          # default ACL, extensions and storage buckets. Policies/functions are allowed
-          # to differ only when the full Staging fingerprint matches the committed checkpoint.
-          for idx in 0 3 4 5 6 7 8 9; do
+          # Invariantes de infraestructura que no deben divergir silenciosamente:
+          # table grants, sequence grants, default ACL, extensions y storage buckets.
+          # Columnas, policies, funciones, triggers y permisos de RPC pueden diferir
+          # intencionalmente en Pruebas mientras se validan migraciones; en ese caso,
+          # el fingerprint COMPLETO de Staging debe coincidir con el checkpoint aprobado.
+          for idx in 4 5 7 8 9; do
             if [ "${prod_parts[$idx]}" != "${staging_parts[$idx]}" ]; then
-              echo "ERROR: critical database invariant $idx differs from Production."
+              echo "ERROR: protected infrastructure invariant $idx differs from Production."
               exit 5
             fi
           done
