@@ -356,17 +356,29 @@ async function auditPage(browser,module,viewportName,viewport){
 }
 
 function reportPrompt(report){
-  return "Eres auditor técnico de una aplicación SaaS. Analiza este informe de navegador REAL de YummyPro Pruebas. No inventes fallos. Prioriza errores visibles, rutas equivocadas, pantallas vacías, JavaScript, HTTP 5xx, responsive y selector de rubros. Responde SOLO JSON válido con esta forma: {\\\"status\\\":\\\"success|warning|failure\\\",\\\"summary\\\":\\\"...\\\",\\\"findings\\\":[{\\\"severity\\\":\\\"critical|warning|info\\\",\\\"module\\\":\\\"...\\\",\\\"title\\\":\\\"...\\\",\\\"evidence\\\":\\\"...\\\",\\\"suggestion\\\":\\\"...\\\"}]}. Informe:\\n"+JSON.stringify(report,null,2);
+  return "Eres auditor visual, funcional y técnico de una aplicación SaaS. Analiza evidencia REAL de YummyPro Pruebas. No inventes fallos. Busca especialmente: modo claro con tarjetas oscuras o modo oscuro con tarjetas claras, botones cortados/tapados/desbordados, responsive roto, saltos o destellos de branding durante la carga, controles visualmente inconsistentes, iconos/textos del nicho equivocado, pantallas vacías, errores JS/HTTP y rutas equivocadas. Compara las capturas t0/t180/t700/settled y light/dark cuando existan. Si una diferencia es intencional o no hay evidencia suficiente, no la marques como fallo. Responde SOLO JSON válido con esta forma: {\\\"status\\\":\\\"success|warning|failure\\\",\\\"summary\\\":\\\"...\\\",\\\"findings\\\":[{\\\"severity\\\":\\\"critical|warning|info\\\",\\\"module\\\":\\\"...\\\",\\\"title\\\":\\\"...\\\",\\\"evidence\\\":\\\"...\\\",\\\"suggestion\\\":\\\"...\\\"}]}. Informe:\\n"+JSON.stringify(report,null,2);
 }
 
 async function geminiAudit(report){
   const key=process.env.GEMINI_API_KEY;
   if(!key)return {provider:"gemini",configured:false};
   const parts=[{text:reportPrompt(report)}];
-  for(const result of report.results.filter(x=>x.screenshot).slice(0,8)){
+  const imageQueue=[];
+  for(const result of report.results||[]){
+    if(result.screenshot)imageQueue.push({file:result.screenshot,label:result.label+" / "+result.viewport+" / final"});
+    for(const theme of ["light","dark"]){
+      const shot=result.themeResults?.[theme]?.screenshot;
+      if(shot)imageQueue.push({file:shot,label:result.label+" / "+result.viewport+" / "+theme});
+    }
+    const early=(result.frames||[]).find(x=>x.label==="t0")?.screenshot;
+    const settled=(result.frames||[]).find(x=>x.label==="settled")?.screenshot;
+    if(early)imageQueue.push({file:early,label:result.label+" / "+result.viewport+" / carga inicial"});
+    if(settled)imageQueue.push({file:settled,label:result.label+" / "+result.viewport+" / carga estable"});
+  }
+  for(const item of imageQueue.slice(0,18)){
     try{
-      const data=(await readFile(result.screenshot)).toString("base64");
-      parts.push({text:"Captura: "+result.label+" / "+result.viewport});
+      const data=(await readFile(item.file)).toString("base64");
+      parts.push({text:"Captura: "+item.label});
       parts.push({inlineData:{mimeType:"image/png",data}});
     }catch(_){}
   }
@@ -411,24 +423,49 @@ async function groqAudit(report){
 }
 
 await mkdir(path.join(OUT,"screenshots"),{recursive:true});
-const browser=await chromium.launch({headless:true});
 const targets=await discoverPublicTargets();
 const modules=[...panelModules,...publicModules(targets)];
+
+// Antes de mirar píxeles, el auditor confirma que GitHub Pages corresponde exactamente
+// al SHA actual de staging. Así nunca aprueba una captura vieja.
+const publicationChecks={};
+const uniqueSources=new Map();
+for(const module of modules){
+  const id=module.sourceRepo+"|"+module.marker;
+  if(!uniqueSources.has(id))uniqueSources.set(id,module);
+}
+for(const [id,module] of uniqueSources){
+  publicationChecks[id]=await waitForExactPublishedSource(module);
+}
+for(const module of modules){
+  module.publication=publicationChecks[module.sourceRepo+"|"+module.marker]||{ok:true,skipped:true};
+}
+
+const browser=await chromium.launch({headless:true});
 const viewports={desktop:{width:1440,height:900},mobile:{width:390,height:844}};
 const results=[];
 for(const module of modules)for(const [name,viewport] of Object.entries(viewports)){
-  try{results.push(await auditPage(browser,module,name,viewport))}
-  catch(error){results.push({module:module.key,label:module.label,viewport:name,url:module.url,status:"failure",errors:[String(error?.message||error)],warnings:[]})}
+  try{
+    const result=await auditPage(browser,module,name,viewport);
+    if(module.publication&&!module.publication.ok){
+      result.errors.unshift("Pruebas desactualizadas: GitHub Pages no corresponde al SHA actual de staging ("+(module.publication.published||"sin marcador")+" != "+(module.publication.expected||"desconocido")+")");
+      result.status="failure";
+      result.publication=module.publication;
+    }else result.publication=module.publication;
+    results.push(result);
+  }
+  catch(error){results.push({module:module.key,label:module.label,viewport:name,url:module.url,status:"failure",errors:[String(error?.message||error)],warnings:[],publication:module.publication})}
 }
 await browser.close();
 
 const counts={success:results.filter(x=>x.status==="success").length,warning:results.filter(x=>x.status==="warning").length,failure:results.filter(x=>x.status==="failure").length};
-const report={version:1,created_at:now(),targets_discovery_error:targets.__error||null,counts,status:counts.failure?"failure":counts.warning?"warning":"success",results};
+const publicationFailures=Object.values(publicationChecks).filter(x=>!x.ok);
+const report={version:2,created_at:now(),targets_discovery_error:targets.__error||null,publication_checks:publicationChecks,publication_failures:publicationFailures.length,counts,status:counts.failure?"failure":counts.warning?"warning":"success",results};
 const gemini=await geminiAudit(report).catch(error=>({provider:"gemini",configured:!!process.env.GEMINI_API_KEY,error:String(error?.message||error)}));
 const groq=await groqAudit(report).catch(error=>({provider:"groq",configured:!!process.env.GROQ_API_KEY,error:String(error?.message||error)}));
 report.ai={gemini,groq};
 await writeFile(path.join(OUT,"audit.json"),JSON.stringify(report,null,2));
-const lines=["# YummyPro · Auditor IA de Pruebas","","- Fecha: "+report.created_at,"- Estado navegador: **"+report.status.toUpperCase()+"**","- Éxitos: "+counts.success+" · Advertencias: "+counts.warning+" · Fallos: "+counts.failure,"- Gemini: "+(gemini.configured?(gemini.error?"error":"activo"):"sin clave"),"- Groq: "+(groq.configured?(groq.error?"error":"activo"):"sin clave"),"","## Recorridos"];
+const lines=["# YummyPro · Auditor Visual + Funcional + IA","","- Fecha: "+report.created_at,"- Estado navegador: **"+report.status.toUpperCase()+"**","- Éxitos: "+counts.success+" · Advertencias: "+counts.warning+" · Fallos: "+counts.failure,"- Publicaciones exactas pendientes: "+publicationFailures.length,"- Gemini: "+(gemini.configured?(gemini.error?"error":"activo"):"sin clave"),"- Groq: "+(groq.configured?(groq.error?"error":"activo"):"sin clave"),"","## Qué revisó","- Carga y destellos de interfaz en 4 momentos","- Modo claro y oscuro","- Botones cortados, tapados o desbordados","- Navegación real por secciones autenticadas","- Móvil y escritorio","- Consola, red, HTTP y pantallas vacías","- Reglas de nicho (incluido Streaming sin contenido de restaurante)","- Capturas comparadas por IA","","## Recorridos"];
 for(const x of results)lines.push("- **"+x.label+" / "+x.viewport+"** — "+x.status+" — "+([...x.errors,...x.warnings].join(" | ")||"OK"));
 lines.push("","## Gemini",JSON.stringify(gemini.analysis||gemini,null,2),"","## Groq",JSON.stringify(groq.analysis||groq,null,2));
 const md=lines.join("\\n");
