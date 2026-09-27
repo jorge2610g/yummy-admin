@@ -1,3 +1,8 @@
+## 2.3.84 — 2026-09-27
+- El Auditor Visual distingue carruseles, pestañas y listas con desplazamiento intencional de un desbordamiento real.
+- Se eliminan falsos positivos en tabs y catálogos horizontales sin relajar la detección de controles realmente cortados.
+- Producción no fue modificada.
+
 ## 2.3.83 — 2026-09-27
 - Se corrigió un error de sintaxis en el botón **Ver auditoría** que impedía ejecutar el JavaScript principal: el login y el panel quedaban ocultos y generaban errores secundarios de Streaming y filtros.
 - La validación estática ahora compila todos los scripts inline de `index.html` y `admin-streaming-access.js`; un error de sintaxis vuelve a bloquear `quality` antes de publicarse.
