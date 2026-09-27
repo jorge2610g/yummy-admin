@@ -2459,12 +2459,12 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
   <div class="admin-form-backdrop" onclick="closeReleaseConfirmation()"></div>
   <div class="card admin-form-card release-progress-card">
     <div class="row between" style="align-items:flex-start;gap:14px">
-      <div><div class="eyebrow">CONFIRMACIÓN DE RELEASE</div><h2 style="margin:6px 0">Lanzar a Producción</h2><p class="mut" style="margin:0">Se publicará exactamente la versión que acabas de preparar. Pruebas no se modificará.</p></div>
+      <div><div class="eyebrow">CONFIRMACIÓN DE RELEASE</div><h2 style="margin:6px 0">Lanzar a Producción</h2><p class="mut" style="margin:0">Se publicará el contenido validado de staging mediante PR protegido. Al finalizar, staging se alineará al commit de merge sin cambiar el contenido probado.</p></div>
       <button class="ghost" type="button" onclick="closeReleaseConfirmation()" aria-label="Cerrar">✕</button>
     </div>
     <div class="item" style="margin-top:16px">
       <b id="releaseConfirmCount">6 módulos preparados</b>
-      <div class="mut" style="margin-top:5px">Antes de comenzar se validan nuevamente los SHA y se crean respaldos automáticos.</div>
+      <div class="mut" style="margin-top:5px">Antes de comenzar se validan nuevamente los SHA, se crean respaldos automáticos y se usan PR protegidos para respetar las reglas de main.</div>
     </div>
     <label style="margin-top:16px">Escribe <b>LANZAR A PRODUCCION</b> para confirmar
       <input id="releaseConfirmInput" autocomplete="off" autocapitalize="characters" placeholder="LANZAR A PRODUCCION" oninput="updateReleaseConfirmState()">
@@ -2895,7 +2895,7 @@ function renderReleaseProgress(data){
   if(list)list.innerHTML=tracked.map(item=>{
     const current=byKey.get(item.key)||{};
     const expected=releaseProgressExpected?.[item.key]||{};
-    const codeDone=!!expected.staging_sha&&current.main_sha===expected.staging_sha;
+    const codeDone=!!current.production_code_synced|| (!!current.main_sha&&!!current.staging_sha&&current.main_sha===current.staging_sha);
     const siteDone=codeDone&&!!current.production_deploy_ready;
     if(codeDone)moved++;if(siteDone)live++;
     const icon=siteDone?"✅":codeDone?"🔵":"⏳";

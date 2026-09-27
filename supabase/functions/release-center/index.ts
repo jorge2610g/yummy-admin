@@ -245,6 +245,80 @@ async function updateStaging(repo: string, sha: string, force = true) {
   });
 }
 
+function githubRepoOwner(repo: string) {
+  return String(repo || "").split("/")[0] || "";
+}
+
+async function findOpenPromotionPr(repo: string) {
+  const owner = githubRepoOwner(repo);
+  const pulls = await githubRequest(`/repos/${repo}/pulls?state=open&head=${encodeURIComponent(owner + ":staging")}&base=main&per_page=20`);
+  return (Array.isArray(pulls) ? pulls : []).find((pr: any) => pr?.head?.ref === "staging" && pr?.base?.ref === "main") || null;
+}
+
+async function ensurePromotionPr(repo: string, expectedHeadSha: string, backupBranch: string) {
+  let pr = await findOpenPromotionPr(repo);
+  if (pr) {
+    if (String(pr?.head?.sha || "") !== String(expectedHeadSha || "")) {
+      throw Object.assign(new Error("El PR de lanzamiento existente apunta a otro SHA. Vuelve a preparar el lanzamiento."), { status: 409 });
+    }
+    return pr;
+  }
+  return githubRequest(`/repos/${repo}/pulls`, {
+    method: "POST",
+    body: JSON.stringify({
+      title: "release: promover staging validado a producción",
+      head: "staging",
+      base: "main",
+      body: `Release coordinado YummyPro. Origen: staging validado. Respaldo previo: ${backupBranch}. No copia datos ni ejecuta migraciones de base de datos.`,
+      maintainer_can_modify: false,
+    }),
+  });
+}
+
+async function waitForPromotionMerge(repo: string, prNumber: number, expectedHeadSha: string, timeoutMs = 120000) {
+  const started = Date.now();
+  let lastError: any = null;
+  while (Date.now() - started < timeoutMs) {
+    try {
+      const pr = await githubRequest(`/repos/${repo}/pulls/${prNumber}`);
+      if (String(pr?.head?.sha || "") !== String(expectedHeadSha || "")) {
+        throw Object.assign(new Error("El SHA de staging cambió mientras se esperaba el merge."), { status: 409 });
+      }
+      if (pr?.merged) return { sha: pr?.merge_commit_sha || null, merged: true, existing: true };
+      const checks = await githubRequest(`/repos/${repo}/commits/${expectedHeadSha}/check-runs`);
+      const quality = latestCheckByName(checks?.check_runs || [], "quality");
+      if (quality?.status === "completed" && !["success", "neutral", "skipped"].includes(String(quality?.conclusion || ""))) {
+        throw Object.assign(new Error(`Calidad falló antes del merge en ${repo}: ${quality?.conclusion || "failure"}`), { status: 409 });
+      }
+      if (quality?.status === "completed" && ["success", "neutral", "skipped"].includes(String(quality?.conclusion || "")) && pr?.mergeable !== false) {
+        try {
+          const merged = await githubRequest(`/repos/${repo}/pulls/${prNumber}/merge`, {
+            method: "PUT",
+            body: JSON.stringify({
+              sha: expectedHeadSha,
+              merge_method: "merge",
+              commit_title: "release: promover staging validado a producción",
+              commit_message: "Release coordinado YummyPro con branch protection y quality en verde.",
+            }),
+          });
+          if (merged?.merged && merged?.sha) return merged;
+          lastError = new Error(merged?.message || "GitHub todavía no permite fusionar el PR.");
+        } catch (error) {
+          const status = Number((error as any)?.status || 0);
+          if (![405, 409, 422].includes(status)) throw error;
+          lastError = error;
+        }
+      }
+    } catch (error) {
+      const status = Number((error as any)?.status || 0);
+      if (![405, 409, 422].includes(status)) throw error;
+      lastError = error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+  throw Object.assign(new Error(lastError instanceof Error ? lastError.message : `Timeout esperando el merge protegido de ${repo}.`), { status: 409 });
+}
+
 function emergencyBackupRefName() {
   return `backup/emergency-staging-${new Date().toISOString().replace(/[:.]/g, "-").replace("T", "-").replace("Z", "")}`;
 }
@@ -369,7 +443,7 @@ async function handleRelease(body: any, admin: any) {
 
   let repositories = await inspectAllRepositories();
   const unsafe = repositories.filter((item) => !item.safe || item.error);
-  if (unsafe.length) return { status: 409, body: { error: "Hay repositorios que no pueden promoverse por fast-forward.", repositories } };
+  if (unsafe.length) return { status: 409, body: { error: "Hay repositorios que no pueden promoverse de forma segura.", repositories } };
 
   repositories = await inspectAllQuality(repositories);
   const unhealthy = repositories.filter((item) => !item.quality_ready);
@@ -390,8 +464,6 @@ async function handleRelease(body: any, admin: any) {
     }
   }
 
-  // Revalidación autoritativa inmediatamente antes de crear respaldos o mover main.
-  // Nunca confiamos solo en los SHA derivados del compare endpoint.
   const authoritative: any[] = [];
   for (const item of repositories) {
     const [mainSha, stagingSha] = await Promise.all([
@@ -420,22 +492,82 @@ async function handleRelease(body: any, admin: any) {
   const backupBranch = backupRefName();
   for (const item of repositories) await createBackup(item.repo, item.main_sha, backupBranch);
 
+  const promotionPulls: any[] = [];
+  try {
+    for (const item of changed) {
+      const pr = await ensurePromotionPr(item.repo, item.staging_sha, backupBranch);
+      promotionPulls.push({
+        key: item.key,
+        repo: item.repo,
+        number: Number(pr?.number),
+        url: pr?.html_url || null,
+        head_sha: item.staging_sha,
+      });
+    }
+  } catch (error) {
+    return {
+      status: 500,
+      body: {
+        error: error instanceof Error ? error.message : "No se pudieron preparar los PR protegidos de lanzamiento.",
+        backup_branch: backupBranch,
+        promotion_pulls: promotionPulls,
+      },
+    };
+  }
+
   const promoted: any[] = [];
   try {
     for (const item of changed) {
-      await updateMain(item.repo, item.staging_sha, false);
-      promoted.push({ key: item.key, repo: item.repo, from: item.main_sha, to: item.staging_sha });
+      const pull = promotionPulls.find((row) => row.key === item.key);
+      if (!pull?.number) throw new Error(`No existe PR de lanzamiento para ${item.label}.`);
+      const merged = await waitForPromotionMerge(item.repo, pull.number, item.staging_sha);
+      const mergeSha = String(merged?.sha || "");
+      if (!mergeSha) throw new Error(`GitHub no devolvió el commit de merge para ${item.label}.`);
+
+      const mainSha = await getBranchSha(item.repo, "main");
+      if (mainSha !== mergeSha) throw new Error(`main de ${item.label} no coincide con el merge recién creado.`);
+
+      // Mantiene main y staging alineados sin alterar el contenido probado:
+      // staging avanza únicamente al commit de merge cuyo árbol ya contiene el mismo código.
+      await updateStaging(item.repo, mergeSha, false);
+      const stagingSha = await getBranchSha(item.repo, "staging");
+      if (stagingSha !== mergeSha) throw new Error(`No se pudo alinear staging después del merge de ${item.label}.`);
+
+      promoted.push({
+        key: item.key,
+        repo: item.repo,
+        from: item.main_sha,
+        tested_sha: item.staging_sha,
+        to: mergeSha,
+        pull_request: pull.number,
+        pull_url: pull.url,
+      });
     }
   } catch (releaseError) {
-    const rollback: any[] = [];
-    for (const item of promoted.slice().reverse()) {
-      try { await updateMain(item.repo, item.from, true); rollback.push({ repo: item.repo, ok: true, restored_sha: item.from }); }
-      catch (rollbackError) { rollback.push({ repo: item.repo, ok: false, error: rollbackError instanceof Error ? rollbackError.message : "Rollback falló" }); }
-    }
-    return { status: 500, body: { error: "El lanzamiento falló y se ejecutó rollback.", promoted, rollback, backup_branch: backupBranch } };
+    return {
+      status: 500,
+      body: {
+        error: "El lanzamiento se detuvo durante la promoción protegida. No se forzó ninguna rama; revisa los módulos ya promovidos y el respaldo automático.",
+        detail: releaseError instanceof Error ? releaseError.message : "Error de promoción",
+        promoted,
+        promotion_pulls: promotionPulls,
+        backup_branch: backupBranch,
+      },
+    };
   }
 
-  return { status: 200, body: { ok: true, released: true, released_by: admin.email, backup_branch: backupBranch, promoted, untouched_staging: true, message: "Código promovido de staging a main. No se modificaron bases de datos ni ramas staging." } };
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      released: true,
+      released_by: admin.email,
+      backup_branch: backupBranch,
+      promoted,
+      staging_aligned: true,
+      message: "Código promovido mediante PR protegido y quality en verde. main y staging quedaron alineados; no se copiaron datos ni se ejecutaron migraciones.",
+    },
+  };
 }
 
 async function handleEmergencyStatus() {

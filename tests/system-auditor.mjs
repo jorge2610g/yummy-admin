@@ -12,10 +12,10 @@ const ENFORCE_AI=String(process.env.AI_AUDIT_ENFORCE||"false").toLowerCase()==="
 
 const panelModules=[
   {key:"admin",label:"Admin",url:"https://jorge2610g.github.io/yummy-admin-pruebas/",auth:"admin"},
-  {key:"restaurante",label:"Restaurante",url:"https://jorge2610g.github.io/yummy-restaurante-pruebas/",auth:"business"},
-  {key:"retail",label:"Retail",url:"https://jorge2610g.github.io/yummy-retail-pruebas/",auth:"business"},
-  {key:"profesionales",label:"Profesionales",url:"https://jorge2610g.github.io/yummy-profesionales-pruebas/",auth:"business"},
-  {key:"streaming",label:"Streaming",url:"https://jorge2610g.github.io/yummy-streaming-pruebas/",auth:"business"}
+  {key:"restaurante",label:"Restaurante",url:"https://jorge2610g.github.io/yummy-restaurante-pruebas/panel/",auth:"restaurant"},
+  {key:"retail",label:"Retail",url:"https://jorge2610g.github.io/yummy-retail-pruebas/panel/",auth:"retail"},
+  {key:"profesionales",label:"Profesionales",url:"https://jorge2610g.github.io/yummy-profesionales-pruebas/panel/",auth:"professional"},
+  {key:"streaming",label:"Streaming",url:"https://jorge2610g.github.io/yummy-streaming-pruebas/panel/",auth:"streaming"}
 ];
 
 const now=()=>new Date().toISOString();
@@ -56,21 +56,51 @@ function publicModules(targets){
   return list;
 }
 
-async function maybeLogin(page,auth){
+async function maybeLogin(page,auth,moduleUrl){
   if(!auth)return {attempted:false};
-  const email=auth==="admin"?process.env.ADMIN_TEST_EMAIL:process.env.RESTAURANT_TEST_EMAIL;
-  const password=auth==="admin"?process.env.ADMIN_TEST_PASSWORD:process.env.RESTAURANT_TEST_PASSWORD;
+  const credentials={
+    admin:[process.env.ADMIN_TEST_EMAIL,process.env.ADMIN_TEST_PASSWORD],
+    restaurant:[process.env.RESTAURANT_TEST_EMAIL,process.env.RESTAURANT_TEST_PASSWORD],
+    retail:[process.env.RETAIL_TEST_EMAIL,process.env.RETAIL_TEST_PASSWORD],
+    professional:[process.env.PROFESSIONAL_TEST_EMAIL,process.env.PROFESSIONAL_TEST_PASSWORD],
+    streaming:[process.env.STREAMING_TEST_EMAIL,process.env.STREAMING_TEST_PASSWORD]
+  };
+  const [email,password]=credentials[auth]||[];
   if(!email||!password)return {attempted:false,reason:"credenciales-no-configuradas"};
-  const emailInput=page.locator('#email,input[type="email"]').first();
-  const passInput=page.locator('#password,input[type="password"]').first();
+
+  if(auth!=="admin"){
+    try{
+      const authUrl=new URL("/auth/v1/token",SUPABASE_URL);
+      authUrl.searchParams.set("grant_type","password");
+      const res=await fetch(authUrl,{
+        method:"POST",
+        headers:{apikey:SUPABASE_KEY,"Content-Type":"application/json"},
+        body:JSON.stringify({email,password})
+      });
+      const raw=await res.text();
+      if(!res.ok)return {attempted:true,success:false,method:"supabase-handoff",error:"Auth HTTP "+res.status+" "+raw.slice(0,240)};
+      const session=JSON.parse(raw);
+      if(!session?.access_token||!session?.refresh_token)return {attempted:true,success:false,method:"supabase-handoff",error:"Supabase no devolvió sesión completa"};
+      const target=new URL(moduleUrl);
+      target.hash=new URLSearchParams({yummy_access:session.access_token,yummy_refresh:session.refresh_token}).toString();
+      await page.goto(target.toString(),{waitUntil:"domcontentloaded",timeout:25000});
+      const app=page.locator("#app").first();
+      let appVisible=false;
+      try{await app.waitFor({state:"visible",timeout:12000});appVisible=true}catch(_){appVisible=await app.isVisible().catch(()=>false)}
+      return {attempted:true,success:appVisible,method:"supabase-handoff",finalUrl:page.url(),error:appVisible?null:"El panel no quedó visible después del handoff autenticado"};
+    }catch(error){return {attempted:true,success:false,method:"supabase-handoff",error:String(error?.message||error)}}
+  }
+
+  const emailInput=page.locator('#email:visible,#lEmail:visible,input[type="email"]:visible').first();
+  const passInput=page.locator('#password:visible,#lPass:visible,input[type="password"]:visible').first();
   if(!(await emailInput.count())||!(await passInput.count()))return {attempted:false,reason:"formulario-no-visible"};
   try{
     await emailInput.fill(email);await passInput.fill(password);
     const button=page.getByRole("button",{name:/Ingresar|Entrar|Iniciar sesión/i}).first();
     if(await button.count())await button.click();else await passInput.press("Enter");
     await page.waitForTimeout(1800);
-    return {attempted:true,success:!(await emailInput.isVisible().catch(()=>false))};
-  }catch(error){return {attempted:true,success:false,error:String(error?.message||error)}}
+    return {attempted:true,success:!(await emailInput.isVisible().catch(()=>false)),method:"form"};
+  }catch(error){return {attempted:true,success:false,method:"form",error:String(error?.message||error)}}
 }
 
 async function auditPage(browser,module,viewportName,viewport){
@@ -84,7 +114,7 @@ async function auditPage(browser,module,viewportName,viewport){
   let response=null,navigationError=null;
   try{response=await page.goto(module.url,{waitUntil:"domcontentloaded",timeout:25000});await page.waitForTimeout(2200)}
   catch(error){navigationError=String(error?.message||error)}
-  const login=await maybeLogin(page,module.auth);
+  const login=await maybeLogin(page,module.auth,module.url);
   await page.waitForTimeout(1000);
   let metrics={};
   try{
@@ -108,8 +138,12 @@ async function auditPage(browser,module,viewportName,viewport){
   if((metrics.bodyChildren||0)<1)errors.push("Pantalla vacía: body sin contenido");
   if((metrics.scrollWidth||0)>(metrics.innerWidth||0)+16)warnings.push("Desbordamiento horizontal detectado");
   const missingAuth=!!module.auth&&!login.attempted&&login.reason==="credenciales-no-configuradas";
+  const missingLoginForm=!!module.auth&&!login.attempted&&login.reason==="formulario-no-visible";
+  const failedLogin=!!module.auth&&login.attempted&&login.success===false;
   const effectiveConsoleErrors=consoleErrors.filter(message=>!(missingAuth&&/\b401\b|unauthorized/i.test(message)));
   if(missingAuth)warnings.push("Área autenticada no recorrida: faltan credenciales de prueba en GitHub Secrets");
+  if(missingLoginForm)errors.push("Formulario de inicio de sesión no disponible");
+  if(failedLogin)errors.push("Inicio de sesión automático falló"+(login.error?": "+String(login.error).split("\n")[0]:""));
   if(effectiveConsoleErrors.length)errors.push("Errores JavaScript/consola: "+effectiveConsoleErrors.length);
   const seriousHttp=httpErrors.filter(x=>x.status>=500);
   if(seriousHttp.length)errors.push("Respuestas 5xx: "+seriousHttp.length+" ("+seriousHttp.slice(0,3).map(x=>x.url).join(", ")+")");

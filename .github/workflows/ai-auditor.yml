@@ -42,8 +42,15 @@ jobs:
         env:
           ADMIN_TEST_EMAIL: ${{ secrets.ADMIN_TEST_EMAIL }}
           ADMIN_TEST_PASSWORD: ${{ secrets.ADMIN_TEST_PASSWORD }}
-          RESTAURANT_TEST_EMAIL: ${{ secrets.RESTAURANT_TEST_EMAIL }}
-          RESTAURANT_TEST_PASSWORD: ${{ secrets.RESTAURANT_TEST_PASSWORD }}
+          # Auditor1 es la cuenta Restaurante de Staging. La contraseña compartida ya fue validada por Retail.
+          RESTAURANT_TEST_EMAIL: auditor1.prueba@yummypro.test
+          RESTAURANT_TEST_PASSWORD: ${{ secrets.RETAIL_TEST_PASSWORD }}
+          RETAIL_TEST_EMAIL: ${{ secrets.RETAIL_TEST_EMAIL }}
+          RETAIL_TEST_PASSWORD: ${{ secrets.RETAIL_TEST_PASSWORD }}
+          PROFESSIONAL_TEST_EMAIL: ${{ secrets.PROFESSIONAL_TEST_EMAIL }}
+          PROFESSIONAL_TEST_PASSWORD: ${{ secrets.PROFESSIONAL_TEST_PASSWORD }}
+          STREAMING_TEST_EMAIL: ${{ secrets.STREAMING_TEST_EMAIL }}
+          STREAMING_TEST_PASSWORD: ${{ secrets.STREAMING_TEST_PASSWORD }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GEMINI_MODEL: gemini-3.5-flash
