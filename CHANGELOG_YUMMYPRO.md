@@ -1,3 +1,10 @@
+## 2.3.89 — 2026-09-27
+- Se endurecieron los RPC públicos de telemetría `log_app_event` y `log_app_error` en Supabase Staging.
+- Landing, Cliente y Restaurante conservan la telemetría pública necesaria para diagnóstico.
+- El contexto `admin` ahora exige una sesión válida de administrador general, evitando que llamadas anónimas o usuarios no administradores falsifiquen eventos del panel.
+- Se verificó en transacción que `anon` es rechazado para contexto Admin y continúa pudiendo registrar telemetría pública normal.
+- Producción no fue modificada.
+
 ## 2.3.88 — 2026-09-27
 - Segunda fase de endurecimiento de RPC en Supabase Staging.
 - Se eliminó ejecución anónima de 5 RPC que ya exigían sesión: acceso de suscripción, caja abierta, pedidos QR listos, registro de cliente y creación de pedidos Streaming.
