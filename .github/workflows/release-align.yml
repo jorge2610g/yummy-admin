@@ -1,0 +1,43 @@
+name: Alinear staging tras release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  align-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verificar que main proviene exactamente de staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin staging
+
+          if ! git rev-parse --verify HEAD^2 >/dev/null 2>&1; then
+            echo "No es un merge commit; no se realinea staging."
+            exit 0
+          fi
+
+          staging_sha="$(git rev-parse origin/staging)"
+          release_parent="$(git rev-parse HEAD^2)"
+
+          if [ "$release_parent" != "$staging_sha" ]; then
+            echo "El segundo padre de main no coincide con staging; no se toca staging."
+            exit 0
+          fi
+
+          git diff --quiet "$release_parent" HEAD || {
+            echo "El árbol publicado difiere de staging; no se toca staging."
+            exit 1
+          }
+
+          git push origin HEAD:staging
+          echo "OK: staging quedó alineado con el merge publicado en main."

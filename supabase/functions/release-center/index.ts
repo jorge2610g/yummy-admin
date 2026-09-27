@@ -104,6 +104,41 @@ async function getBranchSha(repo: string, branch: string) {
   return data?.object?.sha || null;
 }
 
+async function probePullRequestWrite(repo: string) {
+  const res = await fetch(`${GH_API}/repos/${repo}/pulls`, {
+    method: "POST",
+    headers: { ...githubHeaders(true), "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: "permission-check",
+      head: "main",
+      base: "main",
+      body: "Comprobación segura de permiso; esta solicitud no puede crear un PR porque origen y destino son iguales.",
+    }),
+  });
+  const raw = await res.text();
+  let data: any = null;
+  try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = { message: raw || "" }; }
+
+  // GitHub devuelve 422 cuando el token SÍ tiene permiso pero el PR es inválido
+  // porque main -> main no tiene cambios. No se crea ningún PR.
+  if (res.status === 422) return { ok: true, status: res.status, message: data?.message || "validation_failed" };
+  if (res.ok) return { ok: true, status: res.status, message: data?.message || "ok" };
+
+  const message = String(data?.message || `GitHub respondió ${res.status}`);
+  return {
+    ok: false,
+    status: res.status,
+    message,
+    missing_pull_requests_write: res.status === 403 && /personal access token|resource not accessible/i.test(message),
+  };
+}
+
+async function getCommitTreeSha(repo: string, sha: string) {
+  if (!sha) return null;
+  const data = await githubRequest(`/repos/${repo}/git/commits/${sha}`);
+  return data?.tree?.sha || null;
+}
+
 async function inspectRepository(item: any) {
   const comparison = await compareBranches(item.repo);
   const status = String(comparison?.status || "unknown");
@@ -114,7 +149,17 @@ async function inspectRepository(item: any) {
     : commits.at(-1)?.sha || comparison?.merge_base_commit?.sha || null;
   const aheadBy = Number(comparison?.ahead_by || 0);
   const behindBy = Number(comparison?.behind_by || 0);
-  const safe = status === "identical" || (status === "ahead" && behindBy === 0);
+  let treeSynced = status === "identical";
+  if (!treeSynced && mainSha && stagingSha && status === "behind" && aheadBy === 0) {
+    const [mainTree, stagingTree] = await Promise.all([
+      getCommitTreeSha(item.repo, mainSha),
+      getCommitTreeSha(item.repo, stagingSha),
+    ]);
+    treeSynced = !!mainTree && mainTree === stagingTree;
+  }
+  const safe = status === "identical"
+    || (status === "ahead" && behindBy === 0)
+    || (status === "behind" && aheadBy === 0 && treeSynced);
   return {
     ...item,
     main_sha: mainSha,
@@ -122,6 +167,7 @@ async function inspectRepository(item: any) {
     status,
     ahead_by: aheadBy,
     behind_by: behindBy,
+    tree_synced: treeSynced,
     changed_files: Array.isArray(comparison?.files) ? comparison.files.length : 0,
     safe,
     needs_release: status === "ahead" && aheadBy > 0,
@@ -161,7 +207,7 @@ function latestCheckByName(checks: any[], name: string) {
 }
 
 async function inspectProductionDeployment(item: any) {
-  const synced = !!item?.main_sha && !!item?.staging_sha && item.main_sha === item.staging_sha;
+  const synced = !!item?.main_sha && !!item?.staging_sha && (item.main_sha === item.staging_sha || !!item?.tree_synced);
   if (!synced || item.error) {
     return { ...item, production_code_synced: synced, production_deploy_ready: false, production_deploy: synced ? "checking" : "waiting" };
   }
@@ -186,7 +232,7 @@ async function inspectAllProductionDeployment(repositories: any[]) {
     catch (error) {
       results.push({
         ...item,
-        production_code_synced: item?.main_sha === item?.staging_sha,
+        production_code_synced: item?.main_sha === item?.staging_sha || !!item?.tree_synced,
         production_deploy_ready: false,
         production_deploy: "error",
         production_deploy_error: error instanceof Error ? error.message : "No se pudo verificar el despliegue de Producción",
@@ -422,17 +468,73 @@ async function handleDryRun() {
   const qualityBlocked = cfg.release_enabled && cfg.github_token_configured
     ? repositories.filter((item) => !item.quality_ready)
     : [];
+
+  const missingPullRequestWrite: any[] = [];
+  if (!unsafe.length && !qualityBlocked.length && cfg.release_enabled && cfg.github_token_configured) {
+    for (const item of repositories.filter((row) => row.needs_release)) {
+      const probe = await probePullRequestWrite(item.repo);
+      if (!probe.ok) {
+        missingPullRequestWrite.push({
+          key: item.key,
+          label: item.label,
+          repo: item.repo,
+          status: probe.status,
+          message: probe.message,
+          missing_pull_requests_write: !!probe.missing_pull_requests_write,
+        });
+      }
+    }
+  }
+
+  const ready = unsafe.length === 0 && qualityBlocked.length === 0 && missingPullRequestWrite.length === 0;
   return {
-    ok: unsafe.length === 0 && qualityBlocked.length === 0,
+    ok: ready,
     mode: "dry-run",
     configuration: cfg,
-    ready: unsafe.length === 0 && qualityBlocked.length === 0,
+    ready,
     pending: repositories.filter((item) => item.needs_release).length,
     repositories,
-    message: unsafe.length || qualityBlocked.length
-      ? "El lanzamiento no está listo todavía."
-      : "Diagnóstico correcto. No se modificó ninguna rama.",
+    release_prerequisites_ready: missingPullRequestWrite.length === 0,
+    missing_pull_request_write: missingPullRequestWrite,
+    message: ready
+      ? "Diagnóstico correcto. GitHub tiene permisos suficientes para crear y fusionar los PR protegidos."
+      : missingPullRequestWrite.length
+        ? "Falta el permiso Pull requests: Read and write en el token privado de GitHub usado por el Centro de lanzamientos."
+        : "El lanzamiento no está listo todavía.",
   };
+}
+
+async function runReleaseInBackground(changed: any[], promotionPulls: any[]) {
+  const results = await Promise.allSettled(changed.map(async (item) => {
+    const pull = promotionPulls.find((row) => row.key === item.key);
+    if (!pull?.number) throw new Error(`No existe PR de lanzamiento para ${item.label}.`);
+
+    const merged = await waitForPromotionMerge(item.repo, pull.number, item.staging_sha, 120000);
+    const mergeSha = String(merged?.sha || "");
+    if (!mergeSha) throw new Error(`GitHub no devolvió el commit de merge para ${item.label}.`);
+
+    const mainSha = await getBranchSha(item.repo, "main");
+    if (mainSha !== mergeSha) throw new Error(`main de ${item.label} no coincide con el merge recién creado.`);
+
+    // Realinea staging al commit de merge sin alterar el árbol probado.
+    await updateStaging(item.repo, mergeSha, false);
+    const stagingSha = await getBranchSha(item.repo, "staging");
+    if (stagingSha !== mergeSha) throw new Error(`No se pudo alinear staging después del merge de ${item.label}.`);
+
+    console.log("release-background-complete", { key: item.key, repo: item.repo, merge_sha: mergeSha, pull_request: pull.number });
+    return { key: item.key, repo: item.repo, merge_sha: mergeSha, pull_request: pull.number };
+  }));
+
+  for (const [index, result] of results.entries()) {
+    if (result.status === "rejected") {
+      const item = changed[index];
+      console.error("release-background-error", {
+        key: item?.key,
+        repo: item?.repo,
+        error: result.reason instanceof Error ? result.reason.message : String(result.reason),
+      });
+    }
+  }
 }
 
 async function handleRelease(body: any, admin: any) {
@@ -489,6 +591,32 @@ async function handleRelease(body: any, admin: any) {
   const changed = repositories.filter((item) => item.needs_release);
   if (!changed.length) return { status: 200, body: { ok: true, released: false, message: "No había cambios pendientes.", repositories } };
 
+  const permissionFailures: any[] = [];
+  for (const item of changed) {
+    const probe = await probePullRequestWrite(item.repo);
+    if (!probe.ok) {
+      permissionFailures.push({
+        key: item.key,
+        label: item.label,
+        repo: item.repo,
+        status: probe.status,
+        message: probe.message,
+        missing_pull_requests_write: !!probe.missing_pull_requests_write,
+      });
+    }
+  }
+  if (permissionFailures.length) {
+    return {
+      status: 403,
+      body: {
+        error: "GitHub bloqueó la publicación porque el token del Centro de lanzamientos no tiene permiso para crear Pull Requests. Añade Pull requests: Read and write al YUMMY_RELEASE_GITHUB_TOKEN y vuelve a Preparar lanzamiento.",
+        permission: "pull_requests_write",
+        repositories: permissionFailures,
+        production_untouched: true,
+      },
+    };
+  }
+
   const backupBranch = backupRefName();
   for (const item of repositories) await createBackup(item.repo, item.main_sha, backupBranch);
 
@@ -515,57 +643,21 @@ async function handleRelease(body: any, admin: any) {
     };
   }
 
-  const promoted: any[] = [];
-  try {
-    for (const item of changed) {
-      const pull = promotionPulls.find((row) => row.key === item.key);
-      if (!pull?.number) throw new Error(`No existe PR de lanzamiento para ${item.label}.`);
-      const merged = await waitForPromotionMerge(item.repo, pull.number, item.staging_sha);
-      const mergeSha = String(merged?.sha || "");
-      if (!mergeSha) throw new Error(`GitHub no devolvió el commit de merge para ${item.label}.`);
-
-      const mainSha = await getBranchSha(item.repo, "main");
-      if (mainSha !== mergeSha) throw new Error(`main de ${item.label} no coincide con el merge recién creado.`);
-
-      // Mantiene main y staging alineados sin alterar el contenido probado:
-      // staging avanza únicamente al commit de merge cuyo árbol ya contiene el mismo código.
-      await updateStaging(item.repo, mergeSha, false);
-      const stagingSha = await getBranchSha(item.repo, "staging");
-      if (stagingSha !== mergeSha) throw new Error(`No se pudo alinear staging después del merge de ${item.label}.`);
-
-      promoted.push({
-        key: item.key,
-        repo: item.repo,
-        from: item.main_sha,
-        tested_sha: item.staging_sha,
-        to: mergeSha,
-        pull_request: pull.number,
-        pull_url: pull.url,
-      });
-    }
-  } catch (releaseError) {
-    return {
-      status: 500,
-      body: {
-        error: "El lanzamiento se detuvo durante la promoción protegida. No se forzó ninguna rama; revisa los módulos ya promovidos y el respaldo automático.",
-        detail: releaseError instanceof Error ? releaseError.message : "Error de promoción",
-        promoted,
-        promotion_pulls: promotionPulls,
-        backup_branch: backupBranch,
-      },
-    };
-  }
+  // El trabajo pesado continúa fuera de la petición HTTP.
+  // Cerrar el navegador ya no cancela ni convierte el release en un falso error.
+  EdgeRuntime.waitUntil(runReleaseInBackground(changed, promotionPulls));
 
   return {
-    status: 200,
+    status: 202,
     body: {
       ok: true,
-      released: true,
+      accepted: true,
+      released: false,
       released_by: admin.email,
       backup_branch: backupBranch,
-      promoted,
-      staging_aligned: true,
-      message: "Código promovido mediante PR protegido y quality en verde. main y staging quedaron alineados; no se copiaron datos ni se ejecutaron migraciones.",
+      promotion_pulls: promotionPulls,
+      background: true,
+      message: "Publicación iniciada. Supabase continuará coordinando GitHub en segundo plano aunque cierres esta ventana.",
     },
   };
 }

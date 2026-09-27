@@ -2703,8 +2703,12 @@ function renderReleaseCenter(data,prepared=false){
   if(safetyText)safetyText.textContent=enabled?"Backend Supabase · publicar exige diagnóstico y Calidad ✅ en GitHub.":"Backend Supabase ✅ · publicación real bloqueada hasta validar la credencial privada de GitHub y habilitar lanzamientos.";
 
   const summary=document.getElementById("releaseSummary");
+  const missingPrPermission=Array.isArray(data?.missing_pull_request_write)?data.missing_pull_request_write:[];
   if(summary){
-    if(!data?.ready)summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>Lanzamiento bloqueado. Revisa los módulos marcados con error o divergencia.</span>";
+    if(missingPrPermission.length){
+      const names=missingPrPermission.map(x=>x.label||x.key).filter(Boolean).join(", ");
+      summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>Falta permiso de GitHub: <b>Pull requests → Read and write</b> en el token privado del Centro de lanzamientos."+(names?" Módulos: "+esc(names)+".":"")+"</span><div class='mut' style='margin-top:6px'>Producción no fue modificada. Corrige el permiso del token y vuelve a pulsar “Preparar lanzamiento”.</div>";
+    }else if(!data?.ready)summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>Lanzamiento bloqueado. Revisa los módulos marcados con error o divergencia.</span>";
     else if(!data?.pending)summary.innerHTML="<b>Estado:</b> <span style='color:var(--ok)'>Producción ya coincide con Pruebas. No hay cambios pendientes.</span>";
     else summary.innerHTML="<b>Estado:</b> <span>"+data.pending+" módulo"+(data.pending===1?"":"s")+" con cambios pendientes."+(prepared?" Diagnóstico completado sin modificar ramas.":"")+"</span>";
   }
@@ -2855,8 +2859,8 @@ async function prepareProductionRelease(){
   try{
     const dry=await releaseAuthorizedFetch("/api/release-production",{method:"POST",body:JSON.stringify({action:"dry-run"})});
     const expected={};(dry.repositories||[]).forEach(item=>{expected[item.key]={main_sha:item.main_sha,staging_sha:item.staging_sha}});
-    releaseSnapshot={expected,configuration:dry.configuration||{},repositories:dry.repositories||[],pending:dry.pending||0,ready:dry.ready!==false};
-    renderReleaseCenter({configuration:dry.configuration||{},repositories:dry.repositories,pending:dry.pending,ready:dry.ready!==false},true);
+    releaseSnapshot={expected,configuration:dry.configuration||{},repositories:dry.repositories||[],pending:dry.pending||0,ready:dry.ready!==false,missing_pull_request_write:dry.missing_pull_request_write||[]};
+    renderReleaseCenter(dry,true);
     toast(dry.message||"Diagnóstico completado. No se modificó ninguna rama.");
   }catch(e){
     releaseSnapshot=null;
@@ -2938,7 +2942,10 @@ async function confirmProductionRelease(){
   closeReleaseConfirmation();
   openReleaseUiModal("releaseProgressModal");
   const closeBtn=document.getElementById("releaseProgressCloseBtn"),title=document.getElementById("releaseProgressTitle"),spinner=document.getElementById("releaseProgressSpinner"),note=document.getElementById("releaseProgressNote"),btn=document.getElementById("launchReleaseBtn");
-  if(closeBtn)closeBtn.disabled=true;if(title)title.textContent="Preparando Producción…";if(spinner)spinner.textContent="⏳";if(note)note.textContent="No cierres esta ventana mientras se mueve el código. Después verificaremos también el despliegue de GitHub Pages.";
+  if(closeBtn)closeBtn.disabled=true;
+  if(title)title.textContent="Preparando Producción…";
+  if(spinner)spinner.textContent="⏳";
+  if(note)note.textContent="Creando respaldos e iniciando la publicación en segundo plano. Después podrás cerrar esta ventana sin detener el proceso.";
   if(btn){btn.disabled=true;btn.textContent="🚀 Publicando…"}
   const initialRows=(releaseProgressPrepared.repositories||[]).map(item=>({...item,main_sha:releaseProgressExpected?.[item.key]?.main_sha,production_deploy_ready:false,production_deploy:"waiting"}));
   renderReleaseProgress({repositories:initialRows});
@@ -2946,38 +2953,59 @@ async function confirmProductionRelease(){
   clearInterval(releaseProgressElapsedTimer);
   releaseProgressElapsedTimer=setInterval(()=>{if(elapsedEl)elapsedEl.textContent=releaseFormatSeconds(Date.now()-releaseProgressStartedAt)},1000);
   clearInterval(releaseProgressPollTimer);
-  releaseProgressPollTimer=setInterval(()=>{pollReleaseProgress()},4000);
-  let releaseSucceeded=false;
+
+  let releaseAccepted=false;
   try{
     const result=await releaseAuthorizedFetch("/api/release-production",{method:"POST",body:JSON.stringify({action:"release",confirmation,expected:releaseProgressExpected})});
-    releaseSucceeded=!!result?.ok;
-    if(title)title.textContent="Código publicado · verificando sitios…";
+    releaseAccepted=!!result?.ok;
+    if(!releaseAccepted)throw new Error(result?.error||"GitHub no aceptó el lanzamiento.");
+
+    if(title)title.textContent="🟡 Publicación en segundo plano";
+    if(spinner)spinner.textContent="🔄";
+    if(note)note.textContent="Supabase ya inició la coordinación con GitHub y seguirá procesándola aunque cierres esta ventana o se corte tu conexión.";
+    if(closeBtn)closeBtn.disabled=false;
+
+    // El navegador ya no controla el release: solo consulta el estado.
+    // Si tarda más, no lo marcamos como fallido porque GitHub continúa en segundo plano.
     let finalState=null;
-    const deadline=Date.now()+90000;
+    const deadline=Date.now()+15*60*1000;
     while(Date.now()<deadline){
       const polled=await pollReleaseProgress();
-      if(polled?.state){finalState=polled.state;if(finalState.allLive)break}
+      if(polled?.state){
+        finalState=polled.state;
+        if(finalState.allLive)break;
+      }
       await releaseSleep(5000);
     }
+
     if(finalState?.allLive){
       const fill=document.getElementById("releaseProgressFill"),pct=document.getElementById("releaseProgressPercent");
-      if(fill)fill.style.width="100%";if(pct)pct.textContent="100%";
+      if(fill)fill.style.width="100%";
+      if(pct)pct.textContent="100%";
       if(title)title.textContent="✅ Producción actualizada";
       if(spinner)spinner.textContent="✅";
-      if(note)note.textContent="Los módulos quedaron sincronizados y los despliegues de Producción fueron verificados.";
+      if(note)note.textContent="Los módulos quedaron publicados y los sitios de Producción fueron verificados.";
+      releaseSnapshot=null;
+      toast("Lanzamiento completado.");
+      await loadReleaseHistory();
     }else{
-      if(title)title.textContent="✅ Código actualizado";
+      if(title)title.textContent="🟡 Publicación continúa en segundo plano";
       if(spinner)spinner.textContent="🔄";
-      if(note)note.textContent="main ya fue actualizado. GitHub Pages todavía puede estar terminando sus despliegues; el monitor horario seguirá verificándolo.";
+      if(note)note.textContent="El tiempo de espera del panel terminó, pero el lanzamiento NO se detuvo. Supabase y GitHub seguirán validando y fusionando en segundo plano; puedes cerrar esta ventana y volver después.";
+      toast(result.message||"Publicación iniciada en segundo plano.");
     }
-    releaseSnapshot=null;
-    toast(result.message||"Lanzamiento completado.");
-    await loadReleaseHistory();
   }catch(e){
-    if(title)title.textContent="⛔ Lanzamiento detenido";
-    if(spinner)spinner.textContent="⛔";
-    if(note)note.textContent=e.message||"El lanzamiento no pudo completarse. Producción no se dará por válida hasta volver a preparar el release.";
-    toast(e.message||"El lanzamiento no pudo completarse.");
+    if(!releaseAccepted){
+      if(title)title.textContent="⛔ No se pudo iniciar";
+      if(spinner)spinner.textContent="⛔";
+      if(note)note.textContent=e.message||"GitHub no aceptó el lanzamiento. Producción no se dará por modificada.";
+      toast(e.message||"No se pudo iniciar el lanzamiento.");
+    }else{
+      if(title)title.textContent="🟡 Publicación continúa en segundo plano";
+      if(spinner)spinner.textContent="🔄";
+      if(note)note.textContent="Se perdió la consulta del progreso, pero la publicación ya había sido iniciada y continuará en segundo plano.";
+      toast("La publicación sigue en segundo plano; solo se perdió el seguimiento del panel.");
+    }
   }finally{
     releaseProgressInFlight=false;
     clearInterval(releaseProgressElapsedTimer);clearInterval(releaseProgressPollTimer);
@@ -2986,7 +3014,7 @@ async function confirmProductionRelease(){
     if(closeBtn)closeBtn.disabled=false;
     if(btn)btn.textContent="🚀 Lanzar a Producción";
     await loadReleaseStatus();
-    if(releaseSucceeded)await loadReleaseHistory();
+    if(releaseAccepted)await loadReleaseHistory();
   }
 }
 
@@ -4062,7 +4090,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.78</footer><script>
+</script><footer class="admin-version">Versión v2.3.81</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;

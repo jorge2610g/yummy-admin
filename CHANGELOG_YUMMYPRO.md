@@ -1,3 +1,18 @@
+## 2.3.81 — 2026-09-26
+- El Centro de lanzamientos comprueba el permiso Pull requests: Read and write antes de crear respaldos o tocar Producción.
+- Si el token de GitHub carece de ese permiso, Preparar lanzamiento muestra el permiso exacto faltante y bloquea la publicación de forma segura.
+- Se evita el mensaje genérico “Resource not accessible by personal access token”.
+
+## 2.3.80 — 2026-09-26
+- El release ya no depende de habilitar Auto-Merge en la configuración del repositorio.
+- Supabase ejecuta la promoción en segundo plano con EdgeRuntime.waitUntil y devuelve el control al navegador inmediatamente.
+- Cerrar el navegador o perder la conexión ya no detiene el lanzamiento.
+
+## 2.3.79 — 2026-09-26
+- El lanzamiento a Producción se entrega a GitHub con auto-merge y continúa aunque se cierre el navegador.
+- El panel ya no interpreta un timeout de seguimiento como “Lanzamiento detenido”.
+- Se reconoce como sincronizado el árbol publicado aunque main esté esperando la realineación del SHA de staging.
+
 # Changelog YummyPro — Admin
 
 ## 2026-09-25/26 — 2.3.67 — Pruebas
