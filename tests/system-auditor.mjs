@@ -11,11 +11,11 @@ const GROQ_MODEL=process.env.GROQ_MODEL||"openai/gpt-oss-20b";
 const ENFORCE_AI=String(process.env.AI_AUDIT_ENFORCE||"false").toLowerCase()==="true";
 
 const panelModules=[
-  {key:"admin",label:"Admin",url:"https://jorge2610g.github.io/yummy-admin-pruebas/",auth:"admin"},
-  {key:"restaurante",label:"Restaurante",url:"https://jorge2610g.github.io/yummy-restaurante-pruebas/panel/",auth:"restaurant"},
-  {key:"retail",label:"Retail",url:"https://jorge2610g.github.io/yummy-retail-pruebas/panel/",auth:"retail"},
-  {key:"profesionales",label:"Profesionales",url:"https://jorge2610g.github.io/yummy-profesionales-pruebas/panel/",auth:"professional"},
-  {key:"streaming",label:"Streaming",url:"https://jorge2610g.github.io/yummy-streaming-pruebas/panel/",auth:"streaming"}
+  {key:"admin",label:"Admin",url:"https://jorge2610g.github.io/yummy-admin-pruebas/",auth:"admin",sourceRepo:"jorge2610g/yummy-admin",marker:"https://jorge2610g.github.io/yummy-admin-pruebas/.staging-source-sha"},
+  {key:"restaurante",label:"Restaurante",url:"https://jorge2610g.github.io/yummy-restaurante-pruebas/panel/",auth:"restaurant",sourceRepo:"jorge2610g/yummy-restaurante",marker:"https://jorge2610g.github.io/yummy-restaurante-pruebas/.staging-source-sha"},
+  {key:"retail",label:"Retail",url:"https://jorge2610g.github.io/yummy-retail-pruebas/panel/",auth:"retail",sourceRepo:"jorge2610g/yummy-retail",marker:"https://jorge2610g.github.io/yummy-retail-pruebas/.staging-source-sha"},
+  {key:"profesionales",label:"Profesionales",url:"https://jorge2610g.github.io/yummy-profesionales-pruebas/panel/",auth:"professional",sourceRepo:"jorge2610g/yummy-profesionales",marker:"https://jorge2610g.github.io/yummy-profesionales-pruebas/.staging-source-sha"},
+  {key:"streaming",label:"Streaming",url:"https://jorge2610g.github.io/yummy-streaming-pruebas/panel/",auth:"streaming",sourceRepo:"jorge2610g/yummy-streaming",marker:"https://jorge2610g.github.io/yummy-streaming-pruebas/.staging-source-sha"}
 ];
 
 const now=()=>new Date().toISOString();
@@ -24,7 +24,7 @@ const slugify=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|
 async function discoverPublicTargets(){
   try{
     const url=new URL("/rest/v1/restaurants",SUPABASE_URL);
-    url.searchParams.set("select","id,slug,name,business_type,is_demo,active");
+    url.searchParams.set("select","id,slug,name,business_type,is_demo,active,white_label_enabled");
     url.searchParams.set("active","eq.true");
     url.searchParams.set("order","is_demo.desc,id.asc");
     url.searchParams.set("limit","200");
@@ -32,10 +32,12 @@ async function discoverPublicTargets(){
     if(!res.ok)throw new Error("Supabase "+res.status);
     const rows=await res.json();
     const byType={};
-    for(const row of Array.isArray(rows)?rows:[]){
+    const list=Array.isArray(rows)?rows:[];
+    for(const row of list){
       const raw=String(row.business_type||"restaurant").toLowerCase();
       const key=["supermarket","minimarket","retail"].includes(raw)?"retail":raw==="professional"?"professional":raw==="streaming"?"streaming":"restaurant";
       if(!byType[key])byType[key]=row;
+      if(key==="streaming"&&row.white_label_enabled===true)byType[key]=row;
     }
     return byType;
   }catch(error){return {__error:String(error?.message||error)}}
@@ -48,11 +50,20 @@ function publicModules(targets){
   for(const pair of [["restaurant","Cliente Restaurante"],["retail","Cliente Retail"],["professional","Cliente Profesionales"]]){
     const key=pair[0],label=pair[1],row=targets[key],url=new URL(client);
     if(row)url.searchParams.set("r",row.slug||String(row.id));
-    list.push({key:"cliente-"+key,label,url:url.toString(),auth:null,expectSelector:!!row});
+    list.push({
+      key:"cliente-"+key,label,url:url.toString(),auth:null,expectSelector:!!row,
+      sourceRepo:"jorge2610g/mipagina",
+      marker:"https://jorge2610g.github.io/yummy-cliente-pruebas/.staging-source-sha"
+    });
   }
   const row=targets.streaming,url=new URL(streaming);
   if(row)url.searchParams.set("business",String(row.id));
-  list.push({key:"cliente-streaming",label:"Catálogo Streaming",url:url.toString(),auth:null,expectSelector:!!row});
+  list.push({
+    key:"cliente-streaming",label:"Catálogo Streaming",url:url.toString(),auth:null,expectSelector:!!row,
+    sourceRepo:"jorge2610g/yummy-streaming",
+    marker:"https://jorge2610g.github.io/yummy-streaming-pruebas/.staging-source-sha",
+    whiteLabelExpected:!!row?.white_label_enabled
+  });
   return list;
 }
 
