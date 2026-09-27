@@ -1,0 +1,106 @@
+name: Release Broker
+
+on:
+  push:
+    branches: [release-control]
+    paths:
+      - '.release-request.json'
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+concurrency:
+  group: release-broker
+  cancel-in-progress: false
+
+jobs:
+  broker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout control
+        uses: actions/checkout@v4
+        with:
+          ref: release-control
+          fetch-depth: 0
+
+      - name: Procesar solicitud
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mode="$(jq -r '.mode // "release"' .release-request.json)"
+
+          if [ "$mode" = "idle" ]; then
+            echo "Sin solicitud pendiente."
+            exit 0
+          fi
+
+          if [ "$mode" = "test" ]; then
+            base="broker-test-base-${GITHUB_RUN_ID}"
+            head="broker-test-head-${GITHUB_RUN_ID}"
+            git fetch origin main
+            git branch "$base" origin/main
+            git push origin "$base"
+            git checkout -b "$head" origin/main
+            printf '%s\n' "$GITHUB_RUN_ID" > .release-broker-test
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .release-broker-test
+            git commit -m "test: validar broker de releases"
+            git push origin "$head"
+
+            pr="$(gh pr create --base "$base" --head "$head" --title "test: release broker" --body "Prueba automática del broker. No toca Producción.")"
+            number="$(basename "$pr")"
+            gh pr merge "$number" --merge
+            git push origin --delete "$head" "$base" || true
+            echo "BROKER_TEST_OK"
+            exit 0
+          fi
+
+          expected_main="$(jq -r '.expected_main_sha' .release-request.json)"
+          expected_staging="$(jq -r '.expected_staging_sha' .release-request.json)"
+          backup_branch="$(jq -r '.backup_branch // "sin-respaldo"' .release-request.json)"
+
+          test -n "$expected_main" && test "$expected_main" != "null"
+          test -n "$expected_staging" && test "$expected_staging" != "null"
+
+          git fetch origin main staging
+          current_main="$(git rev-parse origin/main)"
+          current_staging="$(git rev-parse origin/staging)"
+
+          test "$current_main" = "$expected_main" || { echo "main cambió; se cancela."; exit 20; }
+          test "$current_staging" = "$expected_staging" || { echo "staging cambió; se cancela."; exit 21; }
+
+          quality_ok="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${expected_staging}/check-runs" --jq '[.check_runs[] | select(.name=="quality")] | sort_by(.completed_at // .started_at) | last | (.status=="completed" and (.conclusion=="success" or .conclusion=="neutral" or .conclusion=="skipped"))')"
+          test "$quality_ok" = "true" || { echo "quality no está en verde."; exit 22; }
+
+          pr_number="$(gh pr list --base main --head staging --state open --json number --jq '.[0].number // empty')"
+          if [ -z "$pr_number" ]; then
+            pr_url="$(gh pr create --base main --head staging --title "release: promover staging validado a producción" --body "Release coordinado YummyPro. Respaldo previo: ${backup_branch}. No copia datos ni ejecuta migraciones.")"
+            pr_number="$(basename "$pr_url")"
+          fi
+
+          for attempt in $(seq 1 40); do
+            head_sha="$(gh pr view "$pr_number" --json headRefOid --jq '.headRefOid')"
+            test "$head_sha" = "$expected_staging" || { echo "El head del PR cambió."; exit 23; }
+            if gh pr merge "$pr_number" --merge --match-head-commit "$expected_staging"; then
+              break
+            fi
+            if [ "$attempt" -eq 40 ]; then
+              echo "GitHub no permitió fusionar el PR dentro del tiempo esperado."
+              exit 24
+            fi
+            sleep 5
+          done
+
+          git fetch origin main
+          merge_sha="$(git rev-parse origin/main)"
+          second_parent="$(git rev-parse "${merge_sha}^2")"
+          test "$second_parent" = "$expected_staging" || { echo "El merge publicado no corresponde al staging probado."; exit 25; }
+          git diff --quiet "$expected_staging" "$merge_sha" || { echo "El árbol publicado difiere de staging."; exit 26; }
+
+          git push origin "$merge_sha":staging
+          echo "RELEASE_OK main=${merge_sha}"
