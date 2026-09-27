@@ -104,6 +104,58 @@ async function getBranchSha(repo: string, branch: string) {
   return data?.object?.sha || null;
 }
 
+async function getCommitTreeSha(repo: string, sha: string) {
+  if (!sha) return null;
+  const data = await githubRequest(`/repos/${repo}/git/commits/${sha}`);
+  return data?.tree?.sha || null;
+}
+
+async function githubGraphql(query: string, variables: Record<string, unknown>) {
+  const res = await fetch("https://api.github.com/graphql", {
+    method: "POST",
+    headers: { ...githubHeaders(true), "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+  });
+  const raw = await res.text();
+  let data: any = null;
+  try { data = raw ? JSON.parse(raw) : null; } catch (_) { data = { message: raw || "Respuesta inválida de GitHub GraphQL" }; }
+  if (!res.ok || data?.errors?.length) {
+    const message = data?.errors?.map((item: any) => item?.message).filter(Boolean).join(" · ") || data?.message || `GitHub GraphQL respondió ${res.status}`;
+    const error: any = new Error(message);
+    error.status = res.status;
+    error.data = data;
+    throw error;
+  }
+  return data?.data || null;
+}
+
+async function ensureRepositoryAutoMerge(repo: string) {
+  const current = await githubRequest(`/repos/${repo}`);
+  if (current?.allow_auto_merge) return true;
+  const updated = await githubRequest(`/repos/${repo}`, {
+    method: "PATCH",
+    body: JSON.stringify({ allow_auto_merge: true }),
+  });
+  if (!updated?.allow_auto_merge) {
+    throw Object.assign(new Error(`No se pudo habilitar auto-merge en ${repo}.`), { status: 409 });
+  }
+  return true;
+}
+
+async function enablePromotionAutoMerge(pr: any) {
+  const pullRequestId = String(pr?.node_id || "");
+  if (!pullRequestId) throw Object.assign(new Error("GitHub no devolvió el identificador GraphQL del PR."), { status: 409 });
+  const data = await githubGraphql(
+    `mutation EnableReleaseAutoMerge($pullRequestId: ID!) {
+      enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: MERGE }) {
+        pullRequest { number autoMergeRequest { enabledAt } }
+      }
+    }`,
+    { pullRequestId },
+  );
+  return data?.enablePullRequestAutoMerge?.pullRequest || null;
+}
+
 async function inspectRepository(item: any) {
   const comparison = await compareBranches(item.repo);
   const status = String(comparison?.status || "unknown");
@@ -114,7 +166,17 @@ async function inspectRepository(item: any) {
     : commits.at(-1)?.sha || comparison?.merge_base_commit?.sha || null;
   const aheadBy = Number(comparison?.ahead_by || 0);
   const behindBy = Number(comparison?.behind_by || 0);
-  const safe = status === "identical" || (status === "ahead" && behindBy === 0);
+  let treeSynced = status === "identical";
+  if (!treeSynced && mainSha && stagingSha && status === "behind" && aheadBy === 0) {
+    const [mainTree, stagingTree] = await Promise.all([
+      getCommitTreeSha(item.repo, mainSha),
+      getCommitTreeSha(item.repo, stagingSha),
+    ]);
+    treeSynced = !!mainTree && mainTree === stagingTree;
+  }
+  const safe = status === "identical"
+    || (status === "ahead" && behindBy === 0)
+    || (status === "behind" && aheadBy === 0 && treeSynced);
   return {
     ...item,
     main_sha: mainSha,
@@ -122,6 +184,7 @@ async function inspectRepository(item: any) {
     status,
     ahead_by: aheadBy,
     behind_by: behindBy,
+    tree_synced: treeSynced,
     changed_files: Array.isArray(comparison?.files) ? comparison.files.length : 0,
     safe,
     needs_release: status === "ahead" && aheadBy > 0,
@@ -161,7 +224,7 @@ function latestCheckByName(checks: any[], name: string) {
 }
 
 async function inspectProductionDeployment(item: any) {
-  const synced = !!item?.main_sha && !!item?.staging_sha && item.main_sha === item.staging_sha;
+  const synced = !!item?.main_sha && !!item?.staging_sha && (item.main_sha === item.staging_sha || !!item?.tree_synced);
   if (!synced || item.error) {
     return { ...item, production_code_synced: synced, production_deploy_ready: false, production_deploy: synced ? "checking" : "waiting" };
   }
@@ -186,7 +249,7 @@ async function inspectAllProductionDeployment(repositories: any[]) {
     catch (error) {
       results.push({
         ...item,
-        production_code_synced: item?.main_sha === item?.staging_sha,
+        production_code_synced: item?.main_sha === item?.staging_sha || !!item?.tree_synced,
         production_deploy_ready: false,
         production_deploy: "error",
         production_deploy_error: error instanceof Error ? error.message : "No se pudo verificar el despliegue de Producción",
@@ -489,6 +552,20 @@ async function handleRelease(body: any, admin: any) {
   const changed = repositories.filter((item) => item.needs_release);
   if (!changed.length) return { status: 200, body: { ok: true, released: false, message: "No había cambios pendientes.", repositories } };
 
+  // Antes de crear PRs, deja preparado GitHub para que complete el release por su cuenta
+  // aunque el administrador cierre el navegador o la red móvil se corte.
+  try {
+    for (const item of changed) await ensureRepositoryAutoMerge(item.repo);
+  } catch (error) {
+    return {
+      status: 409,
+      body: {
+        error: "No se pudo preparar GitHub para el lanzamiento automático. Producción no fue modificada.",
+        detail: error instanceof Error ? error.message : "Error habilitando auto-merge",
+      },
+    };
+  }
+
   const backupBranch = backupRefName();
   for (const item of repositories) await createBackup(item.repo, item.main_sha, backupBranch);
 
@@ -496,76 +573,39 @@ async function handleRelease(body: any, admin: any) {
   try {
     for (const item of changed) {
       const pr = await ensurePromotionPr(item.repo, item.staging_sha, backupBranch);
+      await enablePromotionAutoMerge(pr);
       promotionPulls.push({
         key: item.key,
         repo: item.repo,
         number: Number(pr?.number),
         url: pr?.html_url || null,
         head_sha: item.staging_sha,
+        auto_merge: true,
       });
     }
   } catch (error) {
     return {
       status: 500,
       body: {
-        error: error instanceof Error ? error.message : "No se pudieron preparar los PR protegidos de lanzamiento.",
+        error: "GitHub recibió parte de la preparación, pero no se pudo activar el auto-merge en todos los módulos. Revisa el estado antes de volver a intentar.",
+        detail: error instanceof Error ? error.message : "No se pudieron preparar los PR protegidos de lanzamiento.",
         backup_branch: backupBranch,
         promotion_pulls: promotionPulls,
-      },
-    };
-  }
-
-  const promoted: any[] = [];
-  try {
-    for (const item of changed) {
-      const pull = promotionPulls.find((row) => row.key === item.key);
-      if (!pull?.number) throw new Error(`No existe PR de lanzamiento para ${item.label}.`);
-      const merged = await waitForPromotionMerge(item.repo, pull.number, item.staging_sha);
-      const mergeSha = String(merged?.sha || "");
-      if (!mergeSha) throw new Error(`GitHub no devolvió el commit de merge para ${item.label}.`);
-
-      const mainSha = await getBranchSha(item.repo, "main");
-      if (mainSha !== mergeSha) throw new Error(`main de ${item.label} no coincide con el merge recién creado.`);
-
-      // Mantiene main y staging alineados sin alterar el contenido probado:
-      // staging avanza únicamente al commit de merge cuyo árbol ya contiene el mismo código.
-      await updateStaging(item.repo, mergeSha, false);
-      const stagingSha = await getBranchSha(item.repo, "staging");
-      if (stagingSha !== mergeSha) throw new Error(`No se pudo alinear staging después del merge de ${item.label}.`);
-
-      promoted.push({
-        key: item.key,
-        repo: item.repo,
-        from: item.main_sha,
-        tested_sha: item.staging_sha,
-        to: mergeSha,
-        pull_request: pull.number,
-        pull_url: pull.url,
-      });
-    }
-  } catch (releaseError) {
-    return {
-      status: 500,
-      body: {
-        error: "El lanzamiento se detuvo durante la promoción protegida. No se forzó ninguna rama; revisa los módulos ya promovidos y el respaldo automático.",
-        detail: releaseError instanceof Error ? releaseError.message : "Error de promoción",
-        promoted,
-        promotion_pulls: promotionPulls,
-        backup_branch: backupBranch,
       },
     };
   }
 
   return {
-    status: 200,
+    status: 202,
     body: {
       ok: true,
-      released: true,
+      accepted: true,
+      released: false,
       released_by: admin.email,
       backup_branch: backupBranch,
-      promoted,
-      staging_aligned: true,
-      message: "Código promovido mediante PR protegido y quality en verde. main y staging quedaron alineados; no se copiaron datos ni se ejecutaron migraciones.",
+      promotion_pulls: promotionPulls,
+      background: true,
+      message: "Publicación iniciada. GitHub continuará validando y fusionando los módulos aunque cierres esta ventana; el panel solo consulta el progreso.",
     },
   };
 }
