@@ -56,7 +56,7 @@ function publicModules(targets){
   return list;
 }
 
-async function maybeLogin(page,auth){
+async function maybeLogin(page,auth,moduleUrl){
   if(!auth)return {attempted:false};
   const credentials={
     admin:[process.env.ADMIN_TEST_EMAIL,process.env.ADMIN_TEST_PASSWORD],
@@ -67,6 +67,29 @@ async function maybeLogin(page,auth){
   };
   const [email,password]=credentials[auth]||[];
   if(!email||!password)return {attempted:false,reason:"credenciales-no-configuradas"};
+
+  if(auth!=="admin"){
+    try{
+      const authUrl=new URL("/auth/v1/token",SUPABASE_URL);
+      authUrl.searchParams.set("grant_type","password");
+      const res=await fetch(authUrl,{
+        method:"POST",
+        headers:{apikey:SUPABASE_KEY,"Content-Type":"application/json"},
+        body:JSON.stringify({email,password})
+      });
+      const raw=await res.text();
+      if(!res.ok)return {attempted:true,success:false,method:"supabase-handoff",error:"Auth HTTP "+res.status+" "+raw.slice(0,240)};
+      const session=JSON.parse(raw);
+      if(!session?.access_token||!session?.refresh_token)return {attempted:true,success:false,method:"supabase-handoff",error:"Supabase no devolvió sesión completa"};
+      const target=new URL(moduleUrl);
+      target.hash=new URLSearchParams({yummy_access:session.access_token,yummy_refresh:session.refresh_token}).toString();
+      await page.goto(target.toString(),{waitUntil:"domcontentloaded",timeout:25000});
+      await page.waitForTimeout(2600);
+      const appVisible=await page.locator("#app").first().isVisible().catch(()=>false);
+      return {attempted:true,success:appVisible,method:"supabase-handoff",finalUrl:page.url(),error:appVisible?null:"El panel no quedó visible después del handoff autenticado"};
+    }catch(error){return {attempted:true,success:false,method:"supabase-handoff",error:String(error?.message||error)}}
+  }
+
   const emailInput=page.locator('#email:visible,#lEmail:visible,input[type="email"]:visible').first();
   const passInput=page.locator('#password:visible,#lPass:visible,input[type="password"]:visible').first();
   if(!(await emailInput.count())||!(await passInput.count()))return {attempted:false,reason:"formulario-no-visible"};
@@ -75,8 +98,8 @@ async function maybeLogin(page,auth){
     const button=page.getByRole("button",{name:/Ingresar|Entrar|Iniciar sesión/i}).first();
     if(await button.count())await button.click();else await passInput.press("Enter");
     await page.waitForTimeout(1800);
-    return {attempted:true,success:!(await emailInput.isVisible().catch(()=>false))};
-  }catch(error){return {attempted:true,success:false,error:String(error?.message||error)}}
+    return {attempted:true,success:!(await emailInput.isVisible().catch(()=>false)),method:"form"};
+  }catch(error){return {attempted:true,success:false,method:"form",error:String(error?.message||error)}}
 }
 
 async function auditPage(browser,module,viewportName,viewport){
@@ -90,7 +113,7 @@ async function auditPage(browser,module,viewportName,viewport){
   let response=null,navigationError=null;
   try{response=await page.goto(module.url,{waitUntil:"domcontentloaded",timeout:25000});await page.waitForTimeout(2200)}
   catch(error){navigationError=String(error?.message||error)}
-  const login=await maybeLogin(page,module.auth);
+  const login=await maybeLogin(page,module.auth,module.url);
   await page.waitForTimeout(1000);
   let metrics={};
   try{
