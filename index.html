@@ -2356,7 +2356,7 @@ html[data-theme="light"] .side-menu .tab.active .nav-icon{
 </section>
 <section id="ai_auditor" class="section admin-only staging-only">
 <div class="dashboard-hero" style="margin-top:8px">
-  <div><div class="eyebrow">PLAYWRIGHT + IA</div><h2>🤖 Auditor IA de Pruebas</h2><p>Abre los módulos reales con Chromium, revisa móvil y escritorio, captura errores de consola/red y guarda evidencia visual.</p></div>
+  <div><div class="eyebrow">PLAYWRIGHT + IA</div><h2>🤖 Auditor IA de Pruebas</h2><p>Abre los módulos reales con Chromium como un usuario: navega secciones, compara claro/oscuro, detecta destellos, botones cortados o tapados, contenido del nicho equivocado, responsive, consola/red y guarda capturas antes/después.</p></div>
   <button class="primary refresh-btn" id="aiAuditRunBtn" type="button" onclick="runAiAuditNow()">▶ Auditar ahora</button>
 </div>
 <div class="grid">
@@ -2700,17 +2700,21 @@ function renderReleaseCenter(data,prepared=false){
   const safetyTitle=document.getElementById("releaseSafetyTitle");
   const safetyText=document.getElementById("releaseSafetyText");
   if(safetyTitle)safetyTitle.textContent=enabled?"Publicación habilitada":"Modo seguro";
-  if(safetyText)safetyText.textContent=enabled?"Backend Supabase · publicar exige diagnóstico y Calidad ✅ en GitHub.":"Backend Supabase ✅ · publicación real bloqueada hasta validar la credencial privada de GitHub y habilitar lanzamientos.";
+  if(safetyText)safetyText.textContent=enabled?"Backend Supabase · publicar exige Calidad ✅ + Auditor Visual/Funcional ✅.":"Backend Supabase ✅ · publicación real bloqueada hasta validar la credencial privada de GitHub y habilitar lanzamientos.";
 
   const summary=document.getElementById("releaseSummary");
   const missingPrPermission=Array.isArray(data?.missing_pull_request_write)?data.missing_pull_request_write:[];
+  const auditGate=data?.audit_gate||null;
   if(summary){
     if(missingPrPermission.length){
       const names=missingPrPermission.map(x=>x.label||x.key).filter(Boolean).join(", ");
       summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>Falta permiso de GitHub: <b>Pull requests → Read and write</b> en el token privado del Centro de lanzamientos."+(names?" Módulos: "+esc(names)+".":"")+"</span><div class='mut' style='margin-top:6px'>Producción no fue modificada. Corrige el permiso del token y vuelve a pulsar “Preparar lanzamiento”.</div>";
+    }else if(auditGate&&!auditGate.ready){
+      const auditUrl=auditGate?.run?.html_url||"";
+      summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>🤖 Lanzamiento bloqueado por Auditor Visual/Funcional.</span><div class='mut' style='margin-top:6px'>"+esc(auditGate.message||"Ejecuta una auditoría nueva para los cambios actuales.")+"</div>"+(auditUrl?"<button class='ghost' type='button' style='margin-top:8px' onclick='window.open("+JSON.stringify(auditUrl)+","_blank","noopener")'>Ver auditoría</button>":"");
     }else if(!data?.ready)summary.innerHTML="<b>Estado:</b> <span style='color:var(--bad)'>Lanzamiento bloqueado. Revisa los módulos marcados con error o divergencia.</span>";
     else if(!data?.pending)summary.innerHTML="<b>Estado:</b> <span style='color:var(--ok)'>Producción ya coincide con Pruebas. No hay cambios pendientes.</span>";
-    else summary.innerHTML="<b>Estado:</b> <span>"+data.pending+" módulo"+(data.pending===1?"":"s")+" con cambios pendientes."+(prepared?" Diagnóstico completado sin modificar ramas.":"")+"</span>";
+    else summary.innerHTML="<b>Estado:</b> <span>"+data.pending+" módulo"+(data.pending===1?"":"s")+" con cambios pendientes."+(prepared?" Calidad ✅ · Auditor Visual/Funcional ✅ · listo para publicar.":"")+"</span>";
   }
   const launch=document.getElementById("launchReleaseBtn");
   if(launch){
@@ -2757,7 +2761,7 @@ function renderAiAuditStatus(data){
   }
  }
  const modules=document.getElementById("aiAuditModules");
- if(modules)modules.innerHTML='<div class="item"><b>Recorridos del auditor</b><div class="mut" style="margin-top:5px">Admin · Restaurante · Retail · Profesionales · Streaming · Cliente Restaurante · Cliente Retail · Cliente Profesionales · Catálogo Streaming</div></div>';
+ if(modules)modules.innerHTML='<div class="item"><b>Auditoría de 3 capas</b><div class="mut" style="margin-top:5px"><b>Visual:</b> temas, colores, destellos, solapamientos y responsive.<br><b>Funcional:</b> navegación real por secciones y controles.<br><b>Técnica:</b> JavaScript, HTTP, red, despliegue exacto y rutas.<br><br>Recorre Admin · Restaurante · Retail · Profesionales · Streaming · Cliente Restaurante · Cliente Retail · Cliente Profesionales · Catálogo Streaming.</div></div>';
  if(run?.status!=="completed"&&run){
   clearTimeout(aiAuditPollTimer);
   aiAuditPollTimer=setTimeout(loadAiAuditStatus,6000);
@@ -4090,7 +4094,7 @@ window.openOrderDetail=function(id){const o=orders.find(x=>Number(x.id)===Number
 window.closeOrderDetail=function(){orderEditModal.style.display="none"}
 function calcOrderEditTotal(){let t=0;document.querySelectorAll(".orderEditItem").forEach(r=>t+=Number(r.querySelector(".oiQty").value||0)*Number(r.querySelector(".oiPrice").value||0));oeTotal.textContent=money(t);return t}
 window.saveOrderDetail=async function(){const old=orders.find(x=>Number(x.id)===Number(oeId.value));const items=[...document.querySelectorAll(".orderEditItem")].map((r,i)=>({...(old?.items?.[i]||{}),name:r.querySelector(".oiName").value.trim(),qty:Number(r.querySelector(".oiQty").value||1),unit_price:Number(r.querySelector(".oiPrice").value||0),note:r.querySelector(".oiNote").value.trim()}));const row={customer_name:oeName.value.trim(),order_type:oeType.value,delivery_address:oeType.value==="Delivery"?oeAddress.value.trim():null,payment_method:oePayment.value.trim(),status:oeStatus.value,notes:oeNotes.value.trim()||null,items,total:calcOrderEditTotal(),updated_at:new Date().toISOString()};const {error}=await sb.from("restaurant_orders").update(row).eq("id",Number(oeId.value)).eq("restaurant_id",old?.restaurant_id||currentRestaurant);if(error)return toast(error.message);closeOrderDetail();toast("Pedido actualizado");await loadOrders()}
-</script><footer class="admin-version">Versión v2.3.81</footer><script>
+</script><footer class="admin-version">Versión v2.3.82</footer><script>
 async function verifySubscriptionMercadoPago(){
  const box=document.getElementById("subscriptionMpStatus");
  if(!box)return;
