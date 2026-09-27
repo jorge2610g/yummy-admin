@@ -1,3 +1,8 @@
+## 2.3.81 — 2026-09-26
+- El Centro de lanzamientos comprueba el permiso Pull requests: Read and write antes de crear respaldos o tocar Producción.
+- Si el token de GitHub carece de ese permiso, Preparar lanzamiento muestra el permiso exacto faltante y bloquea la publicación de forma segura.
+- Se evita el mensaje genérico “Resource not accessible by personal access token”.
+
 ## 2.3.80 — 2026-09-26
 - El release ya no depende de habilitar Auto-Merge en la configuración del repositorio.
 - Supabase ejecuta la promoción en segundo plano con EdgeRuntime.waitUntil y devuelve el control al navegador inmediatamente.
