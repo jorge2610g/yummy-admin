@@ -68,5 +68,5 @@ test('incluye Auditor IA exclusivo de Pruebas', async ({ page }) => {
   expect(html).toContain('Auditor IA de Pruebas');
   expect(html).toContain('loadAiAuditStatus');
   expect(html).toContain('runAiAuditNow');
-  expect(html).toContain('Gemini 3.8 Flash');
+  expect(html).toContain('Gemini 3.5 Flash');
 });
