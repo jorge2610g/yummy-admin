@@ -1,3 +1,10 @@
+## 2.3.88 — 2026-09-27
+- Segunda fase de endurecimiento de RPC en Supabase Staging.
+- Se eliminó ejecución anónima de 5 RPC que ya exigían sesión: acceso de suscripción, caja abierta, pedidos QR listos, registro de cliente y creación de pedidos Streaming.
+- Los avisos SECURITY DEFINER ejecutables por anon bajaron de 30 a 25 sin afectar llamadas autenticadas.
+- Se verificó que los cinco RPC continúan habilitados para authenticated y service_role.
+- Producción no fue modificada.
+
 ## 2.3.87 — 2026-09-27
 - Primera ola de endurecimiento de seguridad en Supabase Staging.
 - Se eliminó ejecución anónima de RPC administrativos, de caja, POS y funciones internas/trigger que no deben exponerse por PostgREST.
