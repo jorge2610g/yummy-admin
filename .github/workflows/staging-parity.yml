@@ -11,6 +11,7 @@ on:
       - 'scripts/staging-parity.sql'
       - 'scripts/staging-schema-checkpoint.txt'
       - '.github/workflows/staging-parity.yml'
+      - '.ai-audit-trigger'
 
 permissions:
   contents: read
