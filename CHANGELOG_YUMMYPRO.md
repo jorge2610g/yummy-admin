@@ -1,3 +1,11 @@
+## 2.3.90 — 2026-09-27
+- Se endureció `create_professional_appointment` en Supabase Staging.
+- La creación directa de citas ahora exige una cuenta Cliente o una previsualización activa del Administrador para el negocio profesional correspondiente.
+- Usuarios de Restaurante/Personal y cuentas no asignadas ya no pueden crear citas cambiando parámetros del RPC.
+- Se validó en transacción que un usuario de negocio es rechazado y que un Admin con previsualización válida supera el guard sin crear datos de prueba.
+- El flujo moderno de reservas/pagos conserva su lógica de horarios, disponibilidad, precios y estados.
+- Producción no fue modificada.
+
 ## 2.3.89 — 2026-09-27
 - Se endurecieron los RPC públicos de telemetría `log_app_event` y `log_app_error` en Supabase Staging.
 - Landing, Cliente y Restaurante conservan la telemetría pública necesaria para diagnóstico.
