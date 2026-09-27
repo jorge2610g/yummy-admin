@@ -1,3 +1,9 @@
+## 2.3.86 — 2026-09-27
+- El auditor reintenta hasta 3 veces una navegación que devuelva 5xx o falle transitoriamente antes de declarar el módulo roto.
+- Si un 5xx se repite, sigue siendo bloqueante; solo se descarta la evidencia del intento transitorio que luego carga correctamente.
+- Esto evita falsos rojos por indisponibilidad momentánea de GitHub Pages sin relajar errores persistentes.
+- Producción no fue modificada.
+
 ## 2.3.85 — 2026-09-27
 - El Auditor IA mantiene Gemini y Groq como segunda opinión, pero una valoración subjetiva de IA ya no puede bloquear por sí sola un release.
 - El gate sigue siendo estricto con evidencia reproducible de Playwright: pantallas, temas, destellos, desbordes, solapamientos, login, JavaScript, HTTP, rutas y publicación exacta de staging.
