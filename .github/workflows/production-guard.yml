@@ -23,7 +23,7 @@ jobs:
           branch="${GITHUB_REF_NAME}"
 
           if [ "$branch" = "staging" ]; then
-            git fetch origin main --depth=1
+            git fetch origin main
             git merge-base --is-ancestor origin/main HEAD || {
               echo "ERROR: staging ya no contiene main. Hay divergencia o staging quedó detrás."
               exit 1
@@ -31,7 +31,7 @@ jobs:
             echo "OK: staging contiene el estado actual de main."
 
           elif [ "$branch" = "main" ]; then
-            git fetch origin staging --depth=1
+            git fetch origin staging
 
             parent_count="$(git show -s --format=%P HEAD | wc -w | tr -d ' ')"
             if [ "$parent_count" -lt 2 ]; then
