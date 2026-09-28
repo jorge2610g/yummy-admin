@@ -566,3 +566,47 @@ Cuando el workflow quede verde todavía falta una prueba real con un dominio/sub
 9. retirar el dominio de prueba si no se conservará.
 
 No promover estas migraciones ni el gateway a Producción hasta completar esa prueba real end-to-end.
+
+
+## Decisión Cloudflare · usar infraestructura existente
+
+Decisión confirmada por el propietario el 2026-09-28:
+
+- reutilizar la cuenta/zona Cloudflare existente de `yummypro.online`;
+- NO crear una zona nueva;
+- NO reemplazar DNS existentes de forma automática;
+- NO reemplazar un fallback origin existente distinto;
+- NO crear una ruta wildcard `*/*` para Staging;
+- cualquier conflicto con configuración existente debe producir **safety stop** y requerir revisión antes de modificar Cloudflare.
+
+### Staging previsto
+
+- Worker: `yummypro-custom-domain-staging`
+- CNAME/fallback de Pruebas: `domains-pruebas.yummypro.online`
+- Supabase: Staging `wodqqheeesrelsbacmgx`
+- Cliente origin: `yummy-cliente-pruebas`
+- Streaming origin: `yummy-streaming-pruebas`
+- las páginas públicas reciben `window.__YUMMY_ENV="staging"` desde el Worker para impedir que un dominio real de prueba use Supabase Producción.
+
+### Estado de credenciales
+
+El workflow `Cloudflare Gateway Staging` fue ejecutado y se detuvo correctamente en la validación inicial porque el repositorio aún no tiene el secreto:
+
+`CLOUDFLARE_API_TOKEN`
+
+No se realizó ningún cambio en Cloudflare durante ese intento.
+
+El workflow está preparado para:
+
+1. validar el token;
+2. resolver la cuenta Cloudflare automáticamente si el token solo accede a una;
+3. guardar el token cifrado en Supabase Staging Vault;
+4. desplegar el Worker primero en `workers.dev`;
+5. verificar `/__yummy_health`;
+6. inspeccionar la zona existente;
+7. crear `domains-pruebas.yummypro.online` únicamente si no existe;
+8. detenerse si encuentra un DNS/fallback inesperado;
+9. configurar el fallback SaaS de Staging solo si es seguro;
+10. crear rutas Worker por dominio de prueba, no una wildcard global.
+
+No pegar tokens Cloudflare en documentación, frontend, commits ni conversaciones.
