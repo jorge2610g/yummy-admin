@@ -44,27 +44,31 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN" || (echo "Missing GitHub secret: CLOUDFLARE_API_TOKEN" && exit 1)
           test -n "$STAGING_DB_PASSWORD" || (echo "Missing GitHub secret: STAGING_DB_PASSWORD" && exit 1)
 
-      - name: Resolve Cloudflare account
+      - name: Resolve Cloudflare account from existing zone
         run: |
           if [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
             echo "Cloudflare account id supplied explicitly."
             exit 0
           fi
 
-          RESPONSE="$(curl -fsS             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             "https://api.cloudflare.com/client/v4/accounts?per_page=50")"
+          RESPONSE="$(curl -fsS             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             "https://api.cloudflare.com/client/v4/zones?name=yummypro.online&status=active&per_page=5")"
 
           SUCCESS="$(printf '%s' "$RESPONSE" | jq -r '.success')"
-          test "$SUCCESS" = "true" || (echo "Cloudflare token could not list accounts." && exit 1)
+          test "$SUCCESS" = "true" || (echo "Cloudflare token could not read yummypro.online zone." && exit 1)
 
           COUNT="$(printf '%s' "$RESPONSE" | jq '.result | length')"
           if [ "$COUNT" -ne 1 ]; then
-            echo "The token can access $COUNT Cloudflare accounts. Add optional GitHub secret CLOUDFLARE_ACCOUNT_ID to disambiguate."
+            echo "Expected exactly one active yummypro.online zone, found $COUNT."
             exit 1
           fi
 
-          ACCOUNT_ID="$(printf '%s' "$RESPONSE" | jq -r '.result[0].id')"
-          test -n "$ACCOUNT_ID" || (echo "Cloudflare account id could not be resolved." && exit 1)
+          ACCOUNT_ID="$(printf '%s' "$RESPONSE" | jq -r '.result[0].account.id')"
+          ZONE_ID="$(printf '%s' "$RESPONSE" | jq -r '.result[0].id')"
+          test -n "$ACCOUNT_ID" -a "$ACCOUNT_ID" != "null" || (echo "Cloudflare account id could not be resolved from zone." && exit 1)
+          test -n "$ZONE_ID" -a "$ZONE_ID" != "null" || (echo "Cloudflare zone id could not be resolved." && exit 1)
           echo "CLOUDFLARE_ACCOUNT_ID=$ACCOUNT_ID" >> "$GITHUB_ENV"
+          echo "CLOUDFLARE_ZONE_ID=$ZONE_ID" >> "$GITHUB_ENV"
+          echo "Cloudflare zone yummypro.online resolved safely."
 
       - name: Save Cloudflare token encrypted in Supabase Staging Vault
         env:
