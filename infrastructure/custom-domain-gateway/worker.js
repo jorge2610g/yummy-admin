@@ -23,12 +23,13 @@ function normalizeHost(host) {
 
 async function resolveBusiness(hostname, env) {
   const host = normalizeHost(hostname);
-  if (!host || PLATFORM_HOSTS.has(host)) return null;
+  const bareHost = host.replace(/^www\\./, "");
+  if (!host || PLATFORM_HOSTS.has(host) || PLATFORM_HOSTS.has(bareHost)) return null;
 
   const url = new URL("/rest/v1/restaurants", env.SUPABASE_URL);
   url.searchParams.set("select", "id,slug,business_type,custom_domain,active,subscription_status");
   url.searchParams.set("active", "eq.true");
-  url.searchParams.set("custom_domain", "eq." + host);
+  url.searchParams.set("or", "(custom_domain.eq." + host + ",custom_domain.eq." + bareHost + ",custom_domain.eq.www." + bareHost + ")");
   url.searchParams.set("limit", "1");
 
   const response = await fetch(url.toString(), {
@@ -51,7 +52,9 @@ function originTarget(requestUrl, business, env) {
 
   if (type === "streaming") {
     const origin = new URL(env.STREAMING_ORIGIN || "https://streaming.yummypro.online");
-    const relative = incoming.pathname === "/" ? "/" : incoming.pathname;
+    let relative = incoming.pathname || "/";
+    if (relative === "/catalogo") relative = "/";
+    else if (relative.startsWith("/catalogo/")) relative = relative.slice("/catalogo".length);
     origin.pathname = "/catalogo" + (relative.startsWith("/") ? relative : "/" + relative);
     origin.search = incoming.search;
     return origin;
