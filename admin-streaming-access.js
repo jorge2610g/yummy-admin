@@ -188,7 +188,6 @@
  const originalLoadAdminRetailSummary=window.loadAdminRetailSummary;
  window.loadAdminRetailSummary=async function(){const result=originalLoadAdminRetailSummary?await originalLoadAdminRetailSummary():undefined;await refreshStreamingSummaryCard();return result};
 
-
  function fillStreamingPaymentBusinessSelect(){
   const el=document.getElementById('subscriptionPaymentRestaurantFilter');if(!el)return;
   const selected=el.value||'all';
@@ -206,13 +205,45 @@
   }).catch(e=>{console.error('Streaming payment filter',e);toast('No se pudieron cargar los negocios Streaming')});
  };
 
+ const ADMIN_TEST_LINKS=[
+  ['Admin · Pruebas','https://jorge2610g.github.io/yummy-admin-pruebas/'],
+  ['Restaurante · Pruebas','https://jorge2610g.github.io/yummy-restaurante-pruebas/'],
+  ['Retail · Pruebas','https://jorge2610g.github.io/yummy-retail-pruebas/'],
+  ['Profesionales · Pruebas','https://jorge2610g.github.io/yummy-profesionales-pruebas/'],
+  ['Streaming · Pruebas','https://jorge2610g.github.io/yummy-streaming-pruebas/'],
+  ['Cliente · Pruebas','https://jorge2610g.github.io/yummy-cliente-pruebas/']
+ ];
+ function installAdminTestQuickLinks(){
+  const tabs=document.querySelector('#adminSideMenu .tabs');
+  if(!tabs||tabs.querySelector('[data-yummy-test-access]'))return;
+  const group=document.createElement('div');
+  group.className='nav-group-label admin-only';
+  group.dataset.yummyTestAccess='group';
+  group.textContent='PRUEBAS';
+  tabs.appendChild(group);
+  ADMIN_TEST_LINKS.forEach(([label,url])=>{
+   const link=document.createElement('a');
+   link.className='tab admin-only';
+   link.dataset.yummyTestAccess='link';
+   link.href=url;
+   link.target='_blank';
+   link.rel='noopener noreferrer';
+   link.title=label;
+   link.style.textDecoration='none';
+   link.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M13 11l6-6"/><path d="M19 13v6H5V5h6"/></svg></span><span class="nav-label">'+label+'</span>';
+   link.addEventListener('click',()=>{if(typeof window.closeAdminSideMenu==='function')setTimeout(()=>window.closeAdminSideMenu(),0)});
+   tabs.appendChild(link);
+  });
+ }
+
  function refreshStreamingAdminUi(){
   installStreamingBusinessOptions();
+  installAdminTestQuickLinks();
   const copy=document.querySelector('#restaurants .card p.mut');if(copy&&copy.textContent.includes('Restaurantes, supermercados'))copy.textContent='Restaurantes, retail, profesionales y negocios Streaming administrados desde la misma plataforma.';
   refreshStreamingSummaryCard();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refreshStreamingAdminUi);else refreshStreamingAdminUi();
- const observer=new MutationObserver(()=>installStreamingBusinessOptions());
+ const observer=new MutationObserver(()=>{installStreamingBusinessOptions();installAdminTestQuickLinks()});
  observer.observe(document.documentElement,{subtree:true,childList:true});
  setTimeout(refreshStreamingAdminUi,250);
 })();
