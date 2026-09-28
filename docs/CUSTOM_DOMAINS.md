@@ -82,7 +82,7 @@ Esto permite resolver un catálogo Streaming desde un hostname personalizado.
 
 ## Verificación DNS
 
-Edge Function Staging:
+Edge Function Staging (fuente versionada en `supabase/functions/verify-business-domain/index.ts`):
 
 `verify-business-domain`
 
@@ -168,7 +168,7 @@ Los smoke iniciales vencieron esperando la publicación de los repositorios `*-p
 
 ## Aprovisionamiento Cloudflare preparado en backend
 
-Edge Function Staging:
+Edge Function Staging (fuente versionada en `supabase/functions/provision-business-domain/index.ts`):
 
 `provision-business-domain`
 
@@ -183,6 +183,8 @@ La función ya implementa el flujo de backend:
 5. guarda `provider_hostname_id`;
 6. consulta los estados del hostname y SSL;
 7. solo cuando ambos están en `active`, llama a `service_activate_business_custom_domain`.
+
+Después de una verificación DNS exitosa, la interfaz invoca este aprovisionamiento; si Cloudflare aún no está configurado, el dominio queda verificado y no se activa.
 
 La función requiere secretos que **todavía no están configurados**:
 
