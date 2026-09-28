@@ -339,7 +339,21 @@ async function auditPage(browser,module,viewportName,viewport){
   const missingAuth=!!module.auth&&!login.attempted&&login.reason==="credenciales-no-configuradas";
   const missingLoginForm=!!module.auth&&!login.attempted&&login.reason==="formulario-no-visible";
   const failedLogin=!!module.auth&&login.attempted&&login.success===false;
-  const effectiveConsoleErrors=consoleErrors.filter(message=>!(missingAuth&&/\b401\b|unauthorized/i.test(message)));
+  // ipapi.co es solo una ayuda opcional para detectar país. Los paneles tienen fallback local;
+  // si el proveedor externo bloquea CORS, conservar la evidencia pero no convertirla en fallo del producto.
+  const optionalIpGeoFailed=requestFailures.some(x=>/https:\/\/ipapi\.co\/json\/?/i.test(String(x.url||""))&&/ERR_FAILED|blocked|failed/i.test(String(x.error||"")));
+  const ignoredConsoleErrors=consoleErrors.filter(message=>{
+    const text=String(message||"").trim();
+    if(/ipapi\.co\/json\/?/i.test(text)&&/cors|blocked|failed|access to fetch/i.test(text))return true;
+    if(optionalIpGeoFailed&&/^Failed to load resource:\s*net::ERR_FAILED$/i.test(text))return true;
+    return false;
+  });
+  const effectiveConsoleErrors=consoleErrors.filter(message=>{
+    const text=String(message||"").trim();
+    if(missingAuth&&/\b401\b|unauthorized/i.test(text))return false;
+    if(ignoredConsoleErrors.includes(message))return false;
+    return true;
+  });
   if(missingAuth)warnings.push("Área autenticada no recorrida: faltan credenciales de prueba en GitHub Secrets");
   if(missingLoginForm)errors.push("Formulario de inicio de sesión no disponible");
   if(failedLogin)errors.push("Inicio de sesión automático falló"+(login.error?": "+String(login.error).split("\n")[0]:""));
@@ -391,7 +405,7 @@ async function auditPage(browser,module,viewportName,viewport){
   return {
     module:module.key,label:module.label,viewport:viewportName,url:module.url,finalUrl,
     status:errors.length?"failure":warnings.length?"warning":"success",
-    errors,warnings,consoleErrors:consoleErrors.slice(0,20),httpErrors:httpErrors.slice(0,30),
+    errors,warnings,consoleErrors:effectiveConsoleErrors.slice(0,20),ignoredConsoleErrors:ignoredConsoleErrors.slice(0,20),httpErrors:httpErrors.slice(0,30),
     requestFailures:requestFailures.slice(0,20),login,metrics,screenshot,
     frames,themeResults,navigation,navigationAttempts
   };

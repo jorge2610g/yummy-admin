@@ -188,7 +188,6 @@
  const originalLoadAdminRetailSummary=window.loadAdminRetailSummary;
  window.loadAdminRetailSummary=async function(){const result=originalLoadAdminRetailSummary?await originalLoadAdminRetailSummary():undefined;await refreshStreamingSummaryCard();return result};
 
-
  function fillStreamingPaymentBusinessSelect(){
   const el=document.getElementById('subscriptionPaymentRestaurantFilter');if(!el)return;
   const selected=el.value||'all';
@@ -206,13 +205,91 @@
   }).catch(e=>{console.error('Streaming payment filter',e);toast('No se pudieron cargar los negocios Streaming')});
  };
 
+ const ADMIN_TEST_LINKS=[
+  ['Admin','https://jorge2610g.github.io/yummy-admin-pruebas/'],
+  ['Restaurante','https://jorge2610g.github.io/yummy-restaurante-pruebas/'],
+  ['Retail','https://jorge2610g.github.io/yummy-retail-pruebas/'],
+  ['Profesionales','https://jorge2610g.github.io/yummy-profesionales-pruebas/'],
+  ['Streaming','https://jorge2610g.github.io/yummy-streaming-pruebas/'],
+  ['Cliente','https://jorge2610g.github.io/yummy-cliente-pruebas/']
+ ];
+ const ADMIN_PRODUCTION_LINKS=[
+  ['Admin','https://admin.yummypro.online/'],
+  ['Restaurante','https://web.yummypro.online/'],
+  ['Retail','https://retail.yummypro.online/'],
+  ['Profesionales','https://pro.yummypro.online/'],
+  ['Streaming','https://streaming.yummypro.online/'],
+  ['Cliente','https://menu.yummypro.online/']
+ ];
+ function isAdminTestsEnvironment(){
+  return location.hostname.toLowerCase().includes('github.io')&&location.pathname.toLowerCase().includes('/yummy-admin-pruebas');
+ }
+ function installAdminEnvironmentAccessStyle(){
+  if(document.getElementById('admin-environment-access-style'))return;
+  const style=document.createElement('style');
+  style.id='admin-environment-access-style';
+  style.textContent='#adminSideMenu .admin-env-trigger{width:100%;min-height:42px;padding:4px 6px;gap:9px;border:1px solid transparent;border-radius:11px;background:transparent;color:var(--mut);display:flex;align-items:center;text-align:left;cursor:pointer}#adminSideMenu .admin-env-trigger:hover,#adminSideMenu .admin-env-trigger.active{background:color-mix(in srgb,var(--a) 9%,var(--surface-2));border-color:color-mix(in srgb,var(--a) 28%,var(--line));color:var(--txt)}#adminSideMenu .admin-env-trigger .nav-icon{display:grid;place-items:center}#adminSideMenu.collapsed .admin-env-trigger{width:42px;min-width:42px;max-width:42px;height:42px;min-height:42px;padding:0;margin:0 auto;display:grid;place-items:center}#adminSideMenu.collapsed .admin-env-trigger .nav-label{display:none}#adminEnvironmentAccess .admin-env-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}#adminEnvironmentAccess .admin-env-card{min-height:110px;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--card);display:flex;flex-direction:column;justify-content:space-between;gap:12px;text-decoration:none;color:inherit;box-shadow:0 8px 22px color-mix(in srgb,var(--shadow) 45%,transparent)}#adminEnvironmentAccess .admin-env-card:hover{border-color:color-mix(in srgb,var(--a) 45%,var(--line));transform:translateY(-1px)}#adminEnvironmentAccess .admin-env-card b{font-size:15px}#adminEnvironmentAccess .admin-env-card small{color:var(--mut);line-height:1.35}#adminEnvironmentAccess .admin-env-arrow{font-size:20px;align-self:flex-end}@media(max-width:800px){#adminSideMenu .admin-env-trigger{width:100%;min-height:44px;padding:6px 7px;gap:9px}#adminEnvironmentAccess .admin-env-grid{grid-template-columns:1fr;gap:9px}#adminEnvironmentAccess .admin-env-card{min-height:86px;padding:13px;border-radius:13px}}';
+  document.head.appendChild(style);
+ }
+ function renderAdminEnvironmentAccessPanel(){
+  const isTests=isAdminTestsEnvironment();
+  const links=isTests?ADMIN_PRODUCTION_LINKS:ADMIN_TEST_LINKS;
+  const section=document.getElementById('adminEnvironmentAccess');
+  if(!section)return;
+  const destination=isTests?'Producción':'Pruebas';
+  section.innerHTML='<div class="card"><div class="section-heading"><div><span class="eyebrow">YummyPro · '+destination+'</span><h2>'+(isTests?'Volver a Producción':'Accesos de Prueba')+'</h2><p class="mut">Selecciona el módulo. La página de '+destination+' se abrirá en una pestaña nueva.</p></div></div><div class="admin-env-grid">'+links.map(([label,url])=>'<a class="admin-env-card" href="'+url+'" target="_blank" rel="noopener noreferrer"><div><b>'+label+' · '+destination+'</b><small>Abrir '+label+' en '+destination+'.</small></div><span class="admin-env-arrow">↗</span></a>').join('')+'</div></div>';
+ }
+ function openAdminEnvironmentAccess(){
+  if(typeof isSuperAdmin!=='undefined'&&!isSuperAdmin)return toast('Acceso exclusivo del administrador general');
+  const section=document.getElementById('adminEnvironmentAccess');
+  const trigger=document.querySelector('[data-yummy-environment-access="trigger"]');
+  if(!section||!trigger)return;
+  document.querySelectorAll('#adminSideMenu .tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+  document.getElementById('adminAuthenticatedActivity')?.classList.add('hidden');
+  document.getElementById('adminRestaurantScopeBar')?.style.setProperty('display','none');
+  renderAdminEnvironmentAccessPanel();
+  section.classList.add('active');
+  trigger.classList.add('active');
+  if(typeof window.closeAdminSideMenu==='function')window.closeAdminSideMenu();
+ }
+ window.openAdminEnvironmentAccess=openAdminEnvironmentAccess;
+ function installAdminEnvironmentAccess(){
+  const tabs=document.querySelector('#adminSideMenu .tabs');
+  const firstSection=document.querySelector('.section');
+  if(!tabs||!firstSection)return;
+  installAdminEnvironmentAccessStyle();
+  let section=document.getElementById('adminEnvironmentAccess');
+  if(!section){
+   section=document.createElement('section');
+   section.id='adminEnvironmentAccess';
+   section.className='section';
+   firstSection.parentElement.appendChild(section);
+   renderAdminEnvironmentAccessPanel();
+  }
+  if(!tabs.querySelector('[data-yummy-environment-access="trigger"]')){
+   const trigger=document.createElement('button');
+   trigger.type='button';
+   trigger.className='admin-env-trigger admin-only';
+   trigger.dataset.yummyEnvironmentAccess='trigger';
+   trigger.title=isAdminTestsEnvironment()?'Acceso a Producción':'Acceso a Pruebas';
+   trigger.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7h11M8 12h11M8 17h11"/><circle cx="4" cy="7" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="17" r="1"/></svg></span><span class="nav-label">'+trigger.title+'</span>';
+   trigger.addEventListener('click',openAdminEnvironmentAccess);
+   const releaseItem=[...tabs.children].find(el=>/lanzar\s+producci/i.test(String(el.textContent||'')));
+   releaseItem?.after(trigger);
+   if(!trigger.isConnected)tabs.appendChild(trigger);
+   tabs.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>trigger.classList.remove('active')));
+  }
+ }
+
  function refreshStreamingAdminUi(){
   installStreamingBusinessOptions();
+  installAdminEnvironmentAccess();
   const copy=document.querySelector('#restaurants .card p.mut');if(copy&&copy.textContent.includes('Restaurantes, supermercados'))copy.textContent='Restaurantes, retail, profesionales y negocios Streaming administrados desde la misma plataforma.';
   refreshStreamingSummaryCard();
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',refreshStreamingAdminUi);else refreshStreamingAdminUi();
- const observer=new MutationObserver(()=>installStreamingBusinessOptions());
+ const observer=new MutationObserver(()=>{installStreamingBusinessOptions();installAdminEnvironmentAccess()});
  observer.observe(document.documentElement,{subtree:true,childList:true});
  setTimeout(refreshStreamingAdminUi,250);
 })();
