@@ -40,10 +40,10 @@ Deno.serve(async(req:Request)=>{
     const anonKey=Deno.env.get("SUPABASE_ANON_KEY")||Deno.env.get("SUPABASE_PUBLISHABLE_KEY")||"";
     const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||"";
     const cfToken=Deno.env.get("CLOUDFLARE_API_TOKEN")||"";
-    const cfZone=Deno.env.get("CLOUDFLARE_ZONE_ID")||"";
-    const originHost=Deno.env.get("CLOUDFLARE_CUSTOM_DOMAIN_ORIGIN")||"domains.yummypro.online";
+    let cfZone=Deno.env.get("CLOUDFLARE_ZONE_ID")||"";
+    const cfZoneName=Deno.env.get("CLOUDFLARE_ZONE_NAME")||"yummypro.online";
 
-    if(!cfToken||!cfZone){
+    if(!cfToken){
       return json({error:"Cloudflare todavía no está configurado en Staging",code:"cloudflare_not_configured"},503);
     }
 
@@ -65,11 +65,19 @@ Deno.serve(async(req:Request)=>{
 
     const pending=state?.pending||null;
     if(!pending?.hostname)return json({error:"No hay dominio pendiente"},400);
+    const originHost=String(pending?.cname_target||Deno.env.get("CLOUDFLARE_CUSTOM_DOMAIN_ORIGIN")||"domains.yummypro.online").toLowerCase();
     if(!["dns_verified","provisioning"].includes(String(pending.status))){
       return json({error:"Primero debes verificar los registros DNS",status:pending.status},409);
     }
 
     const hostname=String(pending.hostname).toLowerCase();
+
+    if(!cfZone){
+      const zones=await cfFetch("/zones?name="+encodeURIComponent(cfZoneName)+"&status=active&per_page=1",{method:"GET"},cfToken);
+      cfZone=String(zones?.result?.[0]?.id||"");
+      if(!cfZone)throw new Error("No se encontró la zona activa "+cfZoneName+" en Cloudflare");
+    }
+
     const {data:domainRow,error:domainError}=await adminClient
       .from("business_custom_domains")
       .select("id,provider_hostname_id,status,ssl_status")
@@ -88,9 +96,7 @@ Deno.serve(async(req:Request)=>{
         method:"POST",
         body:JSON.stringify({
           hostname,
-          custom_origin_server:originHost,
-          custom_origin_sni:originHost,
-          ssl:{method:"txt",type:"dv"},
+          ssl:{method:"http",type:"dv"},
         }),
       },cfToken);
       cfResult=created?.result;
@@ -123,7 +129,7 @@ Deno.serve(async(req:Request)=>{
         p_provider_hostname_id:providerId,
       });
       if(activateError)throw activateError;
-      return json({ok:true,ready:true,hostname,hostname_status:hostnameStatus,ssl_status:sslStatus,activated});
+      return json({ok:true,ready:true,active:true,hostname,hostname_status:hostnameStatus,ssl_status:sslStatus,origin:originHost,activated});
     }
 
     const {error:updateError}=await adminClient.from("business_custom_domains").update({
@@ -137,6 +143,7 @@ Deno.serve(async(req:Request)=>{
     return json({
       ok:true,
       ready:false,
+      active:false,
       hostname,
       hostname_status:hostnameStatus,
       ssl_status:sslStatus,
