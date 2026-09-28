@@ -46,14 +46,19 @@ jobs:
 
       - name: Verify Cloudflare API token
         run: |
-          CLEAN_TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '\r\n')"
+          CLEAN_TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '\r\n' | sed -E 's/^[[:space:]]+//;s/[[:space:]]+$//')"
+          CLEAN_TOKEN="$(printf '%s' "$CLEAN_TOKEN" | sed -E 's/^CLOUDFLARE_API_TOKEN[[:space:]]*=[[:space:]]*//I;s/^Bearer[[:space:]]+//I')"
+          CLEAN_TOKEN="$(printf '%s' "$CLEAN_TOKEN" | sed -E 's/^["'"'"'`]+//;s/["'"'"'`]+$//')"
+
+          test -n "$CLEAN_TOKEN" || (echo "Cloudflare API token is empty after normalization." && exit 1)
+
           RESPONSE="$(curl -sS             -H "Authorization: Bearer $CLEAN_TOKEN"             "https://api.cloudflare.com/client/v4/user/tokens/verify")"
 
           SUCCESS="$(printf '%s' "$RESPONSE" | jq -r '.success // false')"
           STATUS="$(printf '%s' "$RESPONSE" | jq -r '.result.status // empty')"
 
           if [ "$SUCCESS" != "true" ] || [ "$STATUS" != "active" ]; then
-            echo "Cloudflare API token verification failed."
+            echo "Cloudflare API token verification failed after safe normalization."
             printf '%s' "$RESPONSE" | jq -r '.errors[]?.message // empty'
             exit 1
           fi
