@@ -127,3 +127,16 @@ Al preparar el release del panel central de ambientes se detectó que el Centro 
 Causa confirmada: el workflow `Auditor IA de Pruebas` no se ejecuta ante cambios en `admin-streaming-access.js` ni ante cambios únicamente documentales. Sus ejecuciones programadas se estaban resolviendo sobre `main`, cuyo SHA seguía siendo `0fca9afb2afaf377553cacdd1443d2fb7b767f18`, mientras `staging` ya estaba en `7a8520a16f98c1adf33f0d0fad5778cfe3efcf56`.
 
 Resolución aplicada: documentar la incidencia, actualizar `.ai-audit-trigger` en `staging` para obligar una auditoría sobre el HEAD final y publicar ese mismo SHA exacto en `yummy-admin-pruebas`. No promover a Producción hasta que Auditor IA, Calidad, Smoke y guard de ambiente estén en verde para el mismo HEAD.
+
+
+## Incidencia Auditor IA · CORS opcional de ipapi.co
+
+En el Auditor IA run #91, sobre el SHA `381f7c18fd7ffa305f20e2ea9dbef7bb93150463`, Admin desktop y Admin mobile pasaron sin fallos visuales. El gate terminó en failure porque Restaurante, Retail, Profesionales y Streaming registraron, tanto en escritorio como en móvil, dos mensajes de consola producidos por el servicio externo opcional `https://ipapi.co/json/`: bloqueo CORS y `net::ERR_FAILED`.
+
+El informe objetivo mostró 8 recorridos fallidos por ese mismo motivo. No hubo publicaciones desalineadas y los paneles autenticaron/cargaron correctamente. También aparecieron métricas visuales informativas dentro de algunas pestañas (por ejemplo overflow en tablas/POS), pero esas métricas no fueron la causa del failure del run #91.
+
+Corrección aplicada en `tests/system-auditor.mjs`: cuando `ipapi.co/json/` falla por CORS/ERR_FAILED, el auditor conserva la evidencia en `ignoredConsoleErrors` pero no la convierte en error del producto, porque la detección de país dispone de fallback y la aplicación continúa funcionando. Los demás errores de consola siguen bloqueando normalmente.
+
+Commit funcional inicial de esta corrección: `d8433964e94319395ab9c972428418c425a4ddda`.
+
+Antes del release debe existir un Auditor IA posterior en verde cuyo `head_sha` sea exactamente el HEAD final de `staging`, junto con Calidad, Smoke y environment guard en verde para ese mismo SHA.
