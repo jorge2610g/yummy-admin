@@ -70,6 +70,23 @@ Trigger `restaurants_verified_custom_domain_guard`:
 
 Nadie puede escribir arbitrariamente `restaurants.custom_domain` salvo que exista un registro `business_custom_domains` activo para ese mismo negocio/hostname. Limpiar el dominio a NULL sí está permitido.
 
+### Requisito de plan
+
+Los dominios personalizados son exclusivos de cuentas con plan **Pro** y suscripción en
+estado **active**. La interfaz lo comunica antes de iniciar el proceso y las funciones de
+base de datos vuelven a validarlo al solicitar y al activar el dominio; no puede omitirse
+desde el navegador ni desde una llamada directa a la API.
+
+### Instrucciones que verá el negocio
+
+1. Escribir el dominio público, por ejemplo `www.minegocio.com`, sin `https://` ni rutas.
+2. Pulsar **Conectar dominio**.
+3. Crear exactamente el TXT y CNAME que YummyPro muestra en el proveedor DNS.
+4. Esperar la propagación y pulsar **Verificar DNS**. HTTPS se aprovisiona automáticamente.
+
+YummyPro no solicita transferir la propiedad del dominio. El negocio no debe eliminar sus
+registros existentes de correo o web.
+
 ### Streaming
 
 `streaming_public_catalog(p_ref text)` ahora acepta:
