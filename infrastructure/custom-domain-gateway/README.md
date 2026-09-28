@@ -74,3 +74,60 @@ Antes de desplegar:
 - ningún hostname puede reclamar otro `restaurant_id`
 
 Ver también `docs/CUSTOM_DOMAINS.md`.
+
+
+## Estado Staging · 2026-09-28
+
+La automatización de Staging ya está versionada:
+
+- `wrangler.toml` despliega `yummypro-custom-domain-staging` primero a `workers.dev`.
+- `.github/workflows/cloudflare-gateway-staging.yml` valida, despliega y comprueba `/__yummy_health`.
+- `configure-saas-staging.mjs` prepara de forma conservadora el fallback `domains-pruebas.yummypro.online`.
+- El script **no crea** la ruta global `*/*`.
+- Para una prueba real, `provision-business-domain` crea una ruta Worker únicamente para el dominio de prueba después de que ese dominio haya pasado la verificación DNS.
+
+### Único secreto nuevo requerido
+
+GitHub Repository Secret:
+
+`CLOUDFLARE_API_TOKEN`
+
+No copiar el token a archivos ni commits.
+
+`CLOUDFLARE_ACCOUNT_ID` es opcional. Si no existe, el workflow intenta resolverlo automáticamente cuando el token solo puede ver una cuenta. Si el token ve varias cuentas, el workflow se detiene sin modificar Cloudflare y pide ese ID explícito.
+
+El workflow reutiliza el secreto existente `STAGING_DB_PASSWORD` para guardar el token cifrado en **Supabase Vault Staging** con el nombre `cloudflare_api_token`. El Edge Function `provision-business-domain` lo lee mediante una función accesible únicamente a `service_role`.
+
+### Permisos mínimos previstos para el token Cloudflare
+
+Para completar todo el flujo de Staging el token debe estar limitado a la cuenta/zona de YummyPro y permitir:
+
+- Account: **Workers Scripts Write**.
+- Account: **Account Settings Read** (para resolver la cuenta cuando no se proporciona `CLOUDFLARE_ACCOUNT_ID`).
+- Zone `yummypro.online`: **Zone Read**.
+- Zone `yummypro.online`: **DNS Write**.
+- Zone `yummypro.online`: **SSL and Certificates Write**.
+- Zone `yummypro.online`: **Workers Routes Write**.
+
+No dar permisos de administración global que no sean necesarios.
+
+### Bloqueo externo actual
+
+El primer run de `Cloudflare Gateway Staging` llegó correctamente al paso de credenciales y se detuvo porque `CLOUDFLARE_API_TOKEN` todavía no existe en GitHub Secrets. No se ejecutó Wrangler, no se modificó DNS de Cloudflare y Producción quedó intacta.
+
+Una vez agregado el secreto, volver a ejecutar el workflow. El flujo esperado es:
+
+1. resolver cuenta;
+2. cifrar el token en Supabase Vault Staging;
+3. validar bundle;
+4. desplegar Worker a `workers.dev`;
+5. comprobar health;
+6. crear/validar el fallback DNS originless de Pruebas;
+7. configurar el fallback SaaS solo si no existe una configuración incompatible;
+8. dejar pendiente un dominio real de prueba para TXT + CNAME + Custom Hostname + SSL.
+
+### Seguridad de rutas
+
+Cloudflare recomienda `*/*` para capturar todos los vanity domains de un SaaS. **No usar esa ruta durante esta etapa de Staging**, porque la zona `yummypro.online` también contiene los hostnames oficiales de Producción.
+
+En Staging se usa una ruta específica por dominio real de prueba. El wildcard se evaluará únicamente durante un release de infraestructura autorizado y después de definir passthrough/exclusiones para los hostnames oficiales.
