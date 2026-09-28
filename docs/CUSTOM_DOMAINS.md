@@ -395,3 +395,174 @@ No considerar completa una corrección del panel Dominio solo porque la publicac
 5. `main` continúa intacto hasta release autorizado.
 
 El siguiente trabajo de dominios personalizados continúa siendo Cloudflare/gateway + prueba DNS/SSL end-to-end. Esta corrección de UI no activa por sí sola dominios reales.
+
+
+## Estado Cloudflare / gateway · cierre de esta etapa
+
+Fecha: 2026-09-28  
+Este apartado **reemplaza** cualquier instrucción anterior de este documento que todavía diga que se necesitan manualmente `CLOUDFLARE_ZONE_ID` o `CLOUDFLARE_CUSTOM_DOMAIN_ORIGIN`.
+
+### Separación de ambientes terminada
+
+Supabase Staging usa ahora:
+
+`private.runtime_config.custom_domain_cname_target = domains-pruebas.yummypro.online`
+
+Migración aplicada y versionada:
+
+- `20260928172228_custom_domain_environment_target`
+
+Producción deberá usar `domains.yummypro.online` únicamente durante un release autorizado.
+
+Cliente y Streaming públicos aceptan ahora `window.__YUMMY_ENV`, que el gateway inyecta en el HTML. Esto evita que un hostname real usado durante Pruebas seleccione por error Supabase Producción.
+
+SHAs validados de esta separación:
+
+- Cliente / `mipagina staging`: `e174733ec01dfb14b6916e407515be5a0611481f` · quality ✅ · guard ✅ · smoke ✅ · Cliente Pruebas publicado ✅.
+- Streaming: `9cbf6ff2f6839e5a983d5cfe175e139e3c615302` · quality ✅ · guard ✅ · smoke ✅ · Streaming Pruebas publicado ✅.
+
+### Edge Function actual
+
+`provision-business-domain` está ACTIVE en Supabase Staging, versión **7**.
+
+Comportamiento vigente:
+
+1. valida sesión y autorización del negocio;
+2. exige DNS verificado;
+3. obtiene el token Cloudflare primero desde la variable de entorno y, si no existe, desde Supabase Vault;
+4. resuelve automáticamente la zona activa `yummypro.online` si no se proporciona Zone ID;
+5. crea/consulta el Custom Hostname con validación SSL HTTP;
+6. en Staging crea una ruta Worker **solo para el hostname de prueba**, apuntando a `yummypro-custom-domain-staging`;
+7. solo activa `restaurants.custom_domain` cuando Custom Hostname y SSL están ambos en `active`.
+
+No se usa wildcard `*/*` en Staging.
+
+### Token Cloudflare en Vault
+
+Migración aplicada y versionada:
+
+- `20260928172828_custom_domain_cloudflare_vault_secret`
+
+Función:
+
+- `service_get_runtime_secret(text)`
+
+Permisos comprobados:
+
+- anon: NO execute
+- authenticated: NO execute
+- service_role: SÍ execute
+
+El token se guardará cifrado en Supabase Vault con nombre:
+
+`cloudflare_api_token`
+
+Estado al cierre: **el secreto todavía no existe** en Vault.
+
+### Worker Staging
+
+Worker:
+
+`yummypro-custom-domain-staging`
+
+Archivos:
+
+- `infrastructure/custom-domain-gateway/worker.js`
+- `infrastructure/custom-domain-gateway/wrangler.toml`
+- `infrastructure/custom-domain-gateway/configure-saas-staging.mjs`
+- `.github/workflows/cloudflare-gateway-staging.yml`
+
+El Worker:
+
+- resuelve el negocio por hostname;
+- enruta Restaurante/Retail/Profesionales hacia Cliente Pruebas;
+- enruta Streaming hacia Streaming Pruebas;
+- conserva rutas/assets bajo los subpaths de GitHub Pages;
+- inyecta `window.__YUMMY_ENV="staging"`;
+- expone `/__yummy_health`;
+- nunca recibe service_role ni token Cloudflare.
+
+### Bootstrap Cloudflare seguro
+
+El workflow `Cloudflare Gateway Staging` está preparado para:
+
+1. comprobar `CLOUDFLARE_API_TOKEN`;
+2. resolver automáticamente la cuenta Cloudflare cuando el token solo ve una;
+3. reutilizar `STAGING_DB_PASSWORD` existente;
+4. almacenar el token cifrado en Supabase Vault;
+5. validar el bundle Wrangler;
+6. desplegar el Worker a `workers.dev`;
+7. comprobar `/__yummy_health`;
+8. resolver la zona `yummypro.online`;
+9. crear, solo si no existe, el DNS originless/proxied:
+   `domains-pruebas.yummypro.online AAAA 100::`;
+10. configurar ese hostname como fallback de Cloudflare for SaaS solo si no existe una configuración incompatible.
+
+Protecciones:
+
+- si el fallback existente es distinto, se detiene;
+- si `domains-pruebas.yummypro.online` tiene DNS inesperado, se detiene;
+- si hay Custom Hostnames existentes en una situación ambigua, se detiene;
+- si detecta el Worker de Staging conectado a `*/*`, se detiene;
+- no reemplaza silenciosamente infraestructura previa.
+
+### Evidencia del bloqueo actual
+
+Runs de `Cloudflare Gateway Staging` llegaron correctamente al paso de credenciales y se detuvieron antes de ejecutar Wrangler/Cloudflare porque el secreto no existe.
+
+Run más reciente verificado antes de este cierre:
+
+- `36459480882`
+- fallo en: `Validate required secret`
+- pasos de resolver cuenta, Vault, Wrangler, deploy, health y fallback: skipped.
+
+Por tanto:
+
+- Cloudflare DNS no fue modificado.
+- No se desplegó Worker todavía.
+- No se creó fallback.
+- No se creó wildcard.
+- Producción sigue intacta.
+
+### Único dato externo pendiente
+
+Crear en GitHub, repositorio `jorge2610g/yummy-admin`, el Repository Secret:
+
+`CLOUDFLARE_API_TOKEN`
+
+**Nunca pegar el valor en un chat, issue, commit o archivo.**
+
+Permisos previstos, limitados a la cuenta/zona YummyPro:
+
+- Account · Workers Scripts Write
+- Account · Account Settings Read
+- Zone `yummypro.online` · Zone Read
+- Zone `yummypro.online` · DNS Write
+- Zone `yummypro.online` · SSL and Certificates Write
+- Zone `yummypro.online` · Workers Routes Write
+
+`CLOUDFLARE_ACCOUNT_ID` es opcional. Solo será necesario si el token puede ver más de una cuenta.
+
+### Trigger para continuar desde ChatGPT
+
+Archivo:
+
+`.cloudflare-staging-trigger`
+
+Cuando el secreto ya exista, otra IA **no necesita pedir al usuario que ejecute Actions manualmente**. Debe actualizar ese archivo en `staging` para disparar `Cloudflare Gateway Staging`, seguir el run hasta completarlo y documentar la URL `workers.dev` resultante.
+
+### Después del token
+
+Cuando el workflow quede verde todavía falta una prueba real con un dominio/subdominio controlado por el usuario:
+
+1. registrar el dominio desde el panel YummyPro de Pruebas;
+2. crear TXT y CNAME mostrados por la UI;
+3. usar CNAME hacia `domains-pruebas.yummypro.online`;
+4. verificar DNS;
+5. dejar que `provision-business-domain` cree Custom Hostname + ruta Worker específica;
+6. esperar SSL active;
+7. abrir el dominio real y confirmar que usa Staging;
+8. probar Restaurante/Retail/Profesionales o Streaming según el negocio;
+9. retirar el dominio de prueba si no se conservará.
+
+No promover estas migraciones ni el gateway a Producción hasta completar esa prueba real end-to-end.
