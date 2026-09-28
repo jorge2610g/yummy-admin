@@ -20,9 +20,12 @@ jobs:
   deploy:
     if: github.ref == 'refs/heads/staging'
     runs-on: ubuntu-latest
+
     env:
+      STAGING_PROJECT_REF: wodqqheeesrelsbacmgx
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      STAGING_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
 
     steps:
       - name: Checkout staging
@@ -35,13 +38,59 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Validate Cloudflare credentials
+      - name: Validate required secret
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || (echo "Missing GitHub secret: CLOUDFLARE_API_TOKEN" && exit 1)
-          test -n "$CLOUDFLARE_ACCOUNT_ID" || (echo "Missing GitHub secret: CLOUDFLARE_ACCOUNT_ID" && exit 1)
+          test -n "$STAGING_DB_PASSWORD" || (echo "Missing GitHub secret: STAGING_DB_PASSWORD" && exit 1)
+
+      - name: Resolve Cloudflare account
+        run: |
+          if [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "Cloudflare account id supplied explicitly."
+            exit 0
+          fi
+
+          RESPONSE="$(curl -fsS             -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"             "https://api.cloudflare.com/client/v4/accounts?per_page=50")"
+
+          SUCCESS="$(printf '%s' "$RESPONSE" | jq -r '.success')"
+          test "$SUCCESS" = "true" || (echo "Cloudflare token could not list accounts." && exit 1)
+
+          COUNT="$(printf '%s' "$RESPONSE" | jq '.result | length')"
+          if [ "$COUNT" -ne 1 ]; then
+            echo "The token can access $COUNT Cloudflare accounts. Add optional GitHub secret CLOUDFLARE_ACCOUNT_ID to disambiguate."
+            exit 1
+          fi
+
+          ACCOUNT_ID="$(printf '%s' "$RESPONSE" | jq -r '.result[0].id')"
+          test -n "$ACCOUNT_ID" || (echo "Cloudflare account id could not be resolved." && exit 1)
+          echo "CLOUDFLARE_ACCOUNT_ID=$ACCOUNT_ID" >> "$GITHUB_ENV"
+
+      - name: Save Cloudflare token encrypted in Supabase Staging Vault
+        env:
+          PGPASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: |
+          EXISTING_ID="$(docker run --rm             -e PGPASSWORD="$PGPASSWORD"             postgres:17             psql               --host="aws-0-sa-east-1.pooler.supabase.com"               --port=5432               --username="postgres.$STAGING_PROJECT_REF"               --dbname=postgres               --tuples-only               --no-align               --command="select id from vault.secrets where name='cloudflare_api_token' order by updated_at desc limit 1;"             | tr -d '[:space:]')"
+
+          if [ -n "$EXISTING_ID" ]; then
+            docker run --rm               -e PGPASSWORD="$PGPASSWORD"               postgres:17               psql                 --host="aws-0-sa-east-1.pooler.supabase.com"                 --port=5432                 --username="postgres.$STAGING_PROJECT_REF"                 --dbname=postgres                 --set=ON_ERROR_STOP=1                 --set="secret_id=$EXISTING_ID"                 --set="cf_token=$CLOUDFLARE_API_TOKEN"                 --command="select vault.update_secret(:'secret_id'::uuid, :'cf_token', 'cloudflare_api_token', 'YummyPro Cloudflare for SaaS · Staging');"
+          else
+            docker run --rm               -e PGPASSWORD="$PGPASSWORD"               postgres:17               psql                 --host="aws-0-sa-east-1.pooler.supabase.com"                 --port=5432                 --username="postgres.$STAGING_PROJECT_REF"                 --dbname=postgres                 --set=ON_ERROR_STOP=1                 --set="cf_token=$CLOUDFLARE_API_TOKEN"                 --command="select vault.create_secret(:'cf_token', 'cloudflare_api_token', 'YummyPro Cloudflare for SaaS · Staging');"
+          fi
 
       - name: Validate Worker bundle
         run: npx --yes wrangler@4.142.0 deploy --dry-run --config infrastructure/custom-domain-gateway/wrangler.toml
 
       - name: Deploy staging Worker to workers.dev
-        run: npx --yes wrangler@4.142.0 deploy --config infrastructure/custom-domain-gateway/wrangler.toml
+        run: |
+          set -o pipefail
+          npx --yes wrangler@4.142.0 deploy             --config infrastructure/custom-domain-gateway/wrangler.toml             2>&1 | tee /tmp/wrangler-deploy.log
+
+          WORKER_URL="$(grep -Eo 'https://[A-Za-z0-9._-]+\.workers\.dev' /tmp/wrangler-deploy.log | tail -1)"
+          test -n "$WORKER_URL" || (echo "Worker URL was not found in Wrangler output." && exit 1)
+          echo "WORKER_URL=$WORKER_URL" >> "$GITHUB_ENV"
+
+      - name: Verify staging Worker health
+        run: |
+          BODY="$(curl -fsS "$WORKER_URL/__yummy_health")"
+          printf '%s' "$BODY" | jq -e '.ok == true and .environment == "staging"' >/dev/null
+          echo "Cloudflare staging gateway health check passed."
