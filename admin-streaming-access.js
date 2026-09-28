@@ -93,6 +93,9 @@
   if(!local||!isStreamingType(local.business_type))return originalOpenRestaurantPanel?originalOpenRestaurantPanel(id,section):undefined;
   if(!isSuperAdmin)return toast('Acceso exclusivo del administrador general');
   if(!originalOpenRestaurantPanel)return toast('No se pudo iniciar la vista administrativa.');
+
+  // Streaming usa exactamente el mismo ticket temporal de un solo uso que el resto de YummyPro.
+  // Nunca se comparte el access_token ni el refresh_token de la sesión principal del administrador.
   return originalOpenRestaurantPanel(id,section);
  };
 
