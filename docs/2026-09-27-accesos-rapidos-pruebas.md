@@ -119,3 +119,11 @@ No promover a Producción hasta que, sobre el mismo HEAD final de `staging`, est
 No volver al diseño de seis botones visibles en el hamburguesa. El requisito vigente es **un solo botón de ambiente + una sección interna con seis destinos** y comportamiento reversible: Producción → Pruebas, Admin Pruebas → Producción.
 
 El código funcional quedó en `ddbe6ab`; `8a75e71` fue validado con todos los gates en verde. Este archivo se actualizó después para registrar esas evidencias, por lo que la siguiente IA debe mirar el HEAD de `staging` y comprobar que los gates del HEAD documental final también estén verdes. Si están verdes, puede prepararse el release; tras promover, verificar `main = staging` y documentar el SHA final de Producción.
+
+## Incidencia previa al release · Auditor IA
+
+Al preparar el release del panel central de ambientes se detectó que el Centro de lanzamientos rechazaba el lanzamiento con el mensaje de que el Auditor IA no correspondía al SHA actual de Admin Pruebas.
+
+Causa confirmada: el workflow `Auditor IA de Pruebas` no se ejecuta ante cambios en `admin-streaming-access.js` ni ante cambios únicamente documentales. Sus ejecuciones programadas se estaban resolviendo sobre `main`, cuyo SHA seguía siendo `0fca9afb2afaf377553cacdd1443d2fb7b767f18`, mientras `staging` ya estaba en `7a8520a16f98c1adf33f0d0fad5778cfe3efcf56`.
+
+Resolución aplicada: documentar la incidencia, actualizar `.ai-audit-trigger` en `staging` para obligar una auditoría sobre el HEAD final y publicar ese mismo SHA exacto en `yummy-admin-pruebas`. No promover a Producción hasta que Auditor IA, Calidad, Smoke y guard de ambiente estén en verde para el mismo HEAD.
