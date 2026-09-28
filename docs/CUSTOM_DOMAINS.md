@@ -156,15 +156,55 @@ Ahora un hostname personalizado:
 
 ## CI comprobado hasta ahora
 
-En los HEAD funcionales:
+En los HEAD funcionales actuales:
 
-- Restaurante: quality ✅ / environment guard ✅ / smoke estaba ejecutándose al último chequeo.
-- Retail: quality ✅ / environment guard ✅ / smoke estaba ejecutándose.
-- Profesionales: quality ✅ / environment guard ✅ / smoke estaba ejecutándose.
-- Streaming: quality ✅ / environment guard ✅ / smoke estaba ejecutándose.
-- Cliente: quality ✅ / environment guard ✅ / smoke estaba ejecutándose.
+- Restaurante `6a379668b528f089a5ce886e604c50819403be3a`: quality ✅ / environment guard ✅ / smoke ✅.
+- Retail `74ad17f05402c9dbcf5c2b48dfd206be90c8447c`: quality ✅ / environment guard ✅ / smoke ✅.
+- Profesionales `d877a1aa3d0ac9a3355d9e416b2e21b34781ba21`: quality ✅ / environment guard ✅ / smoke ✅.
+- Streaming `380aacdbda2613986105476c604e04c2d5b5bb89`: quality ✅ / environment guard ✅ / smoke ✅.
+- Cliente `d55253bd00e0383de7465038fbd9ea73f17b1fdd`: quality ✅ / environment guard ✅ / smoke ✅.
 
-Volver a comprobar los smoke antes de continuar a release.
+Los smoke iniciales vencieron esperando la publicación de los repositorios `*-pruebas`. Después de publicar los SHAs exactos, se relanzaron los jobs fallidos y los cinco terminaron en `success`.
+
+## Aprovisionamiento Cloudflare preparado en backend
+
+Edge Function Staging:
+
+`provision-business-domain`
+
+Estado: ACTIVE · verify_jwt=true.
+
+La función ya implementa el flujo de backend:
+
+1. autentica al usuario;
+2. confirma que administra el negocio;
+3. exige estado `dns_verified`;
+4. crea el Custom Hostname en Cloudflare si todavía no existe;
+5. guarda `provider_hostname_id`;
+6. consulta los estados del hostname y SSL;
+7. solo cuando ambos están en `active`, llama a `service_activate_business_custom_domain`.
+
+La función requiere secretos que **todavía no están configurados**:
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ZONE_ID`
+- opcional `CLOUDFLARE_CUSTOM_DOMAIN_ORIGIN` (default: `domains.yummypro.online`)
+
+Si faltan, responde `cloudflare_not_configured` y no modifica un dominio como activo.
+
+## Gateway versionado
+
+Archivos:
+
+- `infrastructure/custom-domain-gateway/worker.js`
+- `infrastructure/custom-domain-gateway/README.md`
+
+El Worker resuelve el negocio por `custom_domain` usando la API pública/RLS de Producción y enruta:
+
+- Restaurante / Retail / Profesionales → `menu.yummypro.online`
+- Streaming → `streaming.yummypro.online/catalogo`
+
+Este código está versionado pero **no desplegado**.
 
 ## Infraestructura que FALTA
 
@@ -196,17 +236,11 @@ La opción prevista es un Cloudflare Worker detrás de Cloudflare for SaaS.
 ## Siguiente paso exacto
 
 1. Confirmar todos los smoke tests actuales.
-2. Implementar/versionar el Worker `custom-domain-gateway`.
-3. Configurar `domains.yummypro.online` como fallback/gateway en Cloudflare.
-4. Crear una Edge Function de aprovisionamiento que:
-   - requiera usuario autorizado
-   - solo procese registros `dns_verified`
-   - llame a Cloudflare Custom Hostnames
-   - almacene el provider hostname id
-   - consulte estado/SSL
-   - active el dominio solo al estar ambos en `active`.
-5. Probar con **un dominio de pruebas real**.
-6. Ejecutar Auditor/quality/smoke.
+2. Configurar/desplegar el Worker `custom-domain-gateway` en Cloudflare.
+3. Configurar `domains.yummypro.online` como fallback/gateway de Cloudflare for SaaS.
+4. Cargar de forma segura los secretos Cloudflare requeridos por `provision-business-domain`.
+5. Probar con **un dominio de pruebas real** el ciclo completo: solicitud → TXT/CNAME → verificación → Custom Hostname → SSL → active → carga pública.
+6. Ejecutar Auditor/quality/smoke end-to-end.
 7. Solo entonces preparar el release coordinado.
 8. Aplicar la migración a Producción únicamente durante el release autorizado.
 
@@ -227,3 +261,15 @@ No recrear la tabla ni los RPC desde cero: la migración `20260928061509_busines
 No usar `custom_domain` como “activo” antes de SSL. La fuente de verdad del proceso es `business_custom_domains`; `restaurants.custom_domain` solo se rellena al final.
 
 No promover nada a Producción hasta cerrar el gateway externo y una prueba real end-to-end.
+
+
+## Verificación de permisos realizada
+
+En Supabase Staging se comprobó:
+
+- normalización: `https://WWW.Example.com/path` → `www.example.com`;
+- `anon` NO puede ejecutar get/request de dominio;
+- `authenticated` SÍ puede ejecutar get/request, pero las funciones validan `can_manage_restaurant`;
+- `authenticated` NO puede ejecutar `service_activate_business_custom_domain`;
+- `service_role` SÍ puede ejecutar la activación;
+- al cierre de esta etapa no se insertaron dominios de negocio reales en Staging (`business_custom_domains` tenía 0 filas).
