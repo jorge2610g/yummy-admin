@@ -15,15 +15,16 @@ const PLATFORM_HOSTS = new Set([
   "menu.yummypro.online",
   "streaming.yummypro.online",
   "domains.yummypro.online",
+  "domains-pruebas.yummypro.online",
 ]);
 
 function normalizeHost(host) {
-  return String(host || "").trim().toLowerCase().replace(/:\d+$/, "").replace(/^www\./, "");
+  return String(host || "").trim().toLowerCase().replace(/:\d+$/, "").replace(/\.$/, "");
 }
 
 async function resolveBusiness(hostname, env) {
   const host = normalizeHost(hostname);
-  const bareHost = host.replace(/^www\\./, "");
+  const bareHost = host.replace(/^www\./, "");
   if (!host || PLATFORM_HOSTS.has(host) || PLATFORM_HOSTS.has(bareHost)) return null;
 
   const url = new URL("/rest/v1/restaurants", env.SUPABASE_URL);
@@ -46,22 +47,28 @@ async function resolveBusiness(hostname, env) {
   return Array.isArray(rows) && rows.length ? rows[0] : null;
 }
 
+function appendPath(baseUrl, path) {
+  const base = new URL(baseUrl);
+  const prefix = base.pathname === "/" ? "" : base.pathname.replace(/\/$/, "");
+  const suffix = String(path || "/").startsWith("/") ? String(path || "/") : "/" + String(path || "/");
+  base.pathname = prefix + suffix;
+  return base;
+}
+
 function originTarget(requestUrl, business, env) {
   const incoming = new URL(requestUrl);
   const type = String(business?.business_type || "restaurant").toLowerCase();
 
   if (type === "streaming") {
-    const origin = new URL(env.STREAMING_ORIGIN || "https://streaming.yummypro.online");
     let relative = incoming.pathname || "/";
     if (relative === "/catalogo") relative = "/";
     else if (relative.startsWith("/catalogo/")) relative = relative.slice("/catalogo".length);
-    origin.pathname = "/catalogo" + (relative.startsWith("/") ? relative : "/" + relative);
+    const origin = appendPath(env.STREAMING_ORIGIN || "https://streaming.yummypro.online", "/catalogo" + (relative.startsWith("/") ? relative : "/" + relative));
     origin.search = incoming.search;
     return origin;
   }
 
-  const origin = new URL(env.CLIENT_ORIGIN || "https://menu.yummypro.online");
-  origin.pathname = incoming.pathname;
+  const origin = appendPath(env.CLIENT_ORIGIN || "https://menu.yummypro.online", incoming.pathname || "/");
   origin.search = incoming.search;
   return origin;
 }
@@ -81,15 +88,29 @@ function copyRequest(request, target) {
   });
 }
 
-function withGatewayHeaders(response) {
+function withGatewayHeaders(response, env) {
   const headers = new Headers(response.headers);
   headers.set("x-yummy-domain-gateway", "1");
+  headers.set("x-yummy-environment", env.ENVIRONMENT || "production");
   headers.set("x-content-type-options", "nosniff");
-  return new Response(response.body, {
+  const wrapped = new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers,
   });
+
+  if ((headers.get("content-type") || "").toLowerCase().includes("text/html")) {
+    const environment = JSON.stringify(env.ENVIRONMENT || "production");
+    return new HTMLRewriter()
+      .on("head", {
+        element(element) {
+          element.prepend("<script>window.__YUMMY_ENV=" + environment + ";</script>", { html: true });
+        },
+      })
+      .transform(wrapped);
+  }
+
+  return wrapped;
 }
 
 export default {
@@ -100,6 +121,24 @@ export default {
       }
 
       const incoming = new URL(request.url);
+
+      if (incoming.pathname === "/__yummy_health") {
+        return new Response(JSON.stringify({
+          ok: true,
+          service: "yummypro-custom-domain-gateway",
+          environment: env.ENVIRONMENT || "production",
+          version: "2026-09-28.1",
+        }), {
+          status: 200,
+          headers: {
+            "content-type": "application/json; charset=utf-8",
+            "cache-control": "no-store",
+            "x-yummy-domain-gateway": "1",
+            "x-yummy-environment": env.ENVIRONMENT || "production",
+          },
+        });
+      }
+
       const business = await resolveBusiness(incoming.hostname, env);
 
       if (!business) {
@@ -111,7 +150,7 @@ export default {
 
       const target = originTarget(request.url, business, env);
       const upstream = await fetch(copyRequest(request, target));
-      return withGatewayHeaders(upstream);
+      return withGatewayHeaders(upstream, env);
     } catch (error) {
       console.error("custom-domain-gateway", error);
       return new Response("No se pudo cargar este dominio", {
