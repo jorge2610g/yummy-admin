@@ -1,7 +1,7 @@
 # YummyPro — Panel central de accesos Pruebas / Producción
 
 Fecha: 27 de septiembre de 2026
-Estado: IMPLEMENTADO EN STAGING / PENDIENTE DE GATES DEL HEAD FINAL
+Estado: IMPLEMENTADO Y VALIDADO EN STAGING / LISTO PARA RELEASE TRAS VERIFICAR EL HEAD DOCUMENTAL FINAL
 Repositorio: `jorge2610g/yummy-admin`
 Rama: `staging`
 Versión base visible: `2.3.90`
@@ -34,7 +34,7 @@ En móvil se mantiene exactamente el mismo flujo: un solo botón en el hamburgue
 
 ## Comportamiento reversible por ambiente
 
-El panel detecta el ambiente del Admin:
+El panel detecta el ambiente del Admin.
 
 ### Desde Producción
 
@@ -81,8 +81,18 @@ El HTML principal `index.html` no fue modificado para esta funcionalidad.
 - `108665c03b7dc6460208fdd30c068edf4b4280ad` — restauración de los marcadores de ticket temporal y no compartición de tokens.
 - `5fc5e2c93cdad0a995dd1539df52636d62c9704d` — documentación del estado validado del diseño anterior.
 - `ddbe6abb7dedb245deb03b8786816fe2b0e65d05` — diseño vigente: reemplaza los seis enlaces del hamburguesa por un único botón y una vista interna reversible Pruebas / Producción.
+- `8a75e71b0c0617a6806ec7dda17fcb683e0d22dd` — documentación del diseño vigente y SHA validado funcionalmente.
+- `yummy-admin-pruebas` commit `a5cd272287117ada9ddf9fb5f2b4624d4d5090a2` publicó Admin Pruebas tomando como source `8a75e71b0c0617a6806ec7dda17fcb683e0d22dd`.
 
-Los checks verdes anteriores a `ddbe6ab` corresponden al diseño anterior y no autorizan por sí solos el release del diseño vigente.
+## Validaciones confirmadas sobre `8a75e71`
+
+- `Guardar separación Pruebas-Producción` = **success**.
+- `Smoke GitHub Pages Pruebas` = **success**.
+- `Calidad del panel administrativo` = **success**.
+- Dentro de Calidad: `npm run check` = **success** y `npx playwright test tests/admin.spec.js` = **success**.
+- Publicación `Publicar Admin Pruebas` = **success**.
+
+Los checks verdes anteriores a `ddbe6ab` corresponden al diseño anterior y no deben usarse como evidencia del diseño vigente. La evidencia válida funcional es la de `8a75e71` y cualquier HEAD posterior que solo cambie esta documentación debe volver a comprobar sus gates antes de release.
 
 ## Seguridad y separación de ambientes
 
@@ -108,4 +118,4 @@ No promover a Producción hasta que, sobre el mismo HEAD final de `staging`, est
 
 No volver al diseño de seis botones visibles en el hamburguesa. El requisito vigente es **un solo botón de ambiente + una sección interna con seis destinos** y comportamiento reversible: Producción → Pruebas, Admin Pruebas → Producción.
 
-Revisar el HEAD actual de `staging` y sus workflows. Si los gates del HEAD final están verdes, publicar Admin Pruebas con ese SHA, completar el smoke, y solo después promover a Producción. Tras el release, verificar `main = staging` y documentar el SHA final de Producción.
+El código funcional quedó en `ddbe6ab`; `8a75e71` fue validado con todos los gates en verde. Este archivo se actualizó después para registrar esas evidencias, por lo que la siguiente IA debe mirar el HEAD de `staging` y comprobar que los gates del HEAD documental final también estén verdes. Si están verdes, puede prepararse el release; tras promover, verificar `main = staging` y documentar el SHA final de Producción.
