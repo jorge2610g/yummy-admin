@@ -44,6 +44,23 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN" || (echo "Missing GitHub secret: CLOUDFLARE_API_TOKEN" && exit 1)
           test -n "$STAGING_DB_PASSWORD" || (echo "Missing GitHub secret: STAGING_DB_PASSWORD" && exit 1)
 
+      - name: Verify Cloudflare API token
+        run: |
+          CLEAN_TOKEN="$(printf '%s' "$CLOUDFLARE_API_TOKEN" | tr -d '\r\n')"
+          RESPONSE="$(curl -sS             -H "Authorization: Bearer $CLEAN_TOKEN"             "https://api.cloudflare.com/client/v4/user/tokens/verify")"
+
+          SUCCESS="$(printf '%s' "$RESPONSE" | jq -r '.success // false')"
+          STATUS="$(printf '%s' "$RESPONSE" | jq -r '.result.status // empty')"
+
+          if [ "$SUCCESS" != "true" ] || [ "$STATUS" != "active" ]; then
+            echo "Cloudflare API token verification failed."
+            printf '%s' "$RESPONSE" | jq -r '.errors[]?.message // empty'
+            exit 1
+          fi
+
+          echo "CLOUDFLARE_API_TOKEN=$CLEAN_TOKEN" >> "$GITHUB_ENV"
+          echo "Cloudflare API token is active."
+
       - name: Resolve Cloudflare account from existing zone
         run: |
           if [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
