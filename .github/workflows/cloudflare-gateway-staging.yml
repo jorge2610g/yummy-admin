@@ -8,6 +8,7 @@ on:
     paths:
       - "infrastructure/custom-domain-gateway/**"
       - ".github/workflows/cloudflare-gateway-staging.yml"
+      - ".cloudflare-staging-trigger"
 
 permissions:
   contents: read
