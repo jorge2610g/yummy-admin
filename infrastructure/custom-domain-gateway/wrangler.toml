@@ -1,0 +1,12 @@
+name = "yummypro-custom-domain-staging"
+main = "worker.js"
+compatibility_date = "2026-09-28"
+workers_dev = true
+preview_urls = true
+
+[vars]
+ENVIRONMENT = "staging"
+SUPABASE_URL = "https://wodqqheeesrelsbacmgx.supabase.co"
+SUPABASE_PUBLISHABLE_KEY = "sb_publishable_yiuYVYAAwVLtzlTdEM1kUg_s1Z7BiyE"
+CLIENT_ORIGIN = "https://jorge2610g.github.io/yummy-cliente-pruebas"
+STREAMING_ORIGIN = "https://jorge2610g.github.io/yummy-streaming-pruebas"
