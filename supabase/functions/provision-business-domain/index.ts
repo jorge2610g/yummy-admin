@@ -27,6 +27,27 @@ async function cfFetch(path:string,init:RequestInit,token:string){
   return payload;
 }
 
+async function ensureStagingWorkerRoute(zoneId:string,hostname:string,token:string){
+  const workerName="yummypro-custom-domain-staging";
+  const pattern=hostname+"/*";
+  const listed=await cfFetch("/zones/"+encodeURIComponent(zoneId)+"/workers/routes",{method:"GET"},token);
+  const routes=Array.isArray(listed?.result)?listed.result:[];
+  const existing=routes.find((row:any)=>String(row?.pattern||"").toLowerCase()===pattern.toLowerCase());
+
+  if(existing){
+    if(String(existing?.script||"")!==workerName){
+      throw new Error("El dominio de prueba ya tiene una ruta Worker distinta en Cloudflare");
+    }
+    return existing;
+  }
+
+  const created=await cfFetch("/zones/"+encodeURIComponent(zoneId)+"/workers/routes",{
+    method:"POST",
+    body:JSON.stringify({pattern,script:workerName}),
+  },token);
+  return created?.result||null;
+}
+
 Deno.serve(async(req:Request)=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:corsHeaders});
   if(req.method!=="POST")return json({error:"Método no permitido"},405);
@@ -109,6 +130,10 @@ Deno.serve(async(req:Request)=>{
       providerId=String(cfResult?.id||"");
       if(!providerId)throw new Error("Cloudflare no devolvió id del Custom Hostname");
 
+      if(originHost==="domains-pruebas.yummypro.online"){
+        await ensureStagingWorkerRoute(cfZone,hostname,cfToken);
+      }
+
       const {error:updateError}=await adminClient.from("business_custom_domains").update({
         status:"provisioning",
         ssl_status:"initializing",
@@ -118,6 +143,9 @@ Deno.serve(async(req:Request)=>{
       }).eq("id",domainRow.id);
       if(updateError)throw updateError;
     }else{
+      if(originHost==="domains-pruebas.yummypro.online"){
+        await ensureStagingWorkerRoute(cfZone,hostname,cfToken);
+      }
       const checked=await cfFetch("/zones/"+encodeURIComponent(cfZone)+"/custom_hostnames/"+encodeURIComponent(providerId),{
         method:"GET",
       },cfToken);
