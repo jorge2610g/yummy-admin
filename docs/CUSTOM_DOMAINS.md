@@ -651,3 +651,36 @@ El workflow está preparado para:
 7. configurar únicamente el entorno de Pruebas si la inspección es segura.
 
 No continuar a Producción mientras este paso no quede en verde.
+
+
+## Bloqueo actual · token Cloudflare rechazado
+
+Estado: **PENDIENTE EXTERNO · NO ES UN FALLO DE CÓDIGO**
+
+El secreto `CLOUDFLARE_API_TOKEN` ya existe en GitHub y el workflow lo recibe (GitHub lo enmascara correctamente como `***`).
+
+Intentos realizados:
+
+- run `36460566672`: el secreto todavía no estaba disponible;
+- run `36461723084`: el secreto ya estaba presente, pero la consulta a Cloudflare devolvió HTTP 400;
+- run `36461813268`: se añadió verificación explícita contra `/user/tokens/verify`; Cloudflare respondió `Invalid request headers`;
+- run `36461921399`: se normalizó de forma segura el secreto eliminando CR/LF, prefijo `CLOUDFLARE_API_TOKEN=`, prefijo `Bearer `, comillas y backticks; Cloudflare volvió a responder `Invalid request headers`.
+
+Conclusión: el valor almacenado actualmente en GitHub **no está siendo aceptado por Cloudflare como API Token Bearer**, incluso después de normalización. No se llegó a leer la zona, guardar el token en Vault, desplegar el Worker ni modificar Cloudflare.
+
+### Siguiente paso exacto
+
+Reemplazar el valor del GitHub Secret `CLOUDFLARE_API_TOKEN` por el **token crudo generado en Cloudflare**, sin:
+
+- `Bearer `
+- `CLOUDFLARE_API_TOKEN=`
+- comillas
+- backticks
+- JSON
+- comandos curl
+
+Debe ser un **API Token**, no el Global API Key.
+
+Cuando se reemplace, relanzar `Cloudflare Gateway Staging`. El primer paso válido debe mostrar `Cloudflare API token is active.`.
+
+Después el workflow continuará con zona existente `yummypro.online`, Vault de Supabase Staging, Worker y fallback seguro.
