@@ -1,0 +1,47 @@
+name: Cloudflare Gateway Staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - staging
+    paths:
+      - "infrastructure/custom-domain-gateway/**"
+      - ".github/workflows/cloudflare-gateway-staging.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-gateway-staging
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+    steps:
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate Cloudflare credentials
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || (echo "Missing GitHub secret: CLOUDFLARE_API_TOKEN" && exit 1)
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || (echo "Missing GitHub secret: CLOUDFLARE_ACCOUNT_ID" && exit 1)
+
+      - name: Validate Worker bundle
+        run: npx --yes wrangler@4.142.0 deploy --dry-run --config infrastructure/custom-domain-gateway/wrangler.toml
+
+      - name: Deploy staging Worker to workers.dev
+        run: npx --yes wrangler@4.142.0 deploy --config infrastructure/custom-domain-gateway/wrangler.toml
