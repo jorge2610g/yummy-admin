@@ -292,3 +292,106 @@ En Supabase Staging se comprobó:
 - `authenticated` NO puede ejecutar `service_activate_business_custom_domain`;
 - `service_role` SÍ puede ejecutar la activación;
 - al cierre de esta etapa no se insertaron dominios de negocio reales en Staging (`business_custom_domains` tenía 0 filas).
+
+
+## Corrección del panel Dominio en las cuatro verticales · 2026-09-28
+
+Se detectó en Restaurante Pruebas que la pestaña **Dominio** podía quedarse indefinidamente en `Cargando…`.
+
+### Causa real
+
+El módulo de dominios comprobaba:
+
+```js
+window.sb
+window.currentRestaurant
+```
+
+pero la aplicación mantiene `sb` y `currentRestaurant` como bindings globales del script, no como propiedades de `window`. Por esa razón la función retornaba antes de ejecutar el RPC `get_business_custom_domain`.
+
+### Patrón correcto
+
+Las cuatro verticales deben usar:
+
+```js
+if(!panel || !sb || !currentRestaurant) return;
+```
+
+y las operaciones de dominio deben tener timeout de **15 segundos** y estado de error con botón **Reintentar**.
+
+También se debe volver a cargar el estado si la pestaña Dominio ya está activa al restaurar Configuración y se debe incrementar el query de versión del `professional.js` después de modificarlo para invalidar caché.
+
+### Restaurante
+
+Corrección validada previamente en Pruebas:
+
+- HEAD funcional Staging: `4f394422beb9e079e25507db3672cd25b31c4fa8`
+- usa el módulo publicado `panel/professional-domain-fix.js?v=2`;
+- panel validado manualmente mostrando:
+  `Todavía no conectaste un dominio…`;
+- Producción no fue modificada.
+
+### Retail
+
+Corrección aplicada a `staging`:
+
+- HEAD validado: `64aad23c817a548aa4890134801af36d59fcbbf8`
+- `professional.js?v=2534`
+- timeout 15 s ✅
+- guard con `sb/currentRestaurant` reales ✅
+- error + Reintentar ✅
+- recarga si Dominio está activo ✅
+- Quality ✅
+- Smoke GitHub Pages Pruebas ✅
+- Environment guard ✅
+- Publicación Retail Pruebas ✅
+- `main` no modificado.
+
+### Profesionales
+
+Corrección aplicada a `staging`:
+
+- HEAD validado: `632ab6015fae44d95c074de17da939bcbfac115b`
+- `professional.js?v=2535`
+- timeout 15 s ✅
+- guard con `sb/currentRestaurant` reales ✅
+- error + Reintentar ✅
+- recarga si Dominio está activo ✅
+- Quality ✅
+- Smoke GitHub Pages Pruebas ✅
+- Environment guard ✅
+- Publicación Profesionales Pruebas ✅
+- `main` no modificado.
+
+### Streaming
+
+Corrección aplicada a `staging`:
+
+- HEAD validado: `593e00683c2610e56ee3f63e02ce590ea43e1864`
+- `professional.js?v=2534`
+- timeout 15 s ✅
+- guard con `sb/currentRestaurant` reales ✅
+- error + Reintentar ✅
+- recarga si Dominio está activo ✅
+- Quality ✅
+- Smoke GitHub Pages Pruebas ✅
+- Environment guard ✅
+- Publicación Streaming Pruebas ✅
+- `main` no modificado.
+
+Durante la corrección aparecieron dos tipos de fallos de CI que ya quedaron resueltos:
+
+1. una inserción automática dejó secuencias literales `\\n` en el JS y produjo error de sintaxis; se corrigió antes de validar;
+2. los tests estáticos conservaban versiones de caché antiguas y Streaming tenía `v1.2.15` hardcodeado aunque `VERSION` ya era `1.2.16`. Retail/Profesionales se alinearon con el query vigente y Streaming pasó a leer `VERSION` dinámicamente tanto en static check como en E2E.
+
+### Regla para futuras IAs
+
+No considerar completa una corrección del panel Dominio solo porque la publicación de Pruebas terminó. Confirmar sobre el **mismo HEAD**:
+
+1. Quality = success.
+2. Smoke = success.
+3. Environment guard = success.
+4. repositorio `*-pruebas` publicado con el SHA exacto.
+5. `main` continúa intacto hasta release autorizado.
+
+El siguiente trabajo de dominios personalizados continúa siendo Cloudflare/gateway + prueba DNS/SSL end-to-end. Esta corrección de UI no activa por sí sola dominios reales.
