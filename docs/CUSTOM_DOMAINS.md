@@ -610,3 +610,44 @@ El workflow está preparado para:
 10. crear rutas Worker por dominio de prueba, no una wildcard global.
 
 No pegar tokens Cloudflare en documentación, frontend, commits ni conversaciones.
+
+
+## Bloqueo actual · token Cloudflare ausente en Pruebas
+
+Verificación realizada el 2026-09-28:
+
+- Supabase Staging: `wodqqheeesrelsbacmgx`.
+- `private.runtime_config.custom_domain_cname_target` existe y vale `domains-pruebas.yummypro.online`.
+- Edge Functions `verify-business-domain` y `provision-business-domain` están ACTIVE.
+- Supabase Vault no contiene todavía el secreto `cloudflare_api_token`.
+- GitHub Actions sí recibe `STAGING_DB_PASSWORD`.
+- GitHub Actions NO recibe `CLOUDFLARE_API_TOKEN`.
+
+Evidencia:
+
+- Workflow: `Cloudflare Gateway Staging`
+- Run: `36460566672`
+- Paso fallido: `Validate required secret`
+- Mensaje: `Missing GitHub secret: CLOUDFLARE_API_TOKEN`
+
+Por seguridad, ningún token debe copiarse en commits, documentación o chat.
+
+### Continuación exacta
+
+Configurar un API Token de Cloudflare como GitHub Actions Secret del repo `jorge2610g/yummy-admin` con nombre exacto:
+
+`CLOUDFLARE_API_TOKEN`
+
+Después, relanzar `Cloudflare Gateway Staging`.
+
+El workflow está preparado para:
+
+1. validar el token;
+2. guardarlo cifrado en Supabase Staging Vault como `cloudflare_api_token`;
+3. desplegar `yummypro-custom-domain-staging`;
+4. validar `/__yummy_health`;
+5. inspeccionar la zona existente `yummypro.online`;
+6. detenerse antes de sobrescribir DNS/fallback/rutas incompatibles;
+7. configurar únicamente el entorno de Pruebas si la inspección es segura.
+
+No continuar a Producción mientras este paso no quede en verde.
