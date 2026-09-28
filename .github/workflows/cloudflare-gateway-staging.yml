@@ -94,3 +94,10 @@ jobs:
           BODY="$(curl -fsS "$WORKER_URL/__yummy_health")"
           printf '%s' "$BODY" | jq -e '.ok == true and .environment == "staging"' >/dev/null
           echo "Cloudflare staging gateway health check passed."
+
+      - name: Configure safe Cloudflare for SaaS staging fallback
+        env:
+          CLOUDFLARE_ZONE_NAME: yummypro.online
+          CLOUDFLARE_STAGING_FALLBACK: domains-pruebas.yummypro.online
+          CLOUDFLARE_STAGING_WORKER: yummypro-custom-domain-staging
+        run: node infrastructure/custom-domain-gateway/configure-saas-staging.mjs
