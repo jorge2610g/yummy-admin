@@ -1,69 +1,111 @@
-# YummyPro — Accesos rápidos a entornos de Pruebas
+# YummyPro — Panel central de accesos Pruebas / Producción
 
 Fecha: 27 de septiembre de 2026
-Estado: IMPLEMENTADO EN STAGING / LISTO PARA RELEASE SOLO CON GATES DEL HEAD FINAL EN VERDE
+Estado: IMPLEMENTADO EN STAGING / PENDIENTE DE GATES DEL HEAD FINAL
 Repositorio: `jorge2610g/yummy-admin`
 Rama: `staging`
 Versión base visible: `2.3.90`
 
 ## Objetivo
 
-Permitir que el administrador general entre a los entornos de Pruebas de YummyPro desde un solo lugar, sin buscar ni copiar enlaces manualmente.
+Permitir al administrador general cambiar fácilmente entre los entornos de YummyPro sin llenar el menú hamburguesa con múltiples enlaces.
 
-## Cambio realizado
+## Diseño vigente
 
-Se agregó al menú lateral del Admin un grupo `PRUEBAS`, visible únicamente para elementos con clase `admin-only` (administrador general).
+El diseño inicial con seis accesos externos visibles directamente en el menú lateral fue reemplazado.
 
-Cada acceso abre su destino en una pestaña nueva con `noopener noreferrer`:
+Ahora el menú lateral contiene un único botón:
 
-- Admin · Pruebas: `https://jorge2610g.github.io/yummy-admin-pruebas/`
-- Restaurante · Pruebas: `https://jorge2610g.github.io/yummy-restaurante-pruebas/`
-- Retail · Pruebas: `https://jorge2610g.github.io/yummy-retail-pruebas/`
-- Profesionales · Pruebas: `https://jorge2610g.github.io/yummy-profesionales-pruebas/`
-- Streaming · Pruebas: `https://jorge2610g.github.io/yummy-streaming-pruebas/`
-- Cliente · Pruebas: `https://jorge2610g.github.io/yummy-cliente-pruebas/`
+- En Producción: `Acceso a Pruebas`.
+- En Admin Pruebas: `Acceso a Producción`.
 
-Los seis repositorios de Pruebas cuentan con workflow `deploy-staging-pages.yml` para publicar sus respectivos sitios mediante GitHub Pages.
+Al tocar ese botón no se navega todavía a otro sitio. Se abre una sección dentro del mismo panel Admin, igual que las demás secciones internas. Esa sección muestra seis tarjetas/botones:
+
+- Admin
+- Restaurante
+- Retail
+- Profesionales
+- Streaming
+- Cliente
+
+Recién al tocar una de esas tarjetas se abre el destino externo en una pestaña nueva con `target="_blank"` y `rel="noopener noreferrer"`.
+
+En móvil se mantiene exactamente el mismo flujo: un solo botón en el hamburguesa y los seis destinos dentro del contenido principal.
+
+## Comportamiento reversible por ambiente
+
+El panel detecta el ambiente del Admin:
+
+### Desde Producción
+
+Muestra accesos hacia Pruebas:
+
+- Admin: `https://jorge2610g.github.io/yummy-admin-pruebas/`
+- Restaurante: `https://jorge2610g.github.io/yummy-restaurante-pruebas/`
+- Retail: `https://jorge2610g.github.io/yummy-retail-pruebas/`
+- Profesionales: `https://jorge2610g.github.io/yummy-profesionales-pruebas/`
+- Streaming: `https://jorge2610g.github.io/yummy-streaming-pruebas/`
+- Cliente: `https://jorge2610g.github.io/yummy-cliente-pruebas/`
+
+### Desde Admin Pruebas
+
+Muestra accesos de regreso a Producción:
+
+- Admin: `https://admin.yummypro.online/`
+- Restaurante: `https://web.yummypro.online/`
+- Retail: `https://retail.yummypro.online/`
+- Profesionales: `https://pro.yummypro.online/`
+- Streaming: `https://streaming.yummypro.online/`
+- Cliente: `https://menu.yummypro.online/`
+
+## Ubicación y navegación
+
+El botón intenta colocarse inmediatamente después de la opción `Lanzar Producción`. Si esa opción no se encuentra por texto, usa como fallback el final del grupo de navegación.
+
+El botón de ambiente no usa la clase `.tab`, por lo que no altera el conteo de las 9 pestañas internas esperado por las pruebas actuales. La vista `adminEnvironmentAccess` sí se comporta como una sección interna y desactiva las demás secciones al abrirse.
 
 ## Archivos afectados
 
 - `admin-streaming-access.js`
 - `docs/2026-09-27-accesos-rapidos-pruebas.md`
 
-El HTML principal del Admin no fue modificado para esta funcionalidad. Los accesos se inyectan desde el módulo JavaScript ya cargado por el panel.
+El HTML principal `index.html` no fue modificado para esta funcionalidad.
 
-## Historial exacto de implementación y correcciones
+## Historial exacto
 
-- `731b711e36f29de8e581a5e8e70e2f176ff31794` — `feat(admin): accesos rápidos a entornos de pruebas`. Implementación inicial de los seis enlaces.
-- `d3e79a724dd0e6650c4437b6ed643f6f03d3153f` — `docs(admin): registrar accesos rápidos de pruebas`. Primera documentación de continuidad.
-- El primer workflow de Calidad falló porque los seis enlaces externos heredaban la clase `.tab`; la prueba esperaba 9 pestañas internas y encontró 15 elementos.
-- `60b76e143f49b11195d587a46ed5f66571161c7b` — `fix(admin): separar accesos de pruebas de las pestañas internas`. Los accesos externos pasan a usar `admin-test-link`, conservando 9 pestañas internas + 6 enlaces externos.
-- El siguiente workflow de Calidad detectó que durante esa corrección se habían eliminado accidentalmente dos comentarios/marcadores que el `static-check` usa para verificar la seguridad del ticket temporal de Streaming.
-- `108665c03b7dc6460208fdd30c068edf4b4280ad` — `fix(admin): restaurar marcador de seguridad de vista previa`. Se restauraron exactamente los marcadores de seguridad sin cambiar la lógica funcional.
-- Sobre `108665c`, `npm run check`, el workflow `Calidad del panel administrativo` y `Guardar separación Pruebas-Producción` terminaron correctamente. El smoke de GitHub Pages quedó como último gate pendiente de ese SHA antes de este commit documental.
+- `731b711e36f29de8e581a5e8e70e2f176ff31794` — implementación inicial con seis enlaces directos en el menú.
+- `d3e79a724dd0e6650c4437b6ed643f6f03d3153f` — documentación inicial.
+- El primer workflow de Calidad falló porque los seis enlaces heredaban `.tab`: se esperaban 9 pestañas y se encontraron 15.
+- `60b76e143f49b11195d587a46ed5f66571161c7b` — separación de los enlaces externos respecto de `.tab`.
+- Durante esa corrección se eliminaron accidentalmente marcadores de seguridad de Streaming que usa el `static-check`.
+- `108665c03b7dc6460208fdd30c068edf4b4280ad` — restauración de los marcadores de ticket temporal y no compartición de tokens.
+- `5fc5e2c93cdad0a995dd1539df52636d62c9704d` — documentación del estado validado del diseño anterior.
+- `ddbe6abb7dedb245deb03b8786816fe2b0e65d05` — diseño vigente: reemplaza los seis enlaces del hamburguesa por un único botón y una vista interna reversible Pruebas / Producción.
+
+Los checks verdes anteriores a `ddbe6ab` corresponden al diseño anterior y no autorizan por sí solos el release del diseño vigente.
 
 ## Seguridad y separación de ambientes
 
-- No se modificó `main` durante el desarrollo.
-- No se modificó Supabase.
-- No se copiaron datos entre Pruebas y Producción.
-- Los enlaces son navegación externa; no transfieren tokens ni sesiones.
-- Los destinos se abren en pestaña nueva.
-- El grupo usa `admin-only` para seguir el mismo control visual de opciones exclusivas del superadmin.
-- Los accesos externos no usan la clase `.tab`; así no interfieren con la navegación interna ni con sus pruebas.
-- Se conservaron los marcadores que validan que Streaming usa el ticket temporal de un solo uso y no comparte `access_token` ni `refresh_token` de la sesión principal.
+- `main` no se modifica durante el desarrollo.
+- No se modifica Supabase.
+- No se copian datos entre Pruebas y Producción.
+- Los accesos externos no transfieren tokens ni sesiones.
+- Los destinos se abren en pestaña nueva con `noopener noreferrer`.
+- El botón mantiene la clase `admin-only` y además valida `isSuperAdmin` al abrir la vista.
+- Streaming conserva los marcadores que verifican el uso del ticket temporal de un solo uso y que no se comparte `access_token` ni `refresh_token` de la sesión principal.
 
 ## Criterio obligatorio antes de Release
 
-No promover a Producción mientras algún gate del HEAD final de `staging` esté pendiente o en rojo. Confirmar para el SHA exacto que se va a publicar:
+No promover a Producción hasta que, sobre el mismo HEAD final de `staging`, estén en verde:
 
-1. `Calidad del panel administrativo` = success.
-2. `Smoke GitHub Pages Pruebas` = success.
-3. `Guardar separación Pruebas-Producción` / guard de ambiente = success.
-4. El Centro de lanzamientos no reporta divergencia inesperada.
-
-Los checks rojos de SHAs anteriores forman parte del historial de corrección y no deben confundirse con el estado del HEAD final.
+1. `Calidad del panel administrativo`.
+2. `Smoke GitHub Pages Pruebas`.
+3. `Guardar separación Pruebas-Producción` / environment guard.
+4. Publicación de Admin Pruebas con el mismo SHA de `staging` que se está validando.
+5. Verificación de que no exista divergencia inesperada antes del release.
 
 ## Punto exacto para otra IA
 
-La funcionalidad ya está codificada y corregida en `staging`. No volver a implementarla. Revisar primero el HEAD actual y sus workflows. Si los tres gates anteriores están en verde para ese mismo SHA, el siguiente paso es usar el Centro de lanzamientos para promover `staging` a `main`, verificar el despliegue de Producción y luego documentar el SHA de release y la paridad final `main = staging`.
+No volver al diseño de seis botones visibles en el hamburguesa. El requisito vigente es **un solo botón de ambiente + una sección interna con seis destinos** y comportamiento reversible: Producción → Pruebas, Admin Pruebas → Producción.
+
+Revisar el HEAD actual de `staging` y sus workflows. Si los gates del HEAD final están verdes, publicar Admin Pruebas con ese SHA, completar el smoke, y solo después promover a Producción. Tras el release, verificar `main = staging` y documentar el SHA final de Producción.
