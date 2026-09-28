@@ -512,7 +512,7 @@ Runs de `Cloudflare Gateway Staging` llegaron correctamente al paso de credencia
 
 Run más reciente verificado antes de este cierre:
 
-- `36459480882`
+- `36459660328`
 - fallo en: `Validate required secret`
 - pasos de resolver cuenta, Vault, Wrangler, deploy, health y fallback: skipped.
 
