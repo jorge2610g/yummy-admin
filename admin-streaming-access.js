@@ -93,9 +93,6 @@
   if(!local||!isStreamingType(local.business_type))return originalOpenRestaurantPanel?originalOpenRestaurantPanel(id,section):undefined;
   if(!isSuperAdmin)return toast('Acceso exclusivo del administrador general');
   if(!originalOpenRestaurantPanel)return toast('No se pudo iniciar la vista administrativa.');
-
-  // Streaming usa exactamente el mismo ticket temporal de un solo uso que el resto de YummyPro.
-  // Nunca se comparte el access_token ni el refresh_token de la sesión principal del administrador.
   return originalOpenRestaurantPanel(id,section);
  };
 
@@ -213,9 +210,17 @@
   ['Streaming · Pruebas','https://jorge2610g.github.io/yummy-streaming-pruebas/'],
   ['Cliente · Pruebas','https://jorge2610g.github.io/yummy-cliente-pruebas/']
  ];
+ function installAdminTestQuickLinksStyle(){
+  if(document.getElementById('admin-test-links-style'))return;
+  const style=document.createElement('style');
+  style.id='admin-test-links-style';
+  style.textContent='#adminSideMenu .admin-test-link{width:100%;height:56px;min-height:56px;padding:5px 8px;margin:0;gap:12px;border-radius:11px;display:flex;align-items:center;justify-content:flex-start;color:inherit;text-decoration:none}#adminSideMenu .admin-test-link:hover{background:rgba(255,255,255,.045)}#adminSideMenu.collapsed .admin-test-link{width:42px;min-width:42px;max-width:42px;height:42px;min-height:42px;padding:0;margin:0 auto;display:grid;place-items:center}#adminSideMenu.collapsed .admin-test-link .nav-icon{width:40px;height:40px;flex:0 0 40px}#adminSideMenu.collapsed .admin-test-link .nav-label{display:none}@media(max-width:800px){#adminSideMenu .admin-test-link{width:100%;height:54px;min-height:54px;padding:5px 7px;gap:11px}}';
+  document.head.appendChild(style);
+ }
  function installAdminTestQuickLinks(){
   const tabs=document.querySelector('#adminSideMenu .tabs');
   if(!tabs||tabs.querySelector('[data-yummy-test-access]'))return;
+  installAdminTestQuickLinksStyle();
   const group=document.createElement('div');
   group.className='nav-group-label admin-only';
   group.dataset.yummyTestAccess='group';
@@ -223,13 +228,12 @@
   tabs.appendChild(group);
   ADMIN_TEST_LINKS.forEach(([label,url])=>{
    const link=document.createElement('a');
-   link.className='tab admin-only';
+   link.className='admin-test-link admin-only';
    link.dataset.yummyTestAccess='link';
    link.href=url;
    link.target='_blank';
    link.rel='noopener noreferrer';
    link.title=label;
-   link.style.textDecoration='none';
    link.innerHTML='<span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M13 11l6-6"/><path d="M19 13v6H5V5h6"/></svg></span><span class="nav-label">'+label+'</span>';
    link.addEventListener('click',()=>{if(typeof window.closeAdminSideMenu==='function')setTimeout(()=>window.closeAdminSideMenu(),0)});
    tabs.appendChild(link);
