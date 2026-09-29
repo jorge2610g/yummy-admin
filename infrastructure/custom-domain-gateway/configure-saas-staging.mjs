@@ -45,7 +45,8 @@ if(!dnsRows.length){
 }else{
   const expected=dnsRows.find(row=>String(row?.type||"")==="AAAA"&&String(row?.content||"")==="100::"&&row?.proxied===true);
   if(!expected){
-    const summary=dnsRows.map(row=>({id:row?.id,type:row?.type,name:row?.name,content:row?.content,proxied:row?.proxied,ttl:row?.ttl,comment:row?.comment||""}));\n    throw new Error("Safety stop: "+fallbackHost+" already has unexpected DNS. Existing record was not modified. Existing DNS: "+JSON.stringify(summary));
+    const summary=dnsRows.map(row=>({id:row?.id,type:row?.type,name:row?.name,content:row?.content,proxied:row?.proxied,ttl:row?.ttl,comment:row?.comment||""}));
+    throw new Error("Safety stop: "+fallbackHost+" already has unexpected DNS. Existing record was not modified. Existing DNS: "+JSON.stringify(summary));
   }
   console.log("Fallback DNS already valid:",fallbackHost);
 }
