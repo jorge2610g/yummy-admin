@@ -52,7 +52,26 @@ jobs:
 
           test -n "$CLEAN_TOKEN" || (echo "Cloudflare API token is empty after normalization." && exit 1)
 
-          RESPONSE="$(curl -sS             -H "Authorization: Bearer $CLEAN_TOKEN"             "https://api.cloudflare.com/client/v4/user/tokens/verify")"
+          # Account-owned API tokens use the cfat_ prefix and must be verified
+          # against the account token endpoint. Resolve the account from the zone
+          # first when CLOUDFLARE_ACCOUNT_ID is not configured.
+          if [[ "$CLEAN_TOKEN" == cfat_* ]]; then
+            ACCOUNT_ID="$CLOUDFLARE_ACCOUNT_ID"
+            if [ -z "$ACCOUNT_ID" ]; then
+              ZONE_RESPONSE="$(curl -sS -H "Authorization: Bearer $CLEAN_TOKEN" "https://api.cloudflare.com/client/v4/zones?name=yummypro.online&status=active&per_page=5")"
+              ZONE_SUCCESS="$(printf '%s' "$ZONE_RESPONSE" | jq -r '.success // false')"
+              [ "$ZONE_SUCCESS" = "true" ] || {
+                echo "Cloudflare account token could not read yummypro.online while resolving the account."
+                printf '%s' "$ZONE_RESPONSE" | jq -r '.errors[]?.message // empty'
+                exit 1
+              }
+              ACCOUNT_ID="$(printf '%s' "$ZONE_RESPONSE" | jq -r '.result[0].account.id // empty')"
+              test -n "$ACCOUNT_ID" || (echo "Cloudflare account id could not be resolved from yummypro.online." && exit 1)
+            fi
+            RESPONSE="$(curl -sS -H "Authorization: Bearer $CLEAN_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT_ID/tokens/verify")"
+          else
+            RESPONSE="$(curl -sS -H "Authorization: Bearer $CLEAN_TOKEN" "https://api.cloudflare.com/client/v4/user/tokens/verify")"
+          fi
 
           SUCCESS="$(printf '%s' "$RESPONSE" | jq -r '.success // false')"
           STATUS="$(printf '%s' "$RESPONSE" | jq -r '.result.status // empty')"
@@ -64,6 +83,9 @@ jobs:
           fi
 
           echo "CLOUDFLARE_API_TOKEN=$CLEAN_TOKEN" >> "$GITHUB_ENV"
+          if [ -n "${ACCOUNT_ID:-}" ]; then
+            echo "CLOUDFLARE_ACCOUNT_ID=$ACCOUNT_ID" >> "$GITHUB_ENV"
+          fi
           echo "Cloudflare API token is active."
 
       - name: Resolve Cloudflare account from existing zone
