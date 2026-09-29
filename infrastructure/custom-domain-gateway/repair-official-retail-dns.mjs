@@ -1,5 +1,6 @@
 const token = process.env.CLOUDFLARE_API_TOKEN || "";
 const zoneName = process.env.CLOUDFLARE_ZONE_NAME || "yummypro.online";
+const stagingWorker = process.env.CLOUDFLARE_STAGING_WORKER || "yummypro-custom-domain-staging";
 
 if (!token) throw new Error("CLOUDFLARE_API_TOKEN is required");
 
@@ -94,8 +95,43 @@ for (const host of officialHosts) {
   });
 }
 
+// Staging must never intercept official production hostnames.
+const routePayload = await api("/zones/" + encodeURIComponent(zoneId) + "/workers/routes");
+const routes = Array.isArray(routePayload?.result) ? routePayload.result : [];
+const reservedHosts = [
+  "admin." + zoneName,
+  "web." + zoneName,
+  "retail." + zoneName,
+  "pro." + zoneName,
+  "streaming." + zoneName,
+  "menu." + zoneName,
+];
+
+const removedRoutes = [];
+for (const route of routes) {
+  const pattern = String(route?.pattern || "").toLowerCase();
+  const script = String(route?.script || "");
+  const ownsReservedHost = reservedHosts.some((host) =>
+    pattern === host.toLowerCase() + "/*" ||
+    pattern === "*://" + host.toLowerCase() + "/*" ||
+    pattern === "https://" + host.toLowerCase() + "/*" ||
+    pattern === "http://" + host.toLowerCase() + "/*"
+  );
+
+  if (script === stagingWorker && ownsReservedHost) {
+    const id = String(route?.id || "");
+    if (!id) throw new Error("Safety stop: staging route on official hostname has no id");
+    await api("/zones/" + encodeURIComponent(zoneId) + "/workers/routes/" + encodeURIComponent(id), {
+      method: "DELETE",
+    });
+    removedRoutes.push(pattern);
+    console.log("Removed staging Worker route from official production hostname:", { pattern, script });
+  }
+}
+
 console.log(JSON.stringify({
   ok: true,
   reference_host: referenceHost,
   repaired,
+  removed_staging_routes: removedRoutes,
 }, null, 2));
