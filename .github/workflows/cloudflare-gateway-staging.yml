@@ -118,13 +118,38 @@ jobs:
         env:
           PGPASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
-          EXISTING_ID="$(docker run --rm             -e PGPASSWORD="$PGPASSWORD"             postgres:17             psql               --host="aws-0-sa-east-1.pooler.supabase.com"               --port=5432               --username="postgres.$STAGING_PROJECT_REF"               --dbname=postgres               --tuples-only               --no-align               --command="select id from vault.secrets where name='cloudflare_api_token' order by updated_at desc limit 1;"             | tr -d '[:space:]')"
+          # Feed the secret to psql over stdin via a psql variable. This avoids
+          # putting the token in the process arguments or workflow logs.
+          {
+            printf '\\set cf_token %s\\n' "$(printf '%s' "$CLOUDFLARE_API_TOKEN" | sed "s/'/''/g" | sed "s/^/'/;s/$/'/")"
+            cat <<'SQL'
+          DO $vault$
+          DECLARE
+            existing_id uuid;
+          BEGIN
+            SELECT id INTO existing_id
+            FROM vault.secrets
+            WHERE name = 'cloudflare_api_token'
+            ORDER BY updated_at DESC
+            LIMIT 1;
 
-          if [ -n "$EXISTING_ID" ]; then
-            docker run --rm               -e PGPASSWORD="$PGPASSWORD"               -e CF_TOKEN="$CLOUDFLARE_API_TOKEN"               postgres:17               psql                 --host="aws-0-sa-east-1.pooler.supabase.com"                 --port=5432                 --username="postgres.$STAGING_PROJECT_REF"                 --dbname=postgres                 --set=ON_ERROR_STOP=1                 --command="select vault.update_secret('$EXISTING_ID'::uuid, current_setting('CF_TOKEN'), 'cloudflare_api_token', 'YummyPro Cloudflare for SaaS · Staging');"
-          else
-            docker run --rm               -e PGPASSWORD="$PGPASSWORD"               -e CF_TOKEN="$CLOUDFLARE_API_TOKEN"               postgres:17               psql                 --host="aws-0-sa-east-1.pooler.supabase.com"                 --port=5432                 --username="postgres.$STAGING_PROJECT_REF"                 --dbname=postgres                 --set=ON_ERROR_STOP=1                 --command="select vault.create_secret(current_setting('CF_TOKEN'), 'cloudflare_api_token', 'YummyPro Cloudflare for SaaS · Staging');"
-          fi
+            IF existing_id IS NOT NULL THEN
+              PERFORM vault.update_secret(existing_id, :'cf_token', 'cloudflare_api_token', 'YummyPro Cloudflare for SaaS · Staging');
+            ELSE
+              PERFORM vault.create_secret(:'cf_token', 'cloudflare_api_token', 'YummyPro Cloudflare for SaaS · Staging');
+            END IF;
+          END
+          $vault$;
+          SQL
+          } | docker run --rm -i \
+            -e PGPASSWORD="$PGPASSWORD" \
+            postgres:17 \
+            psql \
+              --host="aws-0-sa-east-1.pooler.supabase.com" \
+              --port=5432 \
+              --username="postgres.$STAGING_PROJECT_REF" \
+              --dbname=postgres \
+              --set=ON_ERROR_STOP=1
 
       - name: Validate Worker bundle
         run: npx --yes wrangler@4.142.0 deploy --dry-run --config infrastructure/custom-domain-gateway/wrangler.toml
