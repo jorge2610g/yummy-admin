@@ -9,6 +9,7 @@ on:
     paths:
       - 'supabase/**'
       - 'scripts/staging-parity.sql'
+      - 'scripts/staging-parity-common-grants.sql'
       - 'scripts/staging-schema-checkpoint.txt'
       - '.github/workflows/staging-parity.yml'
       - '.ai-audit-trigger'
@@ -73,6 +74,25 @@ jobs:
               < scripts/staging-parity.sql
           }
 
+          common_grants() {
+            local ref="$1"
+            local password="$2"
+            docker run --rm -i \
+              -e PGPASSWORD="$password" \
+              -e PGSSLMODE=require \
+              -e PGCONNECT_TIMEOUT=15 \
+              postgres:17 \
+              psql \
+                --host="$SUPABASE_POOLER_HOST" \
+                --port=6543 \
+                --username="postgres.$ref" \
+                --dbname=postgres \
+                --no-align \
+                --tuples-only \
+                --set=ON_ERROR_STOP=1 \
+              < scripts/staging-parity-common-grants.sql
+          }
+
           echo "Validating Production database access..."
           prod_hash="$(fingerprint "$PROD_PROJECT_REF" "$PROD_DB_PASSWORD")" || {
             echo "ERROR: PRODUCTION_DB_PASSWORD or Production pooler connection is invalid."
@@ -96,12 +116,22 @@ jobs:
             exit 4
           fi
 
-          # Invariantes de infraestructura que no deben divergir silenciosamente:
-          # table grants, sequence grants, default ACL, extensions y storage buckets.
-          # Columnas, policies, funciones, triggers y permisos de RPC pueden diferir
-          # intencionalmente en Pruebas mientras se validan migraciones; en ese caso,
-          # el fingerprint COMPLETO de Staging debe coincidir con el checkpoint aprobado.
-          for idx in 4 5 7 8 9; do
+          # El rollout de dominios personalizados existe solo en Staging hasta el release
+          # coordinado. Sus grants quedan protegidos por el fingerprint/checkpoint completo,
+          # mientras que todos los grants del esquema común deben seguir idénticos a Producción.
+          prod_common_grants="$(common_grants "$PROD_PROJECT_REF" "$PROD_DB_PASSWORD" | tr -d '[:space:]')"
+          staging_common_grants="$(common_grants "$STAGING_PROJECT_REF" "$STG_DB_PASSWORD" | tr -d '[:space:]')"
+          if [ "$prod_common_grants" != "$staging_common_grants" ]; then
+            echo "ERROR: table/sequence grants outside the pending custom-domain rollout differ from Production."
+            exit 5
+          fi
+
+          # Invariantes de infraestructura que nunca deben divergir silenciosamente:
+          # default ACL, extensions y storage buckets.
+          # Columnas, policies, funciones, triggers, permisos RPC y los grants del rollout
+          # pendiente pueden diferir en Pruebas solo si el fingerprint COMPLETO coincide
+          # con el checkpoint aprobado.
+          for idx in 7 8 9; do
             if [ "${prod_parts[$idx]}" != "${staging_parts[$idx]}" ]; then
               echo "ERROR: protected infrastructure invariant $idx differs from Production."
               exit 5
