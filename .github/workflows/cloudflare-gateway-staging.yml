@@ -131,7 +131,7 @@ jobs:
               --username="postgres.$STAGING_PROJECT_REF" \
               --dbname=postgres \
               --set=ON_ERROR_STOP=1 <<'SQL'
-          \\getenv cf_token CLOUDFLARE_API_TOKEN
+          \getenv cf_token CLOUDFLARE_API_TOKEN
           SELECT CASE
             WHEN EXISTS (
               SELECT 1
