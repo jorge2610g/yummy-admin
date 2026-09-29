@@ -95,7 +95,8 @@ for (const host of officialHosts) {
   });
 }
 
-// Staging must never intercept official production hostnames.
+// Official production hostnames are served directly by GitHub Pages.
+// No Cloudflare Worker route or SaaS Custom Hostname may intercept them.
 const routePayload = await api("/zones/" + encodeURIComponent(zoneId) + "/workers/routes");
 const routes = Array.isArray(routePayload?.result) ? routePayload.result : [];
 const reservedHosts = [
@@ -111,27 +112,45 @@ const removedRoutes = [];
 for (const route of routes) {
   const pattern = String(route?.pattern || "").toLowerCase();
   const script = String(route?.script || "");
-  const ownsReservedHost = reservedHosts.some((host) =>
-    pattern === host.toLowerCase() + "/*" ||
-    pattern === "*://" + host.toLowerCase() + "/*" ||
-    pattern === "https://" + host.toLowerCase() + "/*" ||
-    pattern === "http://" + host.toLowerCase() + "/*"
-  );
+  const ownsReservedHost = reservedHosts.some((host) => {
+    const h = host.toLowerCase();
+    return pattern === h + "/*" ||
+      pattern === "*://" + h + "/*" ||
+      pattern === "https://" + h + "/*" ||
+      pattern === "http://" + h + "/*";
+  });
 
-  if (script === stagingWorker && ownsReservedHost) {
+  if (ownsReservedHost) {
     const id = String(route?.id || "");
-    if (!id) throw new Error("Safety stop: staging route on official hostname has no id");
+    if (!id) throw new Error("Safety stop: Worker route on official hostname has no id");
     await api("/zones/" + encodeURIComponent(zoneId) + "/workers/routes/" + encodeURIComponent(id), {
       method: "DELETE",
     });
-    removedRoutes.push(pattern);
-    console.log("Removed staging Worker route from official production hostname:", { pattern, script });
+    removedRoutes.push({ pattern, script });
+    console.log("Removed Worker route from official production hostname:", { pattern, script });
   }
+}
+
+const hostPayload = await api("/zones/" + encodeURIComponent(zoneId) + "/custom_hostnames?per_page=100");
+const customHosts = Array.isArray(hostPayload?.result) ? hostPayload.result : [];
+const removedCustomHostnames = [];
+for (const row of customHosts) {
+  const hostname = String(row?.hostname || "").toLowerCase();
+  if (!reservedHosts.includes(hostname)) continue;
+
+  const id = String(row?.id || "");
+  if (!id) throw new Error("Safety stop: Custom Hostname on official hostname has no id");
+  await api("/zones/" + encodeURIComponent(zoneId) + "/custom_hostnames/" + encodeURIComponent(id), {
+    method: "DELETE",
+  });
+  removedCustomHostnames.push(hostname);
+  console.log("Removed Cloudflare for SaaS Custom Hostname from official production hostname:", { hostname });
 }
 
 console.log(JSON.stringify({
   ok: true,
   reference_host: referenceHost,
   repaired,
-  removed_staging_routes: removedRoutes,
+  removed_worker_routes: removedRoutes,
+  removed_custom_hostnames: removedCustomHostnames,
 }, null, 2));
