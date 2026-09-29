@@ -182,3 +182,8 @@ jobs:
           CLOUDFLARE_STAGING_FALLBACK: domains-pruebas.yummypro.online
           CLOUDFLARE_STAGING_WORKER: yummypro-custom-domain-staging
         run: node infrastructure/custom-domain-gateway/configure-saas-staging.mjs
+
+      - name: Repair missing official Retail DNS safely
+        env:
+          CLOUDFLARE_ZONE_NAME: yummypro.online
+        run: node infrastructure/custom-domain-gateway/repair-official-retail-dns.mjs
