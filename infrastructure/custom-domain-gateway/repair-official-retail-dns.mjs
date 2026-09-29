@@ -96,7 +96,8 @@ for (const host of officialHosts) {
 }
 
 // Official production hostnames are served directly by GitHub Pages.
-// No Cloudflare Worker route or SaaS Custom Hostname may intercept them.
+// Cloudflare uses no-script Worker routes as explicit bypasses so a broader
+// SaaS/Worker route can never intercept the platform hostnames.
 const routePayload = await api("/zones/" + encodeURIComponent(zoneId) + "/workers/routes");
 const routes = Array.isArray(routePayload?.result) ? routePayload.result : [];
 const reservedHosts = [
@@ -108,27 +109,35 @@ const reservedHosts = [
   "menu." + zoneName,
 ];
 
-const removedRoutes = [];
-for (const route of routes) {
-  const pattern = String(route?.pattern || "").toLowerCase();
-  const script = String(route?.script || "");
-  const ownsReservedHost = reservedHosts.some((host) => {
-    const h = host.toLowerCase();
-    return pattern === h + "/*" ||
-      pattern === "*://" + h + "/*" ||
-      pattern === "https://" + h + "/*" ||
-      pattern === "http://" + h + "/*";
-  });
+const bypassRoutes = [];
+for (const host of reservedHosts) {
+  const pattern = host.toLowerCase() + "/*";
+  const existing = routes.find((route) => String(route?.pattern || "").toLowerCase() === pattern);
 
-  if (ownsReservedHost) {
-    const id = String(route?.id || "");
+  if (existing && !String(existing?.script || "")) {
+    bypassRoutes.push({ pattern, action: "unchanged" });
+    console.log("Official hostname already bypasses Workers:", { pattern });
+    continue;
+  }
+
+  if (existing) {
+    const id = String(existing?.id || "");
     if (!id) throw new Error("Safety stop: Worker route on official hostname has no id");
+    console.log("Replacing Worker route on official production hostname with bypass:", {
+      pattern,
+      script: String(existing?.script || ""),
+    });
     await api("/zones/" + encodeURIComponent(zoneId) + "/workers/routes/" + encodeURIComponent(id), {
       method: "DELETE",
     });
-    removedRoutes.push({ pattern, script });
-    console.log("Removed Worker route from official production hostname:", { pattern, script });
   }
+
+  await api("/zones/" + encodeURIComponent(zoneId) + "/workers/routes", {
+    method: "POST",
+    body: { pattern, script: null },
+  });
+  bypassRoutes.push({ pattern, action: existing ? "replaced_with_bypass" : "created_bypass" });
+  console.log("Ensured official hostname bypasses all Workers:", { pattern });
 }
 
 const hostPayload = await api("/zones/" + encodeURIComponent(zoneId) + "/custom_hostnames?per_page=100");
@@ -151,6 +160,6 @@ console.log(JSON.stringify({
   ok: true,
   reference_host: referenceHost,
   repaired,
-  removed_worker_routes: removedRoutes,
+  worker_bypasses: bypassRoutes,
   removed_custom_hostnames: removedCustomHostnames,
 }, null, 2));
