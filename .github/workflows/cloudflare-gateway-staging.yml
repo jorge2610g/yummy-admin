@@ -118,38 +118,45 @@ jobs:
         env:
           PGPASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
         run: |
-          # Feed the secret to psql over stdin via a psql variable. This avoids
-          # putting the token in the process arguments or workflow logs.
-          {
-            printf '\\set cf_token %s\\n' "$(printf '%s' "$CLOUDFLARE_API_TOKEN" | sed "s/'/''/g" | sed "s/^/'/;s/$/'/")"
-            cat <<'SQL'
-          DO $vault$
-          DECLARE
-            existing_id uuid;
-          BEGIN
-            SELECT id INTO existing_id
-            FROM vault.secrets
-            WHERE name = 'cloudflare_api_token'
-            ORDER BY updated_at DESC
-            LIMIT 1;
-
-            IF existing_id IS NOT NULL THEN
-              PERFORM vault.update_secret(existing_id, :'cf_token', 'cloudflare_api_token', 'YummyPro Cloudflare for SaaS · Staging');
-            ELSE
-              PERFORM vault.create_secret(:'cf_token', 'cloudflare_api_token', 'YummyPro Cloudflare for SaaS · Staging');
-            END IF;
-          END
-          $vault$;
-          SQL
-          } | docker run --rm -i \
+          # Keep the Cloudflare token out of command-line arguments and logs.
+          # psql reads it from its client environment with \\getenv, then safely
+          # quotes it through psql variable interpolation.
+          docker run --rm -i \
             -e PGPASSWORD="$PGPASSWORD" \
+            -e CLOUDFLARE_API_TOKEN="$CLOUDFLARE_API_TOKEN" \
             postgres:17 \
             psql \
               --host="aws-0-sa-east-1.pooler.supabase.com" \
               --port=5432 \
               --username="postgres.$STAGING_PROJECT_REF" \
               --dbname=postgres \
-              --set=ON_ERROR_STOP=1
+              --set=ON_ERROR_STOP=1 <<'SQL'
+          \\getenv cf_token CLOUDFLARE_API_TOKEN
+          SELECT CASE
+            WHEN EXISTS (
+              SELECT 1
+              FROM vault.secrets
+              WHERE name = 'cloudflare_api_token'
+            )
+            THEN vault.update_secret(
+              (
+                SELECT id
+                FROM vault.secrets
+                WHERE name = 'cloudflare_api_token'
+                ORDER BY updated_at DESC
+                LIMIT 1
+              ),
+              :'cf_token',
+              'cloudflare_api_token',
+              'YummyPro Cloudflare for SaaS · Staging'
+            )::text
+            ELSE vault.create_secret(
+              :'cf_token',
+              'cloudflare_api_token',
+              'YummyPro Cloudflare for SaaS · Staging'
+            )::text
+          END;
+          SQL
 
       - name: Validate Worker bundle
         run: npx --yes wrangler@4.142.0 deploy --dry-run --config infrastructure/custom-domain-gateway/wrangler.toml
