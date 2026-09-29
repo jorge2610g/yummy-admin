@@ -45,10 +45,23 @@ if(!dnsRows.length){
 }else{
   const expected=dnsRows.find(row=>String(row?.type||"")==="AAAA"&&String(row?.content||"")==="100::"&&row?.proxied===true);
   if(!expected){
-    const summary=dnsRows.map(row=>({id:row?.id,type:row?.type,name:row?.name,content:row?.content,proxied:row?.proxied,ttl:row?.ttl,comment:row?.comment||""}));
-    throw new Error("Safety stop: "+fallbackHost+" already has unexpected DNS. Existing record was not modified. Existing DNS: "+JSON.stringify(summary));
+    const legacy=dnsRows.length===1
+      && String(dnsRows[0]?.type||"")==="CNAME"
+      && String(dnsRows[0]?.name||"").toLowerCase()===fallbackHost.toLowerCase()
+      && String(dnsRows[0]?.content||"").toLowerCase()==="domains."+zoneName.toLowerCase()
+      && dnsRows[0]?.proxied===true;
+    if(!legacy){
+      const summary=dnsRows.map(row=>({id:row?.id,type:row?.type,name:row?.name,content:row?.content,proxied:row?.proxied,ttl:row?.ttl,comment:row?.comment||""}));
+      throw new Error("Safety stop: "+fallbackHost+" already has unexpected DNS. Existing record was not modified. Existing DNS: "+JSON.stringify(summary));
+    }
+    await api("/zones/"+encodeURIComponent(zoneId)+"/dns_records/"+encodeURIComponent(String(dnsRows[0].id)),{
+      method:"PUT",
+      body:{type:"AAAA",name:fallbackHost,content:"100::",ttl:1,proxied:true,comment:"YummyPro custom domains staging fallback"},
+    });
+    console.log("Migrated legacy staging CNAME to proxied originless fallback DNS:",fallbackHost);
+  }else{
+    console.log("Fallback DNS already valid:",fallbackHost);
   }
-  console.log("Fallback DNS already valid:",fallbackHost);
 }
 
 // Read existing custom hostnames before touching a zone-level fallback.
