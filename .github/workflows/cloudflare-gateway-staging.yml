@@ -187,3 +187,6 @@ jobs:
         env:
           CLOUDFLARE_ZONE_NAME: yummypro.online
         run: node infrastructure/custom-domain-gateway/repair-official-retail-dns.mjs
+
+      - name: Verify official YummyPro hostnames after DNS repair
+        run: node infrastructure/custom-domain-gateway/verify-official-hosts.mjs
