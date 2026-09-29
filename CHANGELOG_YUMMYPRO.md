@@ -1,3 +1,8 @@
+## 2.3.91 — 2026-09-28
+- Se bloqueó la asignación directa de `custom_domain` también al crear un negocio; solo la activación verificada puede guardarlo.
+- Se versionaron las Edge Functions de verificación DNS y aprovisionamiento Cloudflare para que el flujo sea auditable y reproducible en Staging.
+- Producción no fue modificada.
+
 ## 2.3.90 — 2026-09-27
 - Se endureció `create_professional_appointment` en Supabase Staging.
 - La creación directa de citas ahora exige una cuenta Cliente o una previsualización activa del Administrador para el negocio profesional correspondiente.
