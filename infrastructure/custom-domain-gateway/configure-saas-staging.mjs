@@ -74,11 +74,14 @@ const fallbackResponse=await api(
 const fallbackResult=fallbackResponse.payload?.result||null;
 const currentOrigin=String(fallbackResult?.origin||"").toLowerCase();
 
-if(currentOrigin&&currentOrigin!==fallbackHost.toLowerCase()){
-  throw new Error("Safety stop: Cloudflare already has a different SaaS fallback origin ("+currentOrigin+"). It was not replaced.");
+const productionFallback="domains."+zoneName.toLowerCase();
+if(currentOrigin&&currentOrigin!==fallbackHost.toLowerCase()&&currentOrigin!==productionFallback){
+  throw new Error("Safety stop: Cloudflare already has an unexpected SaaS fallback origin ("+currentOrigin+"). It was not replaced.");
 }
 
-if(!currentOrigin){
+if(currentOrigin===productionFallback){
+  console.log("Existing production SaaS fallback preserved:",currentOrigin);
+}else if(!currentOrigin){
   if(hostRows.length){
     throw new Error("Safety stop: custom hostnames already exist but no fallback origin was readable. Review Cloudflare manually before changing it.");
   }
