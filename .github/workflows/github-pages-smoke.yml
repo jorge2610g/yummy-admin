@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -20,22 +22,37 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
 
-      - name: Esperar a que GitHub Pages publique este commit exacto
+      - name: Esperar a que GitHub Pages publique este commit o contenido equivalente
+        shell: bash
         env:
           PAGES_TEST_URL: https://jorge2610g.github.io/yummy-admin-pruebas/
         run: |
+          set -euo pipefail
           expected="$GITHUB_SHA"
+          marker="${PAGES_TEST_URL%/}/.staging-source-sha"
+          expected_tree="$(git rev-parse "$expected^{tree}")"
+
           for attempt in $(seq 1 48); do
-            deployed="$(curl -fsS "${PAGES_TEST_URL}.staging-source-sha?attempt=${attempt}&sha=${expected}" 2>/dev/null | tr -d '\r\n' || true)"
-            echo "Commit esperado:   $expected"
-            echo "Commit desplegado: ${deployed:-todavía no disponible}"
-            if [ "$deployed" = "$expected" ]; then
-              echo "OK: GitHub Pages corresponde exactamente al commit que se va a probar."
+            published="$(curl -fsSL --max-time 15 "$marker?cache=$RANDOM&expected=$expected" 2>/dev/null | tr -d '\r\n ' || true)"
+            echo "Intento $attempt: publicado=${published:-<sin marcador>} esperado=$expected"
+
+            if [ "$published" = "$expected" ]; then
+              echo "OK: GitHub Pages corresponde exactamente al commit bajo prueba."
               exit 0
             fi
+
+            if [ -n "$published" ] && git cat-file -e "$published^{commit}" 2>/dev/null; then
+              published_tree="$(git rev-parse "$published^{tree}")"
+              if [ "$published_tree" = "$expected_tree" ]; then
+                echo "OK: Pages usa otro SHA por realineación post-release, pero el árbol publicado es exactamente idéntico al commit bajo prueba."
+                exit 0
+              fi
+            fi
+
             sleep 10
           done
-          echo "ERROR: GitHub Pages no publicó el commit esperado dentro de la ventana del gate."
+
+          echo "ERROR: GitHub Pages no publicó el commit esperado ni un commit con contenido Git idéntico dentro de la ventana del gate."
           exit 1
 
       - name: Playwright smoke de Pruebas
