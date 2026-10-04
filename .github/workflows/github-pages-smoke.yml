@@ -47,6 +47,14 @@ jobs:
                 echo "OK: Pages usa otro SHA por realineación post-release, pero el árbol publicado es exactamente idéntico al commit bajo prueba."
                 exit 0
               fi
+
+              # Los cambios dentro de .github solo modifican CI y no forman parte
+              # del sitio servido por GitHub Pages. Todo el contenido desplegable
+              # debe seguir siendo idéntico para aceptar un SHA distinto.
+              if git diff --quiet "$published" "$expected" -- . ':(exclude).github'; then
+                echo "OK: el SHA solo difiere en configuración CI (.github); el contenido desplegable de Pruebas es idéntico."
+                exit 0
+              fi
             fi
 
             sleep 10
